@@ -1,19 +1,21 @@
-import 'package:aura/screens/history/history_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:aura/screens/splash_screen.dart';
-import 'package:aura/screens/landing/landing_screen.dart';
-import 'package:aura/screens/main_navigation_screen.dart';
+import 'package:aura/core/constants/consultation_status.dart';
+import 'package:aura/screens/auth/login_screen.dart';
 import 'package:aura/screens/clinic_setup/clinic_setup_screen.dart';
 import 'package:aura/screens/consultation/consultation_recording_screen.dart';
 import 'package:aura/screens/consultation/soap_note_screen.dart';
+import 'package:aura/screens/history/history_screen.dart';
+import 'package:aura/screens/landing/landing_screen.dart';
+import 'package:aura/screens/main_navigation_screen.dart';
 import 'package:aura/screens/notifications/notification_history_screen.dart';
 import 'package:aura/screens/patients/add_patient_screen.dart';
-import 'package:aura/core/constants/consultation_status.dart';
+import 'package:aura/screens/splash_screen.dart';
+import 'package:flutter/material.dart';
 
 /// Route names constants
 class AppRoutes {
   static const String splash = '/';
   static const String landing = '/landing';
+  static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String clinicSetup = '/clinic-setup';
   static const String history = '/history';
@@ -78,6 +80,12 @@ class AppRouter {
           settings: settings,
         );
 
+      case AppRoutes.login:
+        return MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+          settings: settings,
+        );
+
       case AppRoutes.dashboard:
         return MaterialPageRoute(
           builder: (_) => const MainNavigationScreen(),
@@ -121,9 +129,8 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(
-          builder: (_) => SOAPNoteScreen(
-            consultationId: typedArgs.consultationId,
-          ),
+          builder: (_) =>
+              SOAPNoteScreen(consultationId: typedArgs.consultationId),
           settings: settings,
         );
 

@@ -64,7 +64,7 @@ class AuraApp extends StatelessWidget {
         title: 'Aura Connect',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.splash,
+        initialRoute: AppRoutes.login,
         onGenerateRoute: AppRouter.generateRoute,
       ),
     );

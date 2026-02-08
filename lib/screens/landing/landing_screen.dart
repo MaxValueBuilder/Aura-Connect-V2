@@ -95,7 +95,8 @@ class LandingScreen extends StatelessWidget {
                     ),
                     actions: [
                       CustomMainButton(
-                        onPressed: () => context.read<AuthCubit>().signup(),
+                        onPressed: () =>
+                            AppRouter.pushNamed(context, AppRoutes.login),
                         label: 'Try Free',
                         textSize: 14,
                         icon: Icons.arrow_forward,
@@ -179,9 +180,9 @@ class LandingScreen extends StatelessWidget {
                                       'On Time',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontFamily: 'Serif',
+                                        fontFamily: 'Fraunces',
                                         fontSize: 52,
-                                        fontWeight: FontWeight.w400,
+                                        fontWeight: FontWeight.w600,
                                         height: 1.2,
                                         color: Colors.black,
                                         fontStyle: FontStyle.italic,
@@ -766,7 +767,7 @@ class LandingScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  '© 2026 Aura Connect. All rights reserved.',
+                                  '© 202 Aura Connect. All rights reserved.',
                                   style: TextStyle(
                                     color: AppColors.gray500,
                                     fontSize: 14,
