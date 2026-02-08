@@ -12,8 +12,8 @@ import 'notifications/notification_history_screen.dart';
 import 'settings/settings_screen.dart';
 
 /// Dark nav bar colors to match design (dark bar, white icons, active tab highlight)
-final _navBarBackgroundColor = AppColors.gray900;
-final _navBarActiveItemBackground = AppColors.primaryDark;
+final _navBarBackgroundColor = AppColors.secondary;
+final _navBarActiveItemBackground = Color(0xFF2A3757);
 
 /// Main navigation wrapper that manages bottom navigation bar
 /// and switches between different screens

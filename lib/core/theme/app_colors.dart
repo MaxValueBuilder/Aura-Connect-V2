@@ -7,7 +7,7 @@ class AppColors {
   static const Color primaryLight = Color(0xFF3B82F6); // Blue 500
   static const Color primaryDark = Color(0xFF1E40AF); // Blue 700
 
-  // Secondary Colors
+  // Secondary Colors#2A3757
   static const Color secondary = Color(0xFF0F172A); // Slate 500
   static const Color secondaryLight = Color(0xFF94A3B8); // Slate 400
   static const Color secondaryDark = Color(0xFF475569); // Slate 600
