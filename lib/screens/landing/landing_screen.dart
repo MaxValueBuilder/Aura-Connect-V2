@@ -1,7 +1,7 @@
 import 'package:aura/core/constants/app_constants.dart';
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
-import 'package:aura/screens/widgets/custom_main_button.dart';
+import 'package:aura/screens/widgets/custom_landing_page_button.dart';
 import 'package:aura/screens/landing/widgets/testimonial_card.dart';
 import 'package:aura/screens/landing/widgets/feature_card.dart';
 import 'package:aura/screens/landing/widgets/stat_overview_card.dart';
@@ -94,7 +94,7 @@ class LandingScreen extends StatelessWidget {
                       ],
                     ),
                     actions: [
-                      CustomMainButton(
+                      CustomLandingPageButton(
                         onPressed: () =>
                             AppRouter.pushNamed(context, AppRoutes.login),
                         label: 'Try Free',
@@ -163,26 +163,27 @@ class LandingScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 24),
                                 Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: const [
                                     Text(
                                       'Go Home',
-                                      textAlign: TextAlign.center,
+                                      textAlign: TextAlign.start,
                                       style: TextStyle(
                                         fontSize: 52,
                                         fontWeight: FontWeight.bold,
                                         height: 1.2,
-                                        fontFamily: 'Serif',
+                                        fontFamily: 'Fraunces',
                                         color: Colors.black,
                                       ),
                                     ),
                                     SizedBox(height: 4),
                                     Text(
                                       'On Time',
-                                      textAlign: TextAlign.center,
+                                      textAlign: TextAlign.start,
                                       style: TextStyle(
                                         fontFamily: 'Fraunces',
                                         fontSize: 52,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w400,
                                         height: 1.2,
                                         color: Colors.black,
                                         fontStyle: FontStyle.italic,
@@ -239,7 +240,7 @@ class LandingScreen extends StatelessWidget {
                                   children: [
                                     SizedBox(
                                       width: screenSize.width * 0.8,
-                                      child: CustomMainButton(
+                                      child: CustomLandingPageButton(
                                         paddingSize: 16,
                                         onPressed: () =>
                                             context.read<AuthCubit>().signup(),
@@ -255,7 +256,7 @@ class LandingScreen extends StatelessWidget {
                                   children: [
                                     SizedBox(
                                       width: screenSize.width * 0.8,
-                                      child: CustomMainButton(
+                                      child: CustomLandingPageButton(
                                         paddingSize: 16,
                                         onPressed: () {},
                                         label: 'Watch Demo',
@@ -367,7 +368,7 @@ class LandingScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           fontSize: 36,
                                           fontWeight: FontWeight.bold,
-                                          fontFamily: 'Serif',
+                                          fontFamily: 'Fraunces',
                                         ),
                                         children: const [
                                           TextSpan(
@@ -441,7 +442,7 @@ class LandingScreen extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 36,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Serif',
+                                      fontFamily: 'Fraunces',
                                       color: AppColors.textPrimary,
                                     ),
                                     children: [
@@ -450,7 +451,7 @@ class LandingScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           fontSize: 36,
                                           fontWeight: FontWeight.bold,
-                                          fontFamily: 'Serif',
+                                          fontFamily: 'Fraunces',
                                           color: AppColors.primary,
                                         ),
                                       ),
@@ -505,7 +506,7 @@ class LandingScreen extends StatelessWidget {
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
-                                          fontFamily: 'Serif',
+                                          fontFamily: 'Fraunces',
                                         ),
                                       ),
                                       TextSpan(
@@ -514,7 +515,7 @@ class LandingScreen extends StatelessWidget {
                                           color: AppColors.primary,
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          fontFamily: 'Serif',
+                                          fontFamily: 'Fraunces',
                                         ),
                                       ),
                                       const TextSpan(
@@ -523,7 +524,7 @@ class LandingScreen extends StatelessWidget {
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
-                                          fontFamily: 'Serif',
+                                          fontFamily: 'Fraunces',
                                         ),
                                       ),
                                     ],
@@ -570,7 +571,7 @@ class LandingScreen extends StatelessWidget {
                                       fontSize: 36,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
-                                      fontFamily: 'Serif',
+                                      fontFamily: 'Fraunces',
                                     ),
                                     children: [
                                       const TextSpan(text: 'Simple, '),
@@ -609,7 +610,7 @@ class LandingScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 30,
                                             fontWeight: FontWeight.bold,
-                                            fontFamily: 'Serif',
+                                            fontFamily: 'Fraunces',
                                           ),
                                         ),
                                         const SizedBox(height: 16),
@@ -623,7 +624,7 @@ class LandingScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontSize: 60,
                                                 fontWeight: FontWeight.bold,
-                                                fontFamily: 'Serif',
+                                                fontFamily: 'Fraunces',
                                                 color: AppColors.primary,
                                               ),
                                             ),
@@ -632,7 +633,7 @@ class LandingScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontSize: 48,
                                                 fontWeight: FontWeight.bold,
-                                                fontFamily: 'Serif',
+                                                fontFamily: 'Fraunces',
                                                 color: AppColors.primary,
                                               ),
                                             ),
@@ -678,7 +679,7 @@ class LandingScreen extends StatelessWidget {
                                         SizedBox(height: 16),
                                         SizedBox(
                                           width: double.infinity,
-                                          child: CustomMainButton(
+                                          child: CustomLandingPageButton(
                                             paddingSize: 16,
                                             onPressed: () => context
                                                 .read<AuthCubit>()
@@ -710,7 +711,7 @@ class LandingScreen extends StatelessWidget {
                                     fontSize: 36,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
-                                    fontFamily: 'Serif',
+                                    fontFamily: 'Fraunces',
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -726,7 +727,7 @@ class LandingScreen extends StatelessWidget {
                                 const SizedBox(height: 24),
                                 SizedBox(
                                   width: screenSize.width * 0.8,
-                                  child: CustomMainButton(
+                                  child: CustomLandingPageButton(
                                     paddingSize: 16,
                                     textSize: 18,
                                     onPressed: () =>

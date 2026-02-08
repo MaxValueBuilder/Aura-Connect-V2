@@ -1,7 +1,7 @@
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/core/theme/app_colors.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
-import 'package:aura/screens/widgets/custom_main_button.dart';
+import 'package:aura/screens/widgets/custom_landing_page_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -293,7 +293,7 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: CustomMainButton(
+                  child: CustomLandingPageButton(
                     label: 'Complete Setup',
                     onPressed: _isButtonEnabled ? _handleSubmit : null,
                     color: AppColors.primary,

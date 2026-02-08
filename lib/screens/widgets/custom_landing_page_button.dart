@@ -1,7 +1,7 @@
 import 'package:aura/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class CustomMainButton extends StatelessWidget {
+class CustomLandingPageButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
@@ -12,7 +12,7 @@ class CustomMainButton extends StatelessWidget {
   final double? textSize;
   final bool isLoading;
 
-  const CustomMainButton({
+  const CustomLandingPageButton({
     super.key,
     required this.label,
     required this.onPressed,
@@ -32,7 +32,7 @@ class CustomMainButton extends StatelessWidget {
       onPressed: isDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
         elevation: 10, // Increased elevation for stronger shadow
-        shadowColor: color,
+        shadowColor: AppColors.primary.withAlpha(50),
         padding: EdgeInsets.symmetric(
           vertical: paddingSize,
           horizontal: paddingSize,

@@ -1,12 +1,12 @@
-import 'dart:developer';
-
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/core/theme/app_colors.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
-import 'package:aura/screens/widgets/custom_main_button.dart';
+import 'package:aura/screens/auth/widgets/custom_auth_button.dart';
+import 'package:aura/screens/auth/widgets/google_sign_in_button.dart';
+import 'package:aura/screens/auth/widgets/logo_badge.dart';
+import 'package:aura/screens/auth/widgets/paw_print_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,23 +30,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    log('LoginScreen build');
+    final screenSize = MediaQuery.of(context).size;
     return BlocListener<AuthCubit, AuthState>(
-      // listenWhen: (previous, current) =>
-      //     previous.status == AuthStatus.loading &&
-      //     current.status == AuthStatus.authenticated,
+      listenWhen: (previous, current) =>
+          previous.status == AuthStatus.loading &&
+          current.status == AuthStatus.authenticated,
       listener: (context, state) {
-        // if (state.isAuthenticated) {
-        //   if (state.hasClinic) {
-        //     AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.dashboard);
-        //   } else {
-        //     AppRouter.pushNamedAndRemoveUntil(
-        //       context,
-        //       AppRoutes.clinicSetup,
-        //       arguments: ClinicSetupArguments(userEmail: state.userEmail),
-        //     );
-        //   }
-        // }
+        if (state.isAuthenticated) {
+          if (state.hasClinic) {
+            AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.dashboard);
+          } else {
+            AppRouter.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.clinicSetup,
+              arguments: ClinicSetupArguments(userEmail: state.userEmail),
+            );
+          }
+        }
       },
       child: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) => current.hasError,
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           body: Stack(
             children: [
               // Paw print background pattern
-              ..._buildPawPrintBackground(),
+              const PawPrintBackground(),
 
               SafeArea(
                 child: SingleChildScrollView(
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
 
                       // Logo badge
-                      _buildLogoBadge(context),
+                      const LogoBadge(),
 
                       const SizedBox(height: 32),
 
@@ -86,7 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.white,
-                          fontSize: 28,
+                          fontFamily: "Fraunces",
+                          fontSize: 32,
                           fontWeight: FontWeight.w600,
                           fontStyle: FontStyle.italic,
                         ),
@@ -99,6 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Log in to continue to Aura Connect',
                         textAlign: TextAlign.center,
                         style: TextStyle(
+                          fontWeight: FontWeight.w500,
                           color: AppColors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
@@ -150,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
+                            horizontal: 12,
                             vertical: 14,
                           ),
                         ),
@@ -216,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
+                            horizontal: 12,
                             vertical: 14,
                           ),
                         ),
@@ -269,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: AppColors.primary,
+                                color: AppColors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -284,14 +286,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       BlocBuilder<AuthCubit, AuthState>(
                         buildWhen: (p, c) => p.status != c.status,
                         builder: (context, state) {
-                          return CustomMainButton(
+                          return CustomAuthButton(
                             label: 'Login',
                             onPressed: state.status == AuthStatus.loading
                                 ? null
                                 : () => context.read<AuthCubit>().login(),
-                            color: AppColors.primary,
-                            textColor: AppColors.textOnPrimary,
-                            paddingSize: 14,
                             isLoading: state.status == AuthStatus.loading,
                           );
                         },
@@ -329,37 +328,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Continue with Google
-                      ElevatedButton(
+                      GoogleSignInButton(
                         onPressed: () => context.read<AuthCubit>().login(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.white,
-                          foregroundColor: AppColors.gray800,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: const StadiumBorder(),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.g_mobiledata_rounded,
-                              size: 26,
-                              color: AppColors.gray700,
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Continue with Google',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
 
-                      const SizedBox(height: 32),
+                      SizedBox(height: screenSize.height * 0.1),
 
                       // Sign up prompt
                       Row(
@@ -373,7 +346,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => context.read<AuthCubit>().signup(),
+                            onPressed: () =>
+                                AppRouter.pushNamed(context, AppRoutes.signup),
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: Size.zero,
@@ -401,118 +375,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildLogoBadge(BuildContext context) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: SvgPicture.asset(
-                'assets/icons/logo.svg',
-                colorFilter: const ColorFilter.mode(
-                  AppColors.primary,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Aura Connect',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildPawPrintBackground() {
-    return [
-      Positioned(
-        top: 80,
-        left: 20,
-        child: Opacity(
-          opacity: 0.08,
-          child: SvgPicture.asset(
-            'assets/icons/footprint.svg',
-            width: 48,
-            height: 48,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ),
-      Positioned(
-        top: 160,
-        right: 30,
-        child: Opacity(
-          opacity: 0.06,
-          child: SvgPicture.asset(
-            'assets/icons/footprint.svg',
-            width: 40,
-            height: 40,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ),
-      Positioned(
-        bottom: 280,
-        left: 40,
-        child: Opacity(
-          opacity: 0.06,
-          child: SvgPicture.asset(
-            'assets/icons/footprint.svg',
-            width: 36,
-            height: 36,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ),
-      Positioned(
-        bottom: 180,
-        right: 24,
-        child: Opacity(
-          opacity: 0.08,
-          child: SvgPicture.asset(
-            'assets/icons/footprint.svg',
-            width: 44,
-            height: 44,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ),
-    ];
   }
 }

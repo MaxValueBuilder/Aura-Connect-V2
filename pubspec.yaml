@@ -117,26 +117,53 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: Fraunces
-      fonts:
-        - asset: fonts/Fraunces-Black.ttf
-        - asset: fonts/Fraunces-BlackItalic.ttf
-        - asset: fonts/Fraunces-Bold.ttf
-        - asset: fonts/Fraunces-BoldItalic.ttf
-        - asset: fonts/Fraunces-ExtraBold.ttf
-        - asset: fonts/Fraunces-ExtraBoldItalic.ttf
-        - asset: fonts/Fraunces-ExtraLight.ttf
-        - asset: fonts/Fraunces-ExtraLightItalic.ttf
-        - asset: fonts/Fraunces-Italic.ttf
-        - asset: fonts/Fraunces-Light.ttf
-        - asset: fonts/Fraunces-LightItalic.ttf
-        - asset: fonts/Fraunces-Medium.ttf
-        - asset: fonts/Fraunces-MediumItalic.ttf
-        - asset: fonts/Fraunces-Regular.ttf
-        - asset: fonts/Fraunces-SemiBold.ttf
-        - asset: fonts/Fraunces-SemiBoldItalic.ttf
-        - asset: fonts/Fraunces-Thin.ttf
-        - asset: fonts/Fraunces-ThinItalic.ttf
+  - family: Fraunces
+    fonts:
+      - asset: fonts/Fraunces-Thin.ttf
+        weight: 100
+      - asset: fonts/Fraunces-ThinItalic.ttf
+        weight: 100
+        style: italic
+      - asset: fonts/Fraunces-ExtraLight.ttf
+        weight: 200
+      - asset: fonts/Fraunces-ExtraLightItalic.ttf
+        weight: 200
+        style: italic
+      - asset: fonts/Fraunces-Light.ttf
+        weight: 300
+      - asset: fonts/Fraunces-LightItalic.ttf
+        weight: 300
+        style: italic
+      - asset: fonts/Fraunces-Regular.ttf
+        weight: 400
+      - asset: fonts/Fraunces-Italic.ttf
+        weight: 400
+        style: italic
+      - asset: fonts/Fraunces-Medium.ttf
+        weight: 500
+      - asset: fonts/Fraunces-MediumItalic.ttf
+        weight: 500
+        style: italic
+      - asset: fonts/Fraunces-SemiBold.ttf
+        weight: 600
+      - asset: fonts/Fraunces-SemiBoldItalic.ttf
+        weight: 600
+        style: italic
+      - asset: fonts/Fraunces-Bold.ttf
+        weight: 700
+      - asset: fonts/Fraunces-BoldItalic.ttf
+        weight: 700
+        style: italic
+      - asset: fonts/Fraunces-ExtraBold.ttf
+        weight: 800
+      - asset: fonts/Fraunces-ExtraBoldItalic.ttf
+        weight: 800
+        style: italic
+      - asset: fonts/Fraunces-Black.ttf
+        weight: 900
+      - asset: fonts/Fraunces-BlackItalic.ttf
+        weight: 900
+        style: italic
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf

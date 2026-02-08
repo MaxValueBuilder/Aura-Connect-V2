@@ -1,5 +1,6 @@
 import 'package:aura/core/constants/consultation_status.dart';
 import 'package:aura/screens/auth/login_screen.dart';
+import 'package:aura/screens/auth/sign_up_screen.dart';
 import 'package:aura/screens/clinic_setup/clinic_setup_screen.dart';
 import 'package:aura/screens/consultation/consultation_recording_screen.dart';
 import 'package:aura/screens/consultation/soap_note_screen.dart';
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String landing = '/landing';
   static const String login = '/login';
+  static const String signup = '/signup';
   static const String dashboard = '/dashboard';
   static const String clinicSetup = '/clinic-setup';
   static const String history = '/history';
@@ -83,6 +85,12 @@ class AppRouter {
       case AppRoutes.login:
         return MaterialPageRoute(
           builder: (_) => const LoginScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.signup:
+        return MaterialPageRoute(
+          builder: (_) => const SignUpScreen(),
           settings: settings,
         );
 
