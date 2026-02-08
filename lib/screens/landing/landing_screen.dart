@@ -96,7 +96,7 @@ class LandingScreen extends StatelessWidget {
                     actions: [
                       CustomLandingPageButton(
                         onPressed: () =>
-                            AppRouter.pushNamed(context, AppRoutes.login),
+                            AppRouter.pushNamed(context, AppRoutes.dashboard),
                         label: 'Try Free',
                         textSize: 14,
                         icon: Icons.arrow_forward,
@@ -786,7 +786,7 @@ class LandingScreen extends StatelessWidget {
                 if (state.isLoading)
                   AbsorbPointer(
                     child: Container(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withAlpha(128),
                       child: const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(

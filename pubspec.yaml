@@ -43,7 +43,7 @@ dependencies:
   auth0_flutter: ^1.14.0
   flutter_secure_storage: ^9.2.4
   dio: ^5.9.0
-  convex_bottom_bar: ^3.2.0
+  persistent_bottom_nav_bar: ^6.2.1
   record: ^6.1.2
   permission_handler: ^11.3.1
   path_provider: ^2.1.4

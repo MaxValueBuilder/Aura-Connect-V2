@@ -7,8 +7,8 @@ class NavigationCubit extends Cubit<NavigationState> {
 
   /// Change the selected tab index
   void changeTab(int index) {
-    if (index >= 0 && index < 4) {
-      // 4 tabs: Dashboard, History, Patients, Settings
+    if (index >= 0 && index < 5) {
+      // 5 tabs: Dashboard, History, Patients, Notifications, Settings
       emit(state.copyWith(selectedIndex: index));
     }
   }
@@ -28,9 +28,14 @@ class NavigationCubit extends Cubit<NavigationState> {
     changeTab(2);
   }
 
-  /// Navigate to Settings (index 3)
-  void navigateToSettings() {
+  /// Navigate to Notifications (index 3)
+  void navigateToNotifications() {
     changeTab(3);
+  }
+
+  /// Navigate to Settings (index 4)
+  void navigateToSettings() {
+    changeTab(4);
   }
 }
 
