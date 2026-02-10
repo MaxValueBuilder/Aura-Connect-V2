@@ -9,14 +9,14 @@ import '../../../services/recording_service.dart';
 import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
-import 'widgets/recording_view.dart';
+import 'recording_view.dart';
 import 'widgets/patient_extraction_view.dart';
-import 'widgets/patient_review_view.dart';
-import 'widgets/tasks_labs_view.dart';
-import 'widgets/lab_upload_view.dart';
-import 'widgets/lab_analysis_view.dart';
+import 'patient_review_view.dart';
+import 'tasks_labs_view.dart';
+import 'widgets/lab_upload_card.dart';
+import 'lab_analysis_view.dart';
 import 'widgets/lab_results_view.dart';
-import 'widgets/soap_view.dart';
+import 'soap_view.dart';
 import 'widgets/processing_view.dart';
 
 /// Main consultation recording screen that manages the consultation workflow
@@ -46,10 +46,12 @@ class _ConsultationRecordingScreenState
   Map<String, dynamic>? _extractedPatientInfo;
   String? _currentConsultationId;
   String? _transcript;
-  String? _finalTranscript;
   List<dynamic> _generatedTasks = [];
   LabAnalysisModel? _labAnalysis;
   DocumentationModel? _documentation;
+  String _priority = 'medium';
+  bool _isEmergency = false;
+  String _notes = '';
   bool _isLoading = false;
   bool _isPaused = false;
   bool _showLabResults = false;
@@ -93,11 +95,20 @@ class _ConsultationRecordingScreenState
         setState(() {
           _patientName = consultation.patientName ?? widget.initialPatientName;
           _transcript = consultation.transcript;
-          _finalTranscript = consultation.aiAnalysis?.finalTranscript;
           _generatedTasks = consultation.aiAnalysis?.tasks ?? [];
           _labAnalysis = consultation.aiAnalysis?.labAnalysis;
           _documentation = consultation.aiAnalysis?.documentation;
           _currentStatus = consultation.status;
+          _priority = consultation.priority;
+          _isEmergency = consultation.isEmergency;
+          _notes = consultation.notes ?? '';
+          _extractedPatientInfo ??= {};
+          if (consultation.aiAnalysis?.breed != null) {
+            _extractedPatientInfo = {
+              ...?_extractedPatientInfo,
+              'breed': consultation.aiAnalysis!.breed,
+            };
+          }
         });
       }
     } catch (e) {
@@ -115,7 +126,28 @@ class _ConsultationRecordingScreenState
   }
 
   int _getTotalSteps() {
-    return 5;
+    return 4;
+  }
+
+  Future<void> _refreshAfterEditConsultation() async {
+    if (_currentConsultationId == null) return;
+    await context.read<ConsultationCubit>().loadConsultation(_currentConsultationId!);
+    if (!mounted) return;
+    final consultation = context.read<ConsultationCubit>().state.currentConsultation;
+    if (consultation != null) {
+      setState(() {
+        _patientName = consultation.patientName ?? _patientName;
+        _priority = consultation.priority;
+        _isEmergency = consultation.isEmergency;
+        _notes = consultation.notes ?? '';
+        if (consultation.aiAnalysis?.breed != null) {
+          _extractedPatientInfo = {
+            ...?_extractedPatientInfo,
+            'breed': consultation.aiAnalysis!.breed,
+          };
+        }
+      });
+    }
   }
 
   Map<String, dynamic> _getCurrentStepInfo() {
@@ -251,9 +283,7 @@ class _ConsultationRecordingScreenState
         });
         await _processInitialConsultation(manualTranscript);
       } else if (_currentStatus == ConsultationStatus.finalConsult) {
-        setState(() {
-          _finalTranscript = manualTranscript;
-        });
+        setState(() {});
         await _processFinalConsultation(manualTranscript);
       }
 
@@ -399,7 +429,6 @@ class _ConsultationRecordingScreenState
       setState(() {
         _currentStatus = ConsultationStatus.processing;
         _isLoading = true;
-        _finalTranscript = transcript;
       });
 
       if (_currentConsultationId == null) {
@@ -568,16 +597,10 @@ class _ConsultationRecordingScreenState
     });
   }
 
-  void _handleContinueToLabUpload() {
+  void _handleLabUploadComplete() {
+    // When upload starts (from TasksLabsView or LabUploadView), show lab analysis processing
     setState(() {
       _currentStatus = ConsultationStatus.labAnalysis;
-    });
-  }
-
-  void _handleLabUploadComplete() {
-    // This is called when upload starts - show lab analysis processing
-    // The status will remain labAnalysis, but we'll show processing view
-    setState(() {
       _isLoading = true;
     });
   }
@@ -748,7 +771,7 @@ class _ConsultationRecordingScreenState
       );
     }
 
-    // Tasks & Labs Step
+    // Tasks & Labs Step (includes Upload Lab Result card per Figma)
     if (_currentStatus == ConsultationStatus.initialComplete) {
       return TasksLabsView(
         patientName: _patientName,
@@ -756,7 +779,15 @@ class _ConsultationRecordingScreenState
         generatedTasks: _generatedTasks,
         stepInfo: stepInfo,
         totalSteps: _getTotalSteps(),
-        onContinue: _handleContinueToLabUpload,
+        onContinue: _handleSkipLabUpload,
+        onUploadComplete: _handleLabUploadComplete,
+        onUploadSuccess: _handleLabUploadSuccess,
+        onSkipLabUpload: _handleSkipLabUpload,
+        consultationId: _currentConsultationId,
+        initialPriority: _priority,
+        initialIsEmergency: _isEmergency,
+        initialNotes: _notes,
+        onConsultationUpdated: _refreshAfterEditConsultation,
       );
     }
 

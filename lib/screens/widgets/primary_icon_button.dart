@@ -32,6 +32,7 @@ class PrimaryIconButton extends StatelessWidget {
         icon: Icon(icon, size: fontSize + 2),
         label: Text(text, style: TextStyle(fontSize: fontSize)),
         style: ElevatedButton.styleFrom(
+          side: BorderSide(color: AppColors.primary),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           padding: EdgeInsets.symmetric(vertical: verticalPadding),

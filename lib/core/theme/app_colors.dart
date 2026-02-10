@@ -17,7 +17,7 @@ class AppColors {
   static const Color successLight = Color(0xFFD1FAE5); // Green 100
   static const Color warning = Color(0xFFF59E0B); // Amber 500
   static const Color warningLight = Color(0xFFFEF3C7); // Amber 100
-  static const Color error = Color(0xFFEF4444); // Red 500
+  static const Color error = Color(0xFFFF0000); // Red 500
   static const Color errorLight = Color(0xFFFEE2E2); // Red 100
   static const Color info = Color(0xFF3B82F6); // Blue 500
   static const Color infoLight = Color(0xFFDBEAFE); // Blue 100
@@ -55,7 +55,7 @@ class AppColors {
   static const Color activeStatusBg = Color(0xFFDCFCE7);
   static const Color activeStatusText = Color(0xFF166534);
   static const Color inProgressStatusBg = Color(0xFFFEF3C7);
-  static const Color inProgressStatusText = Color(0xFF92400E);
+  static const Color inProgressStatusText = Color(0xFF8F5C23);
   static const Color completedStatusBg = Color(0xFFDBEAFE);
   static const Color completedStatusText = Color(0xFF1E40AF);
   static const Color cancelledStatusBg = Color(0xFFF3F4F6);

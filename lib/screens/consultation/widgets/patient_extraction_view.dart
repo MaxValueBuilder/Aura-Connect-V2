@@ -111,9 +111,7 @@ class _PatientExtractionViewState extends State<PatientExtractionView>
                           return Icon(
                             Icons.psychology,
                             size: 40,
-                            color: AppColors.primary.withOpacity(
-                              0.5 + (_animationController.value * 0.5),
-                            ),
+                            color: AppColors.primary.withAlpha(50),
                           );
                         },
                       ),

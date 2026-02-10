@@ -5,7 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../features/consultation/consultation_cubit.dart';
 import '../../models/consultation_model.dart';
-import 'widgets/soap_view.dart';
+import 'soap_view.dart';
 
 class SOAPNoteScreen extends StatefulWidget {
   final String consultationId;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 class LabAnalysisView extends StatefulWidget {
   final Map<String, dynamic> stepInfo;
@@ -97,49 +97,6 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress Bar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.stepInfo['title'] as String,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        '${((widget.stepInfo['step'] as int) / widget.totalSteps * 100).round()}%',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (widget.stepInfo['step'] as int) / widget.totalSteps,
-                    backgroundColor: AppColors.gray200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                    minHeight: 2,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.stepInfo['description'] as String,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 48),
 
               // AI Processing
@@ -159,9 +116,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                           return Icon(
                             Icons.science,
                             size: 40,
-                            color: AppColors.primary.withOpacity(
-                              0.5 + (_animationController.value * 0.5),
-                            ),
+                            color: AppColors.primary.withAlpha(50),
                           );
                         },
                       ),
@@ -173,6 +128,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
+                        fontFamily: "Fraunces",
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -191,6 +147,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
 
               // Progress Card
               Card(
+                elevation: 0,
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
@@ -222,6 +179,8 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppColors.primary,
                         ),
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       const SizedBox(height: 12),
                       Text(

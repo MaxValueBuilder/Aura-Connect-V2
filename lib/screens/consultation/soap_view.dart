@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cross_file/cross_file.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/routes/app_routes.dart';
-import '../../../../models/consultation_model.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../models/consultation_model.dart';
 
 class SOAPView extends StatefulWidget {
   final DocumentationModel? documentation;
