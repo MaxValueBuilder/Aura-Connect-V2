@@ -5,6 +5,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/di/injection.dart';
 import '../../features/navigation/navigation_cubit.dart';
 import '../../features/navigation/navigation_state.dart';
+import '../../features/notification/notification_cubit.dart';
+import '../../features/notification/notification_state.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'history/history_screen.dart';
 import 'patients/patients_screen.dart';
@@ -118,15 +120,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           controller: _tabController,
           itemCount: _navBarItems().length,
           screens: _buildScreens(),
-          customWidget: _DarkStyleNavBar(
-            items: _navBarItems(),
-            selectedIndex: _tabController.index,
-            onItemSelected: (index) {
-              // CRITICAL: Update controller index so the package stays in sync (per doc)
-              setState(() {
-                _tabController.index = index;
-              });
-              _navigationCubit.changeTab(index);
+          customWidget: BlocBuilder<NotificationCubit, NotificationState>(
+            builder: (context, notificationState) {
+              return _DarkStyleNavBar(
+                items: _navBarItems(),
+                selectedIndex: _tabController.index,
+                notificationUnreadCount: notificationState.unreadCount,
+                onItemSelected: (index) {
+                  setState(() {
+                    _tabController.index = index;
+                  });
+                  _navigationCubit.changeTab(index);
+                },
+              );
             },
           ),
           confineToSafeArea: true,
@@ -156,16 +162,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
+/// Index of the Notifications tab in the bottom nav bar.
+const _notificationsTabIndex = 3;
+
 class _DarkStyleNavBar extends StatelessWidget {
   const _DarkStyleNavBar({
     required this.items,
     required this.selectedIndex,
     required this.onItemSelected,
+    this.notificationUnreadCount = 0,
   });
 
   final List<PersistentBottomNavBarItem> items;
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
+  final int notificationUnreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +191,9 @@ class _DarkStyleNavBar extends StatelessWidget {
             children: List.generate(items.length, (index) {
               final item = items[index];
               final isSelected = selectedIndex == index;
+              final showBadge =
+                  index == _notificationsTabIndex &&
+                  notificationUnreadCount > 0;
               return Expanded(
                 child: GestureDetector(
                   onTap: () => onItemSelected(index),
@@ -195,15 +209,52 @@ class _DarkStyleNavBar extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconTheme(
-                          data: IconThemeData(
-                            size: 24,
-                            color: isSelected
-                                ? (item.activeColorSecondary ??
-                                      item.activeColorPrimary)
-                                : item.inactiveColorPrimary,
-                          ),
-                          child: item.icon,
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconTheme(
+                              data: IconThemeData(
+                                size: 24,
+                                color: isSelected
+                                    ? (item.activeColorSecondary ??
+                                          item.activeColorPrimary)
+                                    : item.inactiveColorPrimary,
+                              ),
+                              child: item.icon,
+                            ),
+                            if (showBadge)
+                              Positioned(
+                                right: -6,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 18,
+                                    minHeight: 18,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      notificationUnreadCount > 99
+                                          ? '99+'
+                                          : '$notificationUnreadCount',
+                                      style: const TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Material(

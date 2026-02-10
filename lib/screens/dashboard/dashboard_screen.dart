@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../features/consultation/consultation_cubit.dart';
@@ -7,10 +8,13 @@ import '../../../features/consultation/consultation_state.dart';
 import '../../../features/auth/auth_cubit.dart';
 import '../../../features/navigation/navigation_cubit.dart';
 import '../../../features/notification/notification_cubit.dart';
-import '../../../features/notification/notification_state.dart';
+import '../../../features/patient/patient_cubit.dart';
 import '../../../models/consultation_model.dart';
 import '../../../core/constants/consultation_status.dart';
 import '../../../core/utils/consultation_status_utils.dart';
+import 'widgets/dashboard_stat_card.dart';
+import 'widgets/app_bar_icon_button.dart';
+import '../widgets/primary_icon_button.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,9 +29,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Load consultations and notification count when screen is initialized
+    // Load consultations, patients, and notification count when screen is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ConsultationCubit>().loadConsultations(refresh: true);
+      context.read<PatientCubit>().loadPatients(refresh: true);
       context.read<NotificationCubit>().refreshUnreadCount();
     });
   }
@@ -36,67 +41,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Dashboard',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+        // titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              width: 32,
+              height: 32,
+              'assets/icons/logo.svg',
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+              fit: BoxFit.contain,
+            ),
+
+            const SizedBox(width: 12),
+            const Text(
+              'Aura Connect',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
-          BlocBuilder<NotificationCubit, NotificationState>(
-            builder: (context, notificationState) {
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: AppColors.textPrimary,
-                    ),
-                    onPressed: () {
-                      AppRouter.pushNamed(context, AppRoutes.notifications);
-                    },
-                  ),
-                  if (notificationState.unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Center(
-                          child: Text(
-                            notificationState.unreadCount > 99
-                                ? '99+'
-                                : '${notificationState.unreadCount}',
-                            style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
+          AppBarIconButton(
+            backgroundColor: AppColors.primary,
+            icon: Icons.add,
+            onPressed: () => _handleStartConsultation(context),
+          ),
+          const SizedBox(width: 8),
+          AppBarIconButton(
+            backgroundColor: AppColors.error,
+            icon: Icons.logout,
+            onPressed: () async {
+              await context.read<AuthCubit>().logout();
+              if (context.mounted) {
+                AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.landing);
+              }
             },
           ),
+          const SizedBox(width: 16),
         ],
       ),
       body: BlocConsumer<ConsultationCubit, ConsultationState>(
@@ -117,96 +108,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome Section
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, authState) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary.withAlpha(230),
-                              AppColors.primaryLight.withAlpha(230),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Welcome To Aura Connect!',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Ready to start your next consultation?',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: AppColors.white.withOpacity(
-                                            0.9,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: ElevatedButton.icon(
-                                onPressed: () =>
-                                    _handleStartConsultation(context),
-                                icon: const Icon(Icons.add),
-                                label: const Text('New Consultation'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 14,
-                                  ),
-                                  backgroundColor: AppColors.white,
-                                  foregroundColor: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                  // Header: Dashboard title, welcome, profile picture
+                  _buildHeaderSection(context),
+                  // Stats Cards (2x2 grid)
+                  Padding(
+                    padding: const EdgeInsets.all(18.0),
+                    child: _buildStatsSection(state, context),
                   ),
                   const SizedBox(height: 32),
-                  // Stats Cards
-                  _buildStatsSection(state),
-                  const SizedBox(height: 32),
-
                   // Active Consultations Section
-                  _buildActiveConsultationsSection(state),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    child: _buildActiveConsultationsSection(state),
+                  ),
                   const SizedBox(height: 32),
-
                   // Recent Consultations Section
-                  _buildRecentConsultationsSection(state),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    child: _buildRecentConsultationsSection(state),
+                  ),
                 ],
               ),
             ),
@@ -216,36 +139,126 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatsSection(ConsultationState state) {
+  Widget _buildHeaderSection(BuildContext context) {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final displayName =
+            authState.user?.fullName ??
+            authState.userEmail?.split('@').first ??
+            'User';
+        final initials = displayName
+            .split(' ')
+            .where((s) => s.isNotEmpty)
+            .take(2)
+            .map((s) => s[0].toUpperCase())
+            .join();
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight.withAlpha(40),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dashboard',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontFamily: "Fraunces",
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Welcome back, ${displayName.toLowerCase()}',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: AppColors.white,
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  child: initials.isNotEmpty
+                      ? Text(
+                          initials,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                          size: 28,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatsSection(ConsultationState state, BuildContext context) {
     final stats = state.stats ?? {};
+    final patientCount = context.read<PatientCubit>().state.patients.length;
     return Column(
       children: [
-        _buildStatCard(
-          title: 'Total Consultations',
-          value: '${stats['totalConsultations'] ?? 0}',
-          icon: Icons.calendar_today,
-          color: AppColors.info,
+        Row(
+          children: [
+            Expanded(
+              child: DashboardStatCard(
+                title: 'Total Consultation',
+                value: '${stats['totalConsultations'] ?? 0}',
+                icon: Icons.event_note,
+                color: AppColors.info,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DashboardStatCard(
+                title: 'Active Consultation',
+                value: '${stats['activeConsultations'] ?? 0}',
+                icon: Icons.timeline,
+                color: AppColors.success,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        _buildStatCard(
-          title: 'Active',
-          value: '${stats['activeConsultations'] ?? 0}',
-          icon: Icons.access_time,
-          color: AppColors.warning,
-        ),
-        const SizedBox(height: 4),
-        _buildStatCard(
-          title: 'Completed',
-          value: '${stats['completedConsultations'] ?? 0}',
-          icon: Icons.check_circle,
-          color: AppColors.success,
-        ),
-        const SizedBox(height: 4),
-        _buildStatCard(
-          title: 'Today',
-          value: '${stats['completedToday'] ?? 0}',
-          icon: Icons.today,
-          color: AppColors.primary,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: DashboardStatCard(
+                title: 'Total Patients',
+                value: '$patientCount',
+                icon: Icons.people,
+                color: const Color(0xFF7C3AED),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DashboardStatCard(
+                title: 'Completed Today',
+                value: '${stats['completedToday'] ?? 0}',
+                icon: Icons.check_circle,
+                color: AppColors.warning,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -277,9 +290,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'Active Consultations',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
+                    fontFamily: "Fraunces",
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -294,79 +308,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Search and Filter
+            // Search and Filter (matched heights)
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   flex: 2,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
+                  child: SizedBox(
+                    height: 44,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search consultations...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppColors.white,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppColors.white,
+                      onChanged: (value) {
+                        context.read<ConsultationCubit>().setSearchTerm(value);
+                      },
                     ),
-                    onChanged: (value) {
-                      context.read<ConsultationCubit>().setSearchTerm(value);
-                    },
                   ),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppColors.white,
-                  ),
-                  child: DropdownButton<String>(
-                    value: _filterStatus,
-                    hint: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('All'),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 44,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.white,
                     ),
-                    isExpanded: false,
-                    underline: const SizedBox.shrink(),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('All')),
-                      DropdownMenuItem(value: 'active', child: Text('Active')),
-                      DropdownMenuItem(
-                        value: 'completed',
-                        child: Text('Completed'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _filterStatus,
+                        hint: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text('All'),
+                        ),
+                        isExpanded: false,
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('All')),
+                          DropdownMenuItem(
+                            value: 'active',
+                            child: Text('Active'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'completed',
+                            child: Text('Completed'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _filterStatus = value;
+                          });
+                          context.read<ConsultationCubit>().setFilterStatus(
+                            value,
+                          );
+                        },
+                        icon: const Icon(Icons.arrow_drop_down),
+                        iconSize: 24,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                        dropdownColor: AppColors.white,
                       ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _filterStatus = value;
-                      });
-                      context.read<ConsultationCubit>().setFilterStatus(value);
-                    },
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    icon: const Icon(Icons.arrow_drop_down),
-                    iconSize: 24,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -412,11 +439,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
+                    fontFamily: "Fraunces",
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Latest consultations',
+                  'Latest completed consultations',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -425,12 +453,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             TextButton.icon(
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6.0),
+                  side: BorderSide(color: AppColors.primary),
+                ),
+              ),
               onPressed: () {
                 // Navigate to History tab (index 1) while keeping navigation bar
                 context.read<NavigationCubit>().navigateToHistory();
               },
               icon: const Icon(Icons.history),
-              label: const Text('View All'),
+              iconAlignment: IconAlignment.end,
+              label: const Text(
+                'View All',
+                style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              ),
             ),
           ],
         ),
@@ -612,21 +650,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String message,
     String? actionLabel,
     VoidCallback? onAction,
+    IconData actionIcon = Icons.add,
   }) {
     return Card(
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 64, color: AppColors.gray300),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primary.withAlpha(25),
+              ),
+              child: Icon(icon, size: 64, color: AppColors.gray300),
+            ),
             const SizedBox(height: 16),
             Text(
               title,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                fontFamily: "Fraunces",
               ),
             ),
             const SizedBox(height: 8),
@@ -638,17 +687,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Always reserve space for button to keep consistent layout
             SizedBox(height: actionLabel != null && onAction != null ? 24 : 0),
             if (actionLabel != null && onAction != null)
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: onAction,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                  ),
-                  child: Text(actionLabel),
-                ),
+              PrimaryIconButton(
+                onPressed: onAction,
+                icon: actionIcon,
+                text: actionLabel,
+                fontSize: 16,
+                verticalPadding: 12,
               )
             else
               // Placeholder to maintain consistent spacing when no button
@@ -739,58 +783,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Icon on the left
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 16),
-            // Title and value on the right
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

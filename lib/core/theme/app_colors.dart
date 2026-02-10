@@ -43,7 +43,7 @@ class AppColors {
 
   // Text Colors
   static const Color textPrimary = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF94A3B8);
+  static const Color textSecondary = Color(0xFF555555);
   static const Color textDisabled = Color(0xFF9CA3AF);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
