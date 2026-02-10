@@ -28,8 +28,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["auth0Domain"] = "dev-iwyem8x75602t3k8.us.auth0.com"
-        manifestPlaceholders["auth0Scheme"] = "com.example.aura"
     }
 
     buildTypes {

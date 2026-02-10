@@ -1,10 +1,10 @@
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/core/theme/app_colors.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
-import 'package:aura/screens/widgets/custom_landing_page_button.dart';
+import 'package:aura/screens/auth/widgets/custom_auth_button.dart';
+import 'package:aura/screens/widgets/logo_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ClinicSetupScreen extends StatefulWidget {
   final String? userEmail;
@@ -20,8 +20,7 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
   final _clinicNameController = TextEditingController();
   final _clinicEmailController = TextEditingController();
   final _clinicPhoneController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _clinicWebsiteController = TextEditingController();
 
   bool _isLoading = false;
   bool _isButtonEnabled = false;
@@ -29,14 +28,9 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
   @override
   void initState() {
     super.initState();
-    // Listen to text changes to update button state
-    // Add listeners FIRST before setting initial values
     _clinicNameController.addListener(_updateButtonState);
     _clinicEmailController.addListener(_updateButtonState);
-    _firstNameController.addListener(_updateButtonState);
-    _lastNameController.addListener(_updateButtonState);
 
-    // Pre-fill email if available (after listeners are added)
     if (widget.userEmail != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -45,7 +39,6 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
         }
       });
     } else {
-      // Update initial button state
       _updateButtonState();
     }
   }
@@ -55,7 +48,6 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
       final wasEnabled = _isButtonEnabled;
       _isButtonEnabled = _areRequiredFieldsFilled && !_isLoading;
 
-      // Only call setState if the state actually changed
       if (wasEnabled != _isButtonEnabled) {
         setState(() {});
       }
@@ -66,22 +58,16 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
   void dispose() {
     _clinicNameController.removeListener(_updateButtonState);
     _clinicEmailController.removeListener(_updateButtonState);
-    _firstNameController.removeListener(_updateButtonState);
-    _lastNameController.removeListener(_updateButtonState);
     _clinicNameController.dispose();
     _clinicEmailController.dispose();
     _clinicPhoneController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _clinicWebsiteController.dispose();
     super.dispose();
   }
 
-  /// Check if all required fields are filled
   bool get _areRequiredFieldsFilled {
     return _clinicNameController.text.trim().isNotEmpty &&
-        _clinicEmailController.text.trim().isNotEmpty &&
-        _firstNameController.text.trim().isNotEmpty &&
-        _lastNameController.text.trim().isNotEmpty;
+        _clinicEmailController.text.trim().isNotEmpty;
   }
 
   Future<void> _handleSubmit() async {
@@ -91,19 +77,19 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
 
     setState(() {
       _isLoading = true;
-      _isButtonEnabled = false; // Disable when loading
+      _isButtonEnabled = false;
     });
 
     try {
-      // Call API to setup clinic via AuthCubit
       await context.read<AuthCubit>().setupClinic(
         clinicName: _clinicNameController.text.trim(),
         clinicEmail: _clinicEmailController.text.trim(),
         clinicPhone: _clinicPhoneController.text.trim().isEmpty
             ? null
             : _clinicPhoneController.text.trim(),
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
+        clinicWebsite: _clinicWebsiteController.text.trim().isEmpty
+            ? null
+            : _clinicWebsiteController.text.trim(),
       );
 
       if (mounted) {
@@ -114,7 +100,6 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
           ),
         );
 
-        // Navigate to dashboard after successful setup
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.dashboard);
@@ -139,8 +124,7 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _isButtonEnabled =
-              _areRequiredFieldsFilled; // Re-evaluate enabled state
+          _isButtonEnabled = _areRequiredFieldsFilled;
         });
       }
     }
@@ -149,14 +133,13 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.secondary,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
           onPressed: () {
-            // Navigate to landing screen when back is pressed
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
@@ -164,59 +147,51 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
             }
           },
         ),
-        title: const Text(
-          'Clinic Setup',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo Icon
-                Center(
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: SvgPicture.asset(
-                      'assets/icons/logo.svg',
-                      width: 48,
-                      height: 48,
-                    ),
+                const LogoBadge(),
+                const SizedBox(height: 32),
+
+                // Title
+                const Text(
+                  'Start Your New Trial',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontFamily: 'Fraunces',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 // Subtitle
                 Text(
-                  'Welcome to Aura Connect! Let\'s set up your veterinary clinic.',
+                  'Welcome to Aura Connect! Let\'s set up your new veterinary client for your free trial.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    color: AppColors.white.withValues(alpha: 0.9),
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
-                // Clinic Name Field
+                // Clinic Name*
+                _buildLabel('Clinic Name*'),
+                const SizedBox(height: 8),
                 _buildTextField(
                   controller: _clinicNameController,
-                  label: 'Clinic Name',
-                  icon: Icons.business_rounded,
-                  isRequired: true,
                   hintText: 'Enter your clinic name',
+                  icon: Icons.business_rounded,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Clinic name is required';
@@ -224,15 +199,26 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Clinic Email Field
+                // Clinic Website (optional)
+                _buildLabel('Clinic Website'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _clinicWebsiteController,
+                  hintText: 'Enter your clinic website',
+                  icon: Icons.language_outlined,
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 20),
+
+                // Clinic Email*
+                _buildLabel('Clinic Email*'),
+                const SizedBox(height: 8),
                 _buildTextField(
                   controller: _clinicEmailController,
-                  label: 'Clinic Email',
-                  icon: Icons.email_outlined,
-                  isRequired: true,
                   hintText: 'Enter your clinic email',
+                  icon: Icons.mail_outline,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -244,62 +230,26 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Clinic Phone Field
+                // Clinic Phone (optional)
+                _buildLabel('Clinic Phone'),
+                const SizedBox(height: 8),
                 _buildTextField(
                   controller: _clinicPhoneController,
-                  label: 'Clinic Phone',
+                  hintText: 'Enter your clinic phone number',
                   icon: Icons.phone_outlined,
-                  isRequired: false,
-                  hintText: '+1-555-0000',
                   keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-
-                // First Name Field
-                _buildTextField(
-                  controller: _firstNameController,
-                  label: 'Your First Name',
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                  hintText: 'Enter your first name',
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'First name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Last Name Field
-                _buildTextField(
-                  controller: _lastNameController,
-                  label: 'Your Last Name',
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                  hintText: 'Your last name',
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Last name is required';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 40),
 
-                // Complete Setup Button
+                // Start Free Trial Button (using CustomAuthButton)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: CustomLandingPageButton(
-                    label: 'Complete Setup',
+                  child: CustomAuthButton(
+                    label: 'Start Free Trial',
                     onPressed: _isButtonEnabled ? _handleSubmit : null,
-                    color: AppColors.primary,
-                    textColor: AppColors.white,
-                    paddingSize: 16,
-                    textSize: 16,
                     isLoading: _isLoading,
                   ),
                 ),
@@ -311,60 +261,52 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
     );
   }
 
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: AppColors.white,
+      ),
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
-    required String label,
+    required String hintText,
     required IconData icon,
-    required bool isRequired,
-    String? hintText,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            if (isRequired) ...[
-              const SizedBox(width: 4),
-              const Text(
-                '*',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ],
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: const TextStyle(color: AppColors.gray900),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(color: AppColors.gray500),
+        prefixIcon: Icon(icon, size: 22, color: AppColors.gray500),
+        filled: true,
+        fillColor: AppColors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.gray300),
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12, // Increased from 12 to 16 for more height
-            ),
-            // Using theme's InputDecorationTheme from app_theme.dart
-            // This will automatically apply the styling we defined
-          ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.gray300),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+      ),
     );
   }
 }

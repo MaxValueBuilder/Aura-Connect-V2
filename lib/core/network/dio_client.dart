@@ -80,32 +80,29 @@ class DioClient {
     handler.next(err);
   }
 
+  /// Refresh JWT: POST /auth/refresh with current Bearer token; response is { token }
   Future<bool> _refreshToken() async {
     try {
-      final refreshToken = await _storage.read(
-        key: AppConstants.refreshTokenKey,
-      );
-      if (refreshToken == null) return false;
+      final currentToken =
+          await _storage.read(key: AppConstants.accessTokenKey);
+      if (currentToken == null) return false;
 
-      final response = await _dio.post(
+      final response = await _dio.post<Map<String, dynamic>>(
         '/auth/refresh',
-        data: {'refreshToken': refreshToken},
+        options: Options(
+          headers: {'Authorization': 'Bearer $currentToken'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        final newAccessToken = response.data['accessToken'];
-        final newRefreshToken = response.data['refreshToken'];
-
-        await _storage.write(
-          key: AppConstants.accessTokenKey,
-          value: newAccessToken,
-        );
-        await _storage.write(
-          key: AppConstants.refreshTokenKey,
-          value: newRefreshToken,
-        );
-
-        return true;
+        final newToken = response.data?['token'];
+        if (newToken != null) {
+          await _storage.write(
+            key: AppConstants.accessTokenKey,
+            value: newToken,
+          );
+          return true;
+        }
       }
 
       return false;

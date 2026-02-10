@@ -40,7 +40,7 @@ dependencies:
   json_annotation: ^4.9.0
   intl: ^0.20.2
   get_it: ^8.2.0
-  auth0_flutter: ^1.14.0
+  crypto: ^3.0.3
   flutter_secure_storage: ^9.2.4
   dio: ^5.9.0
   persistent_bottom_nav_bar: ^6.2.1

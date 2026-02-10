@@ -12,10 +12,10 @@ import 'package:aura/services/notification_service.dart';
 import 'package:aura/services/patient_service.dart';
 import 'package:aura/services/settings_service.dart';
 import 'package:aura/services/subscription_service.dart';
-import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
-import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_it/get_it.dart';
+
 import '../constants/app_constants.dart';
 
 final getIt = GetIt.instance;
@@ -32,11 +32,6 @@ Future<void> setupDependencies() async {
   );
 
   getIt.registerLazySingleton<Dio>(() => getIt<DioClient>().dio);
-
-  // Auth0
-  getIt.registerLazySingleton<Auth0>(
-    () => Auth0(AppConstants.auth0Domain, AppConstants.auth0ClientId),
-  );
 
   // Services
   getIt.registerLazySingleton<AuthService>(() => AuthService(getIt<Dio>()));
@@ -89,7 +84,6 @@ Future<void> setupDependencies() async {
   // Cubits
   getIt.registerFactory<AuthCubit>(
     () => AuthCubit(
-      getIt<Auth0>(),
       getIt<FlutterSecureStorage>(),
       getIt<AuthService>(),
     ),

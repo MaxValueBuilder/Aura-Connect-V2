@@ -1,61 +1,63 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:aura/models/user_model.dart';
 import 'package:aura/services/auth_service.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:auth0_flutter/auth0_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import '../../../core/constants/app_constants.dart';
 
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final Auth0 auth0;
   final FlutterSecureStorage secureStorage;
   final AuthService authService;
 
-  AuthCubit(this.auth0, this.secureStorage, this.authService)
-    : super(const AuthState());
+  AuthCubit(this.secureStorage, this.authService) : super(const AuthState());
 
-  /// Initialize auth state
+  /// Initialize auth state from stored JWT and user
   Future<void> initialize() async {
     try {
       emit(state.copyWith(status: AuthStatus.loading));
 
-      // Check if user has valid credentials
-      final hasCredentials = await auth0.credentialsManager
-          .hasValidCredentials();
-
-      if (hasCredentials) {
-        final credentials = await auth0.credentialsManager.credentials();
-
-        // Get user info
-        final userProfile = await auth0.api.userProfile(
-          accessToken: credentials.accessToken,
-        );
-
-        // Store tokens
-        await _storeTokens(credentials);
-
-        // Store user email
-        await secureStorage.write(key: 'user_email', value: userProfile.email);
-
-        // Check clinic setup status
-        final hasClinic = await _checkClinicSetup();
-
-        emit(
-          state.copyWith(
-            status: AuthStatus.authenticated,
-            accessToken: credentials.accessToken,
-            userEmail: userProfile.email,
-            hasClinic: hasClinic,
-          ),
-        );
-      } else {
+      final token = await secureStorage.read(key: AppConstants.accessTokenKey);
+      if (token == null || token.isEmpty) {
         emit(state.copyWith(status: AuthStatus.unauthenticated));
+        return;
       }
+
+      final userJson = await secureStorage.read(key: AppConstants.userDataKey);
+      String? userEmail;
+      UserModel? user;
+      if (userJson != null && userJson.isNotEmpty) {
+        try {
+          final map = jsonDecode(userJson) as Map<String, dynamic>;
+          user = UserModel.fromJson(map);
+          userEmail = user.email;
+        } catch (_) {
+          userEmail = await secureStorage.read(key: 'user_email');
+        }
+      } else {
+        userEmail = await secureStorage.read(key: 'user_email');
+      }
+
+      // Same as web: derive hasClinic from stored user (user.clinicId)
+      final hasClinic = _hasClinicFromStoredUser(userJson);
+
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          accessToken: token,
+          userEmail: userEmail,
+          user: user,
+          hasClinic: hasClinic,
+        ),
+      );
     } catch (e) {
+      log('Auth initialize error: $e');
+      await _clearTokens();
       emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
@@ -65,111 +67,130 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Login with Auth0
-  Future<void> login() async {
+  /// Login with email and password
+  Future<void> login({required String email, required String password}) async {
     try {
-      emit(state.copyWith(status: AuthStatus.loading));
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
 
-      final credentials = await auth0
-          .webAuthentication(scheme: "com.example.aura")
-          .login(useHTTPS: true);
-      log("credentials: $credentials");
-      log("credentials refresh token: ${credentials.refreshToken}");
-      log("credentials id token: ${credentials.idToken}");
-      log("credentials token type: ${credentials.tokenType}");
+      final data = await authService.login(email: email, password: password);
+      final token = data['token'] as String?;
+      final userMap = data['user'] as Map<String, dynamic>?;
 
-      // Get user info
-      final userProfile = await auth0.api.userProfile(
-        accessToken: credentials.accessToken,
-      );
+      if (token == null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.error,
+            errorMessage: 'Invalid login response',
+          ),
+        );
+        return;
+      }
 
-      // Store tokens
-      await _storeTokens(credentials);
+      await _storeAuth(token: token, userMap: userMap);
+      final userEmail = userMap?['email']?.toString() ?? email;
+      UserModel? user;
+      if (userMap != null) {
+        user = UserModel.fromJson(userMap);
+      }
 
-      // Store user email
-      await secureStorage.write(key: 'user_email', value: userProfile.email);
-
-      // Check clinic setup status
-      final hasClinic = await _checkClinicSetup();
+      // Same as web LogIn.tsx: use user.clinicId from login response
+      final hasClinic = _hasClinicFromUserMap(userMap);
 
       emit(
         state.copyWith(
           status: AuthStatus.authenticated,
-          accessToken: credentials.accessToken,
-          userEmail: userProfile.email,
+          accessToken: token,
+          userEmail: userEmail,
+          user: user,
           hasClinic: hasClinic,
         ),
       );
     } catch (e) {
-      emit(
-        state.copyWith(status: AuthStatus.error, errorMessage: e.toString()),
-      );
+      final message = e.toString().replaceFirst('Exception: ', '');
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
     }
   }
 
-  /// Signup with Auth0
-  Future<void> signup() async {
-    try {
-      emit(state.copyWith(status: AuthStatus.loading));
-
-      final credentials = await auth0
-          .webAuthentication(scheme: "com.example.aura")
-          .login(
-            audience: AppConstants.auth0Audience,
-            scopes: {'openid', 'profile', 'email', 'offline_access'},
-            parameters: {'screen_hint': 'signup'},
-            useHTTPS: true,
-          );
-
-      // Get user info
-      final userProfile = await auth0.api.userProfile(
-        accessToken: credentials.accessToken,
-      );
-
-      // Store tokens
-      await _storeTokens(credentials);
-
-      // Store user email
-      await secureStorage.write(key: 'user_email', value: userProfile.email);
-
-      // Check clinic setup status (new users won't have clinic yet)
-      final hasClinic = await _checkClinicSetup();
-
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          accessToken: credentials.accessToken,
-          userEmail: userProfile.email,
-          hasClinic: hasClinic,
-        ),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(status: AuthStatus.error, errorMessage: e.toString()),
-      );
-    }
-  }
-
-  /// Setup clinic for authenticated user
-  Future<void> setupClinic({
-    required String clinicName,
-    required String clinicEmail,
-    String? clinicPhone,
+  /// Sign up with email, password, first name, last name; then log in
+  Future<void> signup({
+    required String email,
+    required String password,
     required String firstName,
     required String lastName,
   }) async {
     try {
-      emit(state.copyWith(status: AuthStatus.loading));
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
 
-      await authService.setupClinic(
-        clinicName: clinicName,
-        clinicEmail: clinicEmail,
-        clinicPhone: clinicPhone,
+      await authService.signup(
+        email: email,
+        password: password,
         firstName: firstName,
         lastName: lastName,
       );
 
-      // Update state to indicate clinic is now set up
+      // Backend does not return token on signup; log in to get token
+      final data = await authService.login(email: email, password: password);
+      final token = data['token'] as String?;
+      final userMap = data['user'] as Map<String, dynamic>?;
+
+      if (token == null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.error,
+            errorMessage: 'Account created. Please log in.',
+          ),
+        );
+        return;
+      }
+
+      await _storeAuth(token: token, userMap: userMap);
+      final userEmail = userMap?['email']?.toString() ?? email;
+      UserModel? user;
+      if (userMap != null) {
+        user = UserModel.fromJson(userMap);
+      }
+
+      // Same as web: use user.clinicId from login response
+      final hasClinic = _hasClinicFromUserMap(userMap);
+
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          accessToken: token,
+          userEmail: userEmail,
+          user: user,
+          hasClinic: hasClinic,
+        ),
+      );
+    } catch (e) {
+      final message = e.toString().replaceFirst('Exception: ', '');
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+    }
+  }
+
+  /// Setup clinic for authenticated user (calls POST /api/clinic/register)
+  Future<void> setupClinic({
+    required String clinicName,
+    required String clinicEmail,
+    String? clinicPhone,
+    String? clinicWebsite,
+  }) async {
+    try {
+      emit(state.copyWith(status: AuthStatus.loading));
+
+      final data = await authService.setupClinic(
+        clinicName: clinicName,
+        clinicEmail: clinicEmail,
+        clinicPhone: clinicPhone,
+        clinicWebsite: clinicWebsite,
+      );
+
+      // Update stored user with new clinicId (same as web updating localStorage user)
+      final clinicId = data['clinic']?['id']?.toString();
+      if (clinicId != null) {
+        await _updateStoredUserClinicId(clinicId);
+      }
+
       emit(state.copyWith(status: AuthStatus.authenticated, hasClinic: true));
     } catch (e) {
       emit(
@@ -179,36 +200,53 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Check if user has clinic setup
-  Future<bool> _checkClinicSetup() async {
+  /// Same as web: hasClinic from user object (no separate API).
+  bool _hasClinicFromUserMap(Map<String, dynamic>? userMap) {
+    if (userMap == null) return false;
+    final id = userMap['clinicId'];
+    return id != null && id.toString().trim().isNotEmpty;
+  }
+
+  /// Read stored user JSON and return true if user has clinicId.
+  bool _hasClinicFromStoredUser(String? userJson) {
+    if (userJson == null || userJson.isEmpty) return false;
     try {
-      final result = await authService.checkClinicSetup();
-      return result['hasClinic'] ?? false;
-    } catch (e) {
-      log('Error checking clinic setup: $e');
-      // If check fails, assume no clinic (new user)
+      final map = jsonDecode(userJson) as Map<String, dynamic>;
+      return _hasClinicFromUserMap(map);
+    } catch (_) {
       return false;
     }
   }
 
-  /// Refresh clinic setup status
+  /// After clinic register, update stored user with clinicId so next launch has it.
+  Future<void> _updateStoredUserClinicId(String clinicId) async {
+    final userJson = await secureStorage.read(key: AppConstants.userDataKey);
+    if (userJson == null || userJson.isEmpty) return;
+    try {
+      final map = jsonDecode(userJson) as Map<String, dynamic>;
+      map['clinicId'] = clinicId;
+      await secureStorage.write(
+        key: AppConstants.userDataKey,
+        value: jsonEncode(map),
+      );
+    } catch (e) {
+      log('Error updating stored user clinicId: $e');
+    }
+  }
+
+  /// Refresh clinic setup status from stored user (no server call).
   Future<void> refreshClinicStatus() async {
     if (state.isAuthenticated) {
-      try {
-        final hasClinic = await _checkClinicSetup();
-        emit(state.copyWith(hasClinic: hasClinic));
-      } catch (e) {
-        log('Error refreshing clinic status: $e');
-      }
+      final userJson = await secureStorage.read(key: AppConstants.userDataKey);
+      final hasClinic = _hasClinicFromStoredUser(userJson);
+      emit(state.copyWith(hasClinic: hasClinic));
     }
   }
 
   /// Logout
   Future<void> logout() async {
     try {
-      // await auth0.webAuthentication().logout();
       await _clearTokens();
-
       emit(const AuthState(status: AuthStatus.unauthenticated));
     } catch (e) {
       emit(
@@ -217,33 +255,34 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Store tokens securely
-  Future<void> _storeTokens(Credentials credentials) async {
-    await secureStorage.write(
-      key: AppConstants.accessTokenKey,
-      value: credentials.accessToken,
-    );
-    if (credentials.refreshToken != null) {
+  Future<void> _storeAuth({
+    required String token,
+    Map<String, dynamic>? userMap,
+  }) async {
+    await secureStorage.write(key: AppConstants.accessTokenKey, value: token);
+    if (userMap != null) {
       await secureStorage.write(
-        key: AppConstants.refreshTokenKey,
-        value: credentials.refreshToken,
+        key: AppConstants.userDataKey,
+        value: jsonEncode(userMap),
       );
+      final email = userMap['email']?.toString();
+      if (email != null) {
+        await secureStorage.write(key: 'user_email', value: email);
+      }
     }
   }
 
-  /// Clear stored tokens
   Future<void> _clearTokens() async {
     await secureStorage.delete(key: AppConstants.accessTokenKey);
     await secureStorage.delete(key: AppConstants.refreshTokenKey);
+    await secureStorage.delete(key: AppConstants.userDataKey);
     await secureStorage.delete(key: 'user_email');
   }
 
-  /// Update user
   void setUser(UserModel user) {
     emit(state.copyWith(user: user));
   }
 
-  /// Clear error
   void clearError() {
     emit(state.copyWith(errorMessage: ''));
   }

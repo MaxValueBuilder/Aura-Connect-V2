@@ -169,7 +169,12 @@ class AppRouter {
     String routeName, {
     Object? arguments,
   }) {
-    return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
+    // Use the root navigator so that routes are resolved by the top-level
+    // MaterialApp, avoiding issues with nested Navigators (e.g. tab views).
+    return Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pushNamed<T>(routeName, arguments: arguments);
   }
 
   /// Push and remove all previous routes

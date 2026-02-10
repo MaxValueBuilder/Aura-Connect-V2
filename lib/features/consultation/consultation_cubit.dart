@@ -379,10 +379,7 @@ class ConsultationCubit extends Cubit<ConsultationState> {
   }
 
   /// Upload file
-  Future<Map<String, dynamic>?> uploadFile(
-    String filePath,
-    String type,
-  ) async {
+  Future<Map<String, dynamic>?> uploadFile(String filePath, String type) async {
     try {
       emit(state.copyWith(isProcessingAI: true, errorMessage: ''));
 

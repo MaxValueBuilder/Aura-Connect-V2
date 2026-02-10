@@ -7,10 +7,7 @@ class PatientService {
 
   PatientService(this._dio);
 
-  Future<List<PatientModel>> getPatients({
-    int? limit,
-    int? offset,
-  }) async {
+  Future<List<PatientModel>> getPatients({int? limit, int? offset}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (limit != null) queryParams['limit'] = limit;
@@ -23,7 +20,9 @@ class PatientService {
       );
 
       print('🔍 [PatientService] Response status: ${response.statusCode}');
-      print('🔍 [PatientService] Response data type: ${response.data.runtimeType}');
+      print(
+        '🔍 [PatientService] Response data type: ${response.data.runtimeType}',
+      );
       print('🔍 [PatientService] Full response data: ${response.data}');
 
       final patientsList = response.data['patients'] as List<dynamic>? ?? [];
@@ -34,16 +33,30 @@ class PatientService {
         try {
           final json = patientsList[i] as Map<String, dynamic>;
           print('🔍 [PatientService] Processing patient $i: $json');
-          
+
           // Log each field to identify which one is null
-          print('🔍 [PatientService] Patient $i - id: ${json['id']} (type: ${json['id'].runtimeType})');
-          print('🔍 [PatientService] Patient $i - name: ${json['name']} (type: ${json['name']?.runtimeType})');
-          print('🔍 [PatientService] Patient $i - species: ${json['species']} (type: ${json['species']?.runtimeType})');
-          print('🔍 [PatientService] Patient $i - ownerName: ${json['ownerName']} (type: ${json['ownerName']?.runtimeType})');
-          print('🔍 [PatientService] Patient $i - gender: ${json['gender']} (type: ${json['gender']?.runtimeType})');
-          print('🔍 [PatientService] Patient $i - createdAt: ${json['createdAt']} (type: ${json['createdAt']?.runtimeType})');
-          print('🔍 [PatientService] Patient $i - updatedAt: ${json['updatedAt']} (type: ${json['updatedAt']?.runtimeType})');
-          
+          print(
+            '🔍 [PatientService] Patient $i - id: ${json['id']} (type: ${json['id'].runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - name: ${json['name']} (type: ${json['name']?.runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - species: ${json['species']} (type: ${json['species']?.runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - ownerName: ${json['ownerName']} (type: ${json['ownerName']?.runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - gender: ${json['gender']} (type: ${json['gender']?.runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - createdAt: ${json['createdAt']} (type: ${json['createdAt']?.runtimeType})',
+          );
+          print(
+            '🔍 [PatientService] Patient $i - updatedAt: ${json['updatedAt']} (type: ${json['updatedAt']?.runtimeType})',
+          );
+
           final patient = PatientModel.fromJson(json);
           patients.add(patient);
           print('✅ [PatientService] Successfully parsed patient $i');
@@ -55,7 +68,9 @@ class PatientService {
         }
       }
 
-      print('✅ [PatientService] Successfully parsed ${patients.length} patients');
+      print(
+        '✅ [PatientService] Successfully parsed ${patients.length} patients',
+      );
       return patients;
     } on DioException catch (e) {
       print('❌ [PatientService] DioException: ${e.message}');
@@ -71,7 +86,9 @@ class PatientService {
   Future<PatientModel> getPatient(String id) async {
     try {
       final response = await _dio.get('/patients/$id');
-      return PatientModel.fromJson(response.data['patient'] as Map<String, dynamic>);
+      return PatientModel.fromJson(
+        response.data['patient'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -111,7 +128,9 @@ class PatientService {
           'isActive': isActive,
         },
       );
-      return PatientModel.fromJson(response.data['patient'] as Map<String, dynamic>);
+      return PatientModel.fromJson(
+        response.data['patient'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -150,7 +169,9 @@ class PatientService {
       if (isActive != null) data['isActive'] = isActive;
 
       final response = await _dio.put('/patients/$id', data: data);
-      return PatientModel.fromJson(response.data['patient'] as Map<String, dynamic>);
+      return PatientModel.fromJson(
+        response.data['patient'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -167,7 +188,8 @@ class PatientService {
   Exception _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;
-      final message = error.response!.data['error'] ??
+      final message =
+          error.response!.data['error'] ??
           error.response!.data['message'] ??
           'An error occurred';
 
@@ -181,4 +203,3 @@ class PatientService {
     return NetworkException(message: error.message ?? 'Network error occurred');
   }
 }
-

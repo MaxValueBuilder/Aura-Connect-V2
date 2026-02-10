@@ -127,7 +127,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Email is managed by Auth0',
+                  'Email is linked to your account',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,

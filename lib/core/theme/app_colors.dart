@@ -37,7 +37,7 @@ class AppColors {
   static const Color gray900 = Color(0xFF111827);
 
   // Background Colors
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color background = Color(0xFFF9F9F9);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color cardBackground = Color(0xFFFFFFFF);
 

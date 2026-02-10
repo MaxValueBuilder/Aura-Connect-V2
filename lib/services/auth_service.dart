@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+
+import '../core/utils/crypto_utils.dart';
 import '../core/error/exceptions.dart';
 
 /// Service for authentication and clinic setup API calls
@@ -7,36 +9,68 @@ class AuthService {
 
   AuthService(this._dio);
 
-  /// Check if user has clinic setup
-  Future<Map<String, dynamic>> checkClinicSetup() async {
+  /// Login with email and password (password is hashed client-side before send)
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final response = await _dio.get('/auth/check-clinic-setup');
-      return response.data;
+      final hashedPassword = hashPassword(password);
+      final response = await _dio.post(
+        '/auth/login',
+        data: {
+          'email': email,
+          'password': hashedPassword,
+        },
+      );
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Setup clinic for authenticated user
-  Future<Map<String, dynamic>> setupClinic({
-    required String clinicName,
-    required String clinicEmail,
-    String? clinicPhone,
+  /// Sign up with email, password, first name, last name
+  Future<Map<String, dynamic>> signup({
+    required String email,
+    required String password,
     required String firstName,
     required String lastName,
   }) async {
     try {
+      final hashedPassword = hashPassword(password);
       final response = await _dio.post(
-        '/auth/setup-clinic',
+        '/auth/signup',
         data: {
-          'clinicName': clinicName,
-          'clinicEmail': clinicEmail,
-          'clinicPhone': clinicPhone,
+          'email': email,
+          'password': hashedPassword,
           'firstName': firstName,
           'lastName': lastName,
         },
       );
-      return response.data;
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Register clinic for authenticated user (matches server POST /api/clinic/register)
+  Future<Map<String, dynamic>> setupClinic({
+    required String clinicName,
+    required String clinicEmail,
+    String? clinicPhone,
+    String? clinicWebsite,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/clinic/register',
+        data: {
+          'clinicName': clinicName,
+          'clinicEmail': clinicEmail,
+          'clinicPhone': clinicPhone,
+          'clinicWebsite': clinicWebsite,
+        },
+      );
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -46,18 +80,20 @@ class AuthService {
   Exception _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;
-      final message = error.response!.data['error'] ??
-          error.response!.data['message'] ??
-          'An error occurred';
+      final data = error.response!.data;
+      final message = data is Map
+          ? (data['error'] ?? data['message'] ?? 'An error occurred')
+          : 'An error occurred';
 
       if (statusCode == 401) {
-        return AuthException(message: message, statusCode: statusCode);
+        return AuthException(message: message.toString(), statusCode: statusCode);
       }
 
-      return ServerException(message: message, statusCode: statusCode);
+      return ServerException(
+          message: message.toString(), statusCode: statusCode);
     }
 
-    return NetworkException(message: error.message ?? 'Network error occurred');
+    return NetworkException(
+        message: error.message ?? 'Network error occurred');
   }
 }
-

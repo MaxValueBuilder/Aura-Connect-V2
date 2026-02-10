@@ -3,7 +3,7 @@ import 'package:aura/core/theme/app_colors.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
 import 'package:aura/screens/auth/widgets/custom_auth_button.dart';
 import 'package:aura/screens/auth/widgets/google_sign_in_button.dart';
-import 'package:aura/screens/auth/widgets/logo_badge.dart';
+import 'package:aura/screens/widgets/logo_badge.dart';
 import 'package:aura/screens/auth/widgets/paw_print_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -290,7 +290,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Login',
                             onPressed: state.status == AuthStatus.loading
                                 ? null
-                                : () => context.read<AuthCubit>().login(),
+                                : () {
+                                    final email =
+                                        _emailController.text.trim();
+                                    final password =
+                                        _passwordController.text;
+                                    if (email.isEmpty || password.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Please enter email and password',
+                                          ),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    context.read<AuthCubit>().login(
+                                          email: email,
+                                          password: password,
+                                        );
+                                  },
                             isLoading: state.status == AuthStatus.loading,
                           );
                         },
@@ -329,7 +350,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
 
                       GoogleSignInButton(
-                        onPressed: () => context.read<AuthCubit>().login(),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Google sign-in coming soon',
+                              ),
+                            ),
+                          );
+                        },
                       ),
 
                       SizedBox(height: screenSize.height * 0.1),

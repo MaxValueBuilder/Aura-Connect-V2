@@ -10,6 +10,7 @@ class PrimaryIconButton extends StatelessWidget {
     required this.text,
     this.fontSize = 16,
     this.verticalPadding = 12,
+    this.enabled = true,
   });
 
   final VoidCallback onPressed;
@@ -18,12 +19,16 @@ class PrimaryIconButton extends StatelessWidget {
   final double fontSize;
   final double verticalPadding;
 
+  /// Whether the button is enabled. When false, the button is disabled
+  /// and uses Flutter's default disabled styling.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: onPressed,
+        onPressed: enabled ? onPressed : null,
         icon: Icon(icon, size: fontSize + 2),
         label: Text(text, style: TextStyle(fontSize: fontSize)),
         style: ElevatedButton.styleFrom(

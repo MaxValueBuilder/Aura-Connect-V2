@@ -219,7 +219,7 @@ class ConsultationService {
 
       // Send raw audio bytes directly (like web version)
       final response = await _dio.post(
-        '/speech/transcribe-live',
+        '/speech/transcribe',
         data: audioBytes,
         options: Options(headers: {'Content-Type': contentType}),
       );
@@ -239,17 +239,11 @@ class ConsultationService {
       final file = File(filePath);
       final fileName = file.path.split('/').last;
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          filePath,
-          filename: fileName,
-        ),
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
         'type': type,
       });
 
-      final response = await _dio.post(
-        '/upload/single',
-        data: formData,
-      );
+      final response = await _dio.post('/upload/single', data: formData);
       return response.data;
     } on DioException catch (e) {
       throw _handleError(e);

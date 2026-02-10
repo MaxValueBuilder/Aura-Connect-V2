@@ -5,16 +5,12 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API Configuration
-  static const String apiBaseUrl = 'https://api.auraconnect.vet/api';
+  static const String apiBaseUrl =
+      'https://aura-connect-veterinary-saas-production-d1aa.up.railway.app/api';
+
+  // 'http://10.0.2.2:3001/api';
   static const Duration apiTimeout = Duration(seconds: 30);
   static const Duration cacheTimeout = Duration(minutes: 2);
-
-  // Auth0 Configuration
-  static const String auth0Domain = 'dev-iwyem8x75602t3k8.us.auth0.com';
-  static const String auth0ClientId = 'EygrihxuY9IOkS4lhvSpkwcINyXcAjiw';
-  static const String auth0Audience = 'https://api.aura-connect.com';
-  static const String auth0ClientSecret =
-      'b3hTCtZ6rKW0cfeTk4eaoFB4zYN3li12vWtQnpIk9Sgc71LnzSOjtncfBLntSydj';
 
   // Google AI Configuration
   static const String geminiApiKey = 'your-gemini-api-key';

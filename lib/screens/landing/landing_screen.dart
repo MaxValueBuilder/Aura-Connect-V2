@@ -96,7 +96,7 @@ class LandingScreen extends StatelessWidget {
                     actions: [
                       CustomLandingPageButton(
                         onPressed: () =>
-                            AppRouter.pushNamed(context, AppRoutes.dashboard),
+                            AppRouter.pushNamed(context, AppRoutes.login),
                         label: 'Try Free',
                         textSize: 14,
                         icon: Icons.arrow_forward,
@@ -242,8 +242,10 @@ class LandingScreen extends StatelessWidget {
                                       width: screenSize.width * 0.8,
                                       child: CustomLandingPageButton(
                                         paddingSize: 16,
-                                        onPressed: () =>
-                                            context.read<AuthCubit>().signup(),
+                                        onPressed: () => AppRouter.pushNamed(
+                                          context,
+                                          AppRoutes.signup,
+                                        ),
                                         label: 'Start Free Trial',
                                         icon: Icons.arrow_forward,
                                       ),
@@ -681,9 +683,11 @@ class LandingScreen extends StatelessWidget {
                                           width: double.infinity,
                                           child: CustomLandingPageButton(
                                             paddingSize: 16,
-                                            onPressed: () => context
-                                                .read<AuthCubit>()
-                                                .signup(),
+                                            onPressed: () =>
+                                                AppRouter.pushNamed(
+                                                  context,
+                                                  AppRoutes.signup,
+                                                ),
                                             label: 'Start Free Trial',
                                           ),
                                         ),
@@ -730,8 +734,10 @@ class LandingScreen extends StatelessWidget {
                                   child: CustomLandingPageButton(
                                     paddingSize: 16,
                                     textSize: 18,
-                                    onPressed: () =>
-                                        context.read<AuthCubit>().signup(),
+                                    onPressed: () => AppRouter.pushNamed(
+                                      context,
+                                      AppRoutes.signup,
+                                    ),
                                     label: 'Start Your Free Trial',
                                     icon: Icons.arrow_forward,
                                     color: AppColors.white,

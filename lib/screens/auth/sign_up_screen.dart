@@ -3,7 +3,7 @@ import 'package:aura/core/theme/app_colors.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
 import 'package:aura/screens/auth/widgets/custom_auth_button.dart';
 import 'package:aura/screens/auth/widgets/google_sign_in_button.dart';
-import 'package:aura/screens/auth/widgets/logo_badge.dart';
+import 'package:aura/screens/widgets/logo_badge.dart';
 import 'package:aura/screens/auth/widgets/paw_print_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +16,8 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -25,7 +26,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -100,7 +102,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
-
+                      _buildLabel('First Name*'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _firstNameController,
+                        hint: 'Enter your first name',
+                        icon: Icons.person_outline,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildLabel('Last Name*'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _lastNameController,
+                        hint: 'Enter your last name',
+                        icon: Icons.person_outline,
+                      ),
                       const SizedBox(height: 20),
                       _buildLabel('Email*'),
                       const SizedBox(height: 8),
@@ -143,7 +159,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             label: 'Sign Up',
                             onPressed: state.status == AuthStatus.loading
                                 ? null
-                                : () => context.read<AuthCubit>().signup(),
+                                : () {
+                                    final email =
+                                        _emailController.text.trim();
+                                    final password =
+                                        _passwordController.text;
+                                    final confirmPassword =
+                                        _confirmPasswordController.text;
+                                    final firstName =
+                                        _firstNameController.text.trim();
+                                    final lastName =
+                                        _lastNameController.text.trim();
+                                    if (firstName.isEmpty ||
+                                        lastName.isEmpty ||
+                                        email.isEmpty ||
+                                        password.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Please fill in all fields',
+                                          ),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    if (password != confirmPassword) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Passwords do not match',
+                                          ),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    context.read<AuthCubit>().signup(
+                                          email: email,
+                                          password: password,
+                                          firstName: firstName,
+                                          lastName: lastName,
+                                        );
+                                  },
                             isLoading: state.status == AuthStatus.loading,
                           );
                         },
@@ -177,7 +237,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 24),
                       GoogleSignInButton(
-                        onPressed: () => context.read<AuthCubit>().signup(),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Google sign-in coming soon',
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       SizedBox(height: screenSize.height * 0.08),
                       Row(
