@@ -14,7 +14,7 @@ ConsultationModel _$ConsultationModelFromJson(Map<String, dynamic> json) =>
       veterinarianId: json['veterinarianId'] as String?,
       veterinarianName: json['veterinarianName'] as String?,
       status: ConsultationModel._statusFromJson(json['status'] as String?),
-      startTime: DateTime.parse(json['startTime'] as String),
+      startTime: ConsultationModel._dateTimeFromJson(json['startTime']),
       endTime: json['endTime'] == null
           ? null
           : DateTime.parse(json['endTime'] as String),
@@ -32,11 +32,11 @@ ConsultationModel _$ConsultationModelFromJson(Map<String, dynamic> json) =>
       followUpDate: json['followUpDate'] == null
           ? null
           : DateTime.parse(json['followUpDate'] as String),
-      priority: json['priority'] as String,
-      isEmergency: json['isEmergency'] as bool,
+      priority: ConsultationModel._priorityFromJson(json['priority']),
+      isEmergency: ConsultationModel._isEmergencyFromJson(json['isEmergency']),
       recordingUrl: json['recordingUrl'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: ConsultationModel._dateTimeFromJson(json['createdAt']),
+      updatedAt: ConsultationModel._dateTimeFromJson(json['updatedAt']),
     );
 
 Map<String, dynamic> _$ConsultationModelToJson(ConsultationModel instance) =>

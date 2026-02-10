@@ -1,15 +1,19 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../core/constants/app_constants.dart';
 import '../core/error/exceptions.dart';
 import '../models/consultation_model.dart';
 
 /// Service for consultation API calls
 class ConsultationService {
   final Dio _dio;
+  final FlutterSecureStorage _storage;
 
-  ConsultationService(this._dio);
+  ConsultationService(this._dio, this._storage);
 
   /// Get all consultations with optional filters
   Future<Map<String, dynamic>> getConsultations({
@@ -54,7 +58,8 @@ class ConsultationService {
     }
   }
 
-  /// Create new consultation
+  /// Create new consultation.
+  /// Includes stored user (clinicId, role) in body so server can validate clinic.
   Future<ConsultationModel> createConsultation({
     String? patientId,
     required String status,
@@ -67,9 +72,17 @@ class ConsultationService {
     log('Creating consultation with data: $startTime');
     log('Creating consultation with data: ${aiAnalysis?.toJson()}');
     try {
+      final userPayload = await _getStoredUserForConsultation();
+      if (userPayload == null) {
+        throw Exception(
+          'User or clinic not set up. Please complete clinic setup and try again.',
+        );
+      }
+
       final response = await _dio.post(
         '/consultations',
         data: {
+          'user': userPayload,
           if (patientId != null) 'patientId': patientId,
           'status': status,
           'startTime': startTime.toIso8601String(),
@@ -82,6 +95,26 @@ class ConsultationService {
       return ConsultationModel.fromJson(response.data['consultation']);
     } on DioException catch (e) {
       throw _handleError(e);
+    }
+  }
+
+  /// Reads stored user JSON and returns { clinicId, role } for consultation API.
+  Future<Map<String, dynamic>?> _getStoredUserForConsultation() async {
+    final userJson = await _storage.read(key: AppConstants.userDataKey);
+    if (userJson == null || userJson.isEmpty) return null;
+    try {
+      final map = jsonDecode(userJson) as Map<String, dynamic>;
+      final clinicId = map['clinicId']?.toString();
+      final role = map['role']?.toString();
+      final email = map['email']?.toString();
+      if (clinicId == null || clinicId.isEmpty) return null;
+      return {
+        'clinicId': clinicId,
+        'role': role ?? 'veterinarian',
+        'email': email ?? '',
+      };
+    } catch (_) {
+      return null;
     }
   }
 
@@ -99,7 +132,27 @@ class ConsultationService {
       }
 
       final response = await _dio.put('/consultations/$id', data: data);
-      return ConsultationModel.fromJson(response.data['consultation']);
+      final raw = response.data as Map<String, dynamic>?;
+      if (raw == null) {
+        throw Exception('Server did not return a valid response');
+      }
+      // Server PUT returns { success, message, consultation } where consultation
+      // is the Supabase result { data: row, error, status, ... }. Use the inner row.
+      Map<String, dynamic>? consultationJson = raw['data'] as Map<String, dynamic>?;
+      if (consultationJson == null) {
+        final consultationField = raw['consultation'];
+        if (consultationField is Map<String, dynamic>) {
+          final inner = consultationField['data'];
+          consultationJson = inner is Map<String, dynamic> ? inner : consultationField;
+        }
+      }
+      if (consultationJson == null || consultationJson.isEmpty) {
+        log('❌ [updateConsultation] No consultation in response. response.data keys: ${raw.keys.toList()}');
+        throw Exception('Server did not return consultation in update response');
+      }
+      // Ensure id is set (server may return Supabase wrapper that omitted it)
+      consultationJson['id'] ??= id;
+      return ConsultationModel.fromJson(consultationJson);
     } on DioException catch (e) {
       throw _handleError(e);
     }

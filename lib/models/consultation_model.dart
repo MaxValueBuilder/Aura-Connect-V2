@@ -13,6 +13,7 @@ class ConsultationModel extends Equatable {
   final String? veterinarianName;
   @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)
   final ConsultationStatus status;
+  @JsonKey(fromJson: _dateTimeFromJson)
   final DateTime startTime;
   final DateTime? endTime;
   final String? notes;
@@ -23,10 +24,14 @@ class ConsultationModel extends Equatable {
   final String? treatment;
   final String? prescription;
   final DateTime? followUpDate;
+  @JsonKey(fromJson: _priorityFromJson)
   final String priority;
+  @JsonKey(fromJson: _isEmergencyFromJson)
   final bool isEmergency;
   final String? recordingUrl;
+  @JsonKey(fromJson: _dateTimeFromJson)
   final DateTime createdAt;
+  @JsonKey(fromJson: _dateTimeFromJson)
   final DateTime updatedAt;
 
   const ConsultationModel({
@@ -59,6 +64,19 @@ class ConsultationModel extends Equatable {
   }
 
   static String _statusToJson(ConsultationStatus status) => status.apiValue;
+
+  static String _priorityFromJson(Object? v) =>
+      v == null ? 'medium' : (v is String ? v : v.toString());
+
+  static bool _isEmergencyFromJson(Object? v) =>
+      v == null ? false : (v is bool ? v : v == true || v == 'true');
+
+  static DateTime _dateTimeFromJson(Object? v) {
+    if (v == null) return DateTime.now();
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
+    return DateTime.now();
+  }
 
   factory ConsultationModel.fromJson(Map<String, dynamic> json) =>
       _$ConsultationModelFromJson(json);

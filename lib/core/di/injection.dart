@@ -38,7 +38,7 @@ Future<void> setupDependencies() async {
 
   // Import ConsultationService
   getIt.registerLazySingleton<ConsultationService>(
-    () => ConsultationService(getIt<Dio>()),
+    () => ConsultationService(getIt<Dio>(), getIt<FlutterSecureStorage>()),
   );
 
   // Settings Service
