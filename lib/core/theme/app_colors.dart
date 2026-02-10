@@ -13,8 +13,8 @@ class AppColors {
   static const Color secondaryDark = Color(0xFF475569); // Slate 600
 
   // Semantic Colors
-  static const Color success = Color(0xFF10B981); // Green 500
-  static const Color successLight = Color(0xFFD1FAE5); // Green 100
+  static const Color success = Color(0xFF4CAF50); // Green 500
+  static const Color successLight = Color(0xFFEAFFF0); // Green 100
   static const Color warning = Color(0xFFF59E0B); // Amber 500
   static const Color warningLight = Color(0xFFFEF3C7); // Amber 100
   static const Color error = Color(0xFFFF0000); // Red 500

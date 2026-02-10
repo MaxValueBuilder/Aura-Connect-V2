@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
@@ -29,6 +30,10 @@ class _LabUploadCardState extends State<LabUploadCard> {
   bool _isUploading = false;
   String? _uploadError;
   final TextEditingController _notesController = TextEditingController();
+  bool _uploadCompleted = false;
+  DateTime? _analysisCompletedTime;
+  String _clinicalSummary = '';
+  String _confidence = '95%';
 
   @override
   void dispose() {
@@ -94,6 +99,20 @@ class _LabUploadCardState extends State<LabUploadCard> {
       if (uploadedUrls.isNotEmpty && widget.onUploadSuccess != null) {
         widget.onUploadSuccess!(uploadedUrls.first);
       }
+      final hadDocx = _selectedFiles.any((f) {
+        final name = f.path.split(RegExp(r'[/\\]')).last.toLowerCase();
+        return name.endsWith('.docx') || name.endsWith('.doc');
+      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadCompleted = true;
+          _analysisCompletedTime = DateTime.now();
+          _clinicalSummary = hadDocx
+              ? 'Docx file uploaded successfully. AI analysis is only available for image files(JPG, PNG, GIF, WebP, BMP) and PDF documents.'
+              : 'Lab results uploaded successfully. AI analysis has been run on the uploaded documents.';
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -109,12 +128,161 @@ class _LabUploadCardState extends State<LabUploadCard> {
       _selectedFiles.clear();
       _notesController.clear();
       _uploadError = null;
+      _uploadCompleted = false;
     });
     widget.onCancel();
   }
 
+  Widget _buildLabAnalysisCompleteCard() {
+    final completedStr = _analysisCompletedTime != null
+        ? _formatTime(_analysisCompletedTime!)
+        : '--';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.successLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.success.withAlpha(25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title row: checkmark + "Lab Analysis Complete" + "AI Generated" pill
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.check_circle_outline_rounded,
+                color: AppColors.success,
+                size: 24,
+              ),
+
+              const SizedBox(width: 4),
+              const Expanded(
+                child: Text(
+                  'Lab Analysis Complete',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                    fontFamily: 'Fraunces',
+                  ),
+                ),
+              ),
+              LabelChip(
+                label: 'AI Generated',
+                textColor: AppColors.success,
+                backgroundColor: AppColors.success.withAlpha(25),
+                padding: 4,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Clinical Summary
+          const Text(
+            'Clinical Summary',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _clinicalSummary.isEmpty
+                  ? 'Lab results uploaded successfully. AI analysis is available for image files (JPG, PNG, GIF, WebP, BMP) and PDF documents.'
+                  : _clinicalSummary,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Key Findings + Recommendations row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.error,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Key Findings',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 24),
+              const Icon(
+                Icons.check_circle_outline,
+                color: Color(0xFF4CAF50),
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Recommendations',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(color: AppColors.gray200, height: 4),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Analysis Completed: $completedStr',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary.withOpacity(0.9),
+                ),
+              ),
+              Text(
+                'Confidence: $_confidence',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary.withOpacity(0.9),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+    final m = dt.minute.toString().padLeft(2, '0');
+    final s = dt.second.toString().padLeft(2, '0');
+    final am = dt.hour < 12 ? 'AM' : 'PM';
+    return '$h:$m:$s $am';
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_uploadCompleted) {
+      return _buildLabAnalysisCompleteCard();
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

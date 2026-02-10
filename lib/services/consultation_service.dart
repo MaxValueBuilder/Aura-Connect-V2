@@ -52,7 +52,24 @@ class ConsultationService {
   Future<ConsultationModel> getConsultation(String id) async {
     try {
       final response = await _dio.get('/consultations/$id');
-      return ConsultationModel.fromJson(response.data['consultation']);
+      final raw = response.data as Map<String, dynamic>?;
+      if (raw == null) {
+        throw Exception('Server did not return a valid response');
+      }
+      // Server may return { consultation: row } or { consultation: { data: row, error } } (Supabase)
+      dynamic consultationField = raw['consultation'];
+      Map<String, dynamic>? consultationJson;
+      if (consultationField is Map<String, dynamic>) {
+        final inner = consultationField['data'];
+        consultationJson = inner is Map<String, dynamic>
+            ? inner
+            : consultationField;
+      }
+      if (consultationJson == null || consultationJson.isEmpty) {
+        throw Exception('Server did not return consultation');
+      }
+      consultationJson['id'] ??= id;
+      return ConsultationModel.fromJson(consultationJson);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -138,17 +155,24 @@ class ConsultationService {
       }
       // Server PUT returns { success, message, consultation } where consultation
       // is the Supabase result { data: row, error, status, ... }. Use the inner row.
-      Map<String, dynamic>? consultationJson = raw['data'] as Map<String, dynamic>?;
+      Map<String, dynamic>? consultationJson =
+          raw['data'] as Map<String, dynamic>?;
       if (consultationJson == null) {
         final consultationField = raw['consultation'];
         if (consultationField is Map<String, dynamic>) {
           final inner = consultationField['data'];
-          consultationJson = inner is Map<String, dynamic> ? inner : consultationField;
+          consultationJson = inner is Map<String, dynamic>
+              ? inner
+              : consultationField;
         }
       }
       if (consultationJson == null || consultationJson.isEmpty) {
-        log('❌ [updateConsultation] No consultation in response. response.data keys: ${raw.keys.toList()}');
-        throw Exception('Server did not return consultation in update response');
+        log(
+          '❌ [updateConsultation] No consultation in response. response.data keys: ${raw.keys.toList()}',
+        );
+        throw Exception(
+          'Server did not return consultation in update response',
+        );
       }
       // Ensure id is set (server may return Supabase wrapper that omitted it)
       consultationJson['id'] ??= id;

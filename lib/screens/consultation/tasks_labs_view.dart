@@ -19,6 +19,9 @@ class TasksLabsView extends StatefulWidget {
   final void Function(String imageUrl)? onUploadSuccess;
   final VoidCallback? onSkipLabUpload;
 
+  /// When true, show "Ready for Final Consultation" card; when false, show "Initial Recording Complete" alert.
+  final bool labUploadCompleted;
+
   /// When set, "Edit Name & Priority" opens a modal and save updates the consultation.
   final String? consultationId;
   final String initialPriority;
@@ -37,6 +40,7 @@ class TasksLabsView extends StatefulWidget {
     this.onUploadComplete,
     this.onUploadSuccess,
     this.onSkipLabUpload,
+    this.labUploadCompleted = false,
     this.consultationId,
     this.initialPriority = 'medium',
     this.initialIsEmergency = false,
@@ -125,7 +129,8 @@ class _TasksLabsViewState extends State<TasksLabsView> {
 
   void _showEditConsultationModal(BuildContext context) {
     if (widget.consultationId == null) return;
-    final breed = widget.extractedPatientInfo?['breed']?.toString() ?? 'Mixed breed';
+    final breed =
+        widget.extractedPatientInfo?['breed']?.toString() ?? 'Mixed breed';
     showDialog(
       context: context,
       builder: (ctx) => EditConsultationModal(
@@ -140,25 +145,25 @@ class _TasksLabsViewState extends State<TasksLabsView> {
     );
   }
 
-  void _copyTasksToClipboard() {
-    final tasksJson = widget.generatedTasks.map((task) {
-      if (task is Map) {
-        return task;
-      }
-      return {'title': task.toString()};
-    }).toList();
+  // void _copyTasksToClipboard() {
+  //   final tasksJson = widget.generatedTasks.map((task) {
+  //     if (task is Map) {
+  //       return task;
+  //     }
+  //     return {'title': task.toString()};
+  //   }).toList();
 
-    final jsonString = tasksJson.toString();
-    Clipboard.setData(ClipboardData(text: jsonString));
+  //   final jsonString = tasksJson.toString();
+  //   Clipboard.setData(ClipboardData(text: jsonString));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tasks copied to clipboard'),
-        duration: Duration(seconds: 2),
-        backgroundColor: AppColors.success,
-      ),
-    );
-  }
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text('Tasks copied to clipboard'),
+  //       duration: Duration(seconds: 2),
+  //       backgroundColor: AppColors.success,
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -277,56 +282,135 @@ class _TasksLabsViewState extends State<TasksLabsView> {
 
               // Padded main content
               Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Initial Recording Complete alert (Figma: beige card)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEFCE8),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Color(0xFF8F5C23)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: AppColors.inProgressStatusText,
-                            size: 24,
+                    // Before upload: Initial Recording Complete alert; after upload: Ready for Final Consultation card
+                    if (widget.labUploadCompleted)
+                      // Ready for Final Consultation card (light green) - shown after lab upload
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.successLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.success.withAlpha(25),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Initial Recording Complete',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.inProgressStatusText,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'The initial consultation has been recorded and transcribed. '
-                                  'Please upload lab results to continue with the analysis and final consultation.',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.inProgressStatusText
-                                        .withOpacity(0.9),
-                                  ),
-                                ),
-                              ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline_rounded,
+                              color: AppColors.success,
+                              size: 24,
                             ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Ready for Final Consultation',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.success,
+                                      fontFamily: 'Fraunces',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    'Lab analysis is complete. You can now proceed to the final consultation and generate documentation.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.success,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  ElevatedButton.icon(
+                                    onPressed: widget.onContinue,
+                                    icon: const Icon(
+                                      Icons.check_circle_outline_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    label: const Text(
+                                      'Complete Consultation',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.success,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      // Initial Recording Complete alert (beige) - shown before lab upload
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEFCE8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.inProgressStatusText.withAlpha(51),
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: AppColors.inProgressStatusText,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Initial Recording Complete',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.inProgressStatusText,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'The initial consultation has been recorded and transcribed. '
+                                    'Please upload lab results to continue with the analysis and final consultation.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.inProgressStatusText
+                                          .withOpacity(0.9),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 24),
 
                     // Upload Lab Result card (embedded from lab_upload_view)
@@ -388,7 +472,10 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.white,
-                                  border: Border.all(color: AppColors.border),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
@@ -533,7 +620,7 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: AppColors.primary),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

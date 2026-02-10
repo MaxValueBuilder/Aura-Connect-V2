@@ -55,6 +55,7 @@ class _ConsultationRecordingScreenState
   bool _isLoading = false;
   bool _isPaused = false;
   bool _showLabResults = false;
+  bool _labUploadCompleted = false;
   final TextEditingController _manualTranscriptController =
       TextEditingController();
 
@@ -131,9 +132,14 @@ class _ConsultationRecordingScreenState
 
   Future<void> _refreshAfterEditConsultation() async {
     if (_currentConsultationId == null) return;
-    await context.read<ConsultationCubit>().loadConsultation(_currentConsultationId!);
+    await context.read<ConsultationCubit>().loadConsultation(
+      _currentConsultationId!,
+    );
     if (!mounted) return;
-    final consultation = context.read<ConsultationCubit>().state.currentConsultation;
+    final consultation = context
+        .read<ConsultationCubit>()
+        .state
+        .currentConsultation;
     if (consultation != null) {
       setState(() {
         _patientName = consultation.patientName ?? _patientName;
@@ -598,9 +604,8 @@ class _ConsultationRecordingScreenState
   }
 
   void _handleLabUploadComplete() {
-    // When upload starts (from TasksLabsView or LabUploadView), show lab analysis processing
+    // Keep user on TasksLabsView while upload runs; don't switch to labAnalysis yet
     setState(() {
-      _currentStatus = ConsultationStatus.labAnalysis;
       _isLoading = true;
     });
   }
@@ -608,8 +613,10 @@ class _ConsultationRecordingScreenState
   Future<void> _handleLabUploadSuccess(String imageUrl) async {
     try {
       if (!mounted) return;
+      // Show "Ready for Final Consultation" and lab complete card immediately (same time as LabUploadCard)
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
+        _labUploadCompleted = true;
       });
 
       // imageUrl is already the uploaded URL from backend
@@ -634,14 +641,10 @@ class _ConsultationRecordingScreenState
 
         // Convert to LabAnalysisModel
         try {
-          final Map<String, dynamic> jsonData;
-          if (analysisData is Map<String, dynamic>) {
-            jsonData = analysisData;
-          } else {
-            jsonData = analysisResult is Map<String, dynamic>
-                ? analysisResult
-                : <String, dynamic>{};
-          }
+          final Map<String, dynamic> jsonData =
+              analysisData is Map<String, dynamic>
+              ? analysisData
+              : analysisResult;
 
           final labAnalysisModel = LabAnalysisModel.fromJson(jsonData);
 
@@ -674,8 +677,7 @@ class _ConsultationRecordingScreenState
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _showLabResults =
-            true; // Show results instead of going directly to final consult
+        _showLabResults = true;
       });
     } catch (e) {
       if (!mounted) return;
@@ -783,6 +785,7 @@ class _ConsultationRecordingScreenState
         onUploadComplete: _handleLabUploadComplete,
         onUploadSuccess: _handleLabUploadSuccess,
         onSkipLabUpload: _handleSkipLabUpload,
+        labUploadCompleted: _labUploadCompleted,
         consultationId: _currentConsultationId,
         initialPriority: _priority,
         initialIsEmergency: _isEmergency,
