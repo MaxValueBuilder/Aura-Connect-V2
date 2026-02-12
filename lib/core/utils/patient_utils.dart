@@ -67,6 +67,26 @@ class PatientUtils {
     }
   }
 
+  /// Returns the display label for the given species.
+  static String getSpeciesLabel(String species) {
+    switch (species.toLowerCase()) {
+      case 'dog':
+        return 'Dog';
+      case 'cat':
+        return 'Cat';
+      case 'bird':
+        return 'Bird';
+      case 'rabbit':
+        return 'Rabbit';
+      case 'cow':
+        return 'Cow';
+      case 'horse':
+        return 'Horse';
+      default:
+        return 'Other';
+    }
+  }
+
   /// Returns the SVG asset path for the given species.
   /// Supported: dog, cat, bird, rabbit, cow, horse.
   /// Falls back to default_pet.svg for unknown species.

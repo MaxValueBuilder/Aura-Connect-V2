@@ -16,6 +16,7 @@ import 'widgets/patient_extraction_view.dart';
 import 'patient_review_view.dart';
 import 'soap_view.dart';
 import 'widgets/processing_view.dart';
+import '../widgets/app_bar_logo_title.dart';
 
 /// Main consultation recording screen that manages the consultation workflow
 class ConsultationRecordingScreen extends StatefulWidget {
@@ -919,7 +920,7 @@ class _ConsultationRecordingScreenState
     // Default fallback
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Consultation'),
+        title: const AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
       ),

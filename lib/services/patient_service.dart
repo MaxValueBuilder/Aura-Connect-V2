@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -34,9 +35,7 @@ class PatientService {
         );
       }
 
-      print(
-        '🔍 [PatientService] Fetching patients for clinicId: $clinicId',
-      );
+      print('🔍 [PatientService] Fetching patients for clinicId: $clinicId');
       final response = await _dio.get(
         '/patients/getpatientsbyclinicid/$clinicId',
       );
@@ -119,6 +118,7 @@ class PatientService {
           'isActive': isActive,
         },
       );
+      log(' [PatientService] ❤💚 Response: ${response.data}');
       return PatientModel.fromJson(
         response.data['patient'] as Map<String, dynamic>,
       );

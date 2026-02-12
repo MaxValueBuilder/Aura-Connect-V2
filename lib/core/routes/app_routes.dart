@@ -148,11 +148,11 @@ class AppRouter {
           settings: settings,
         );
 
-      case AppRoutes.addPatient:
-        return MaterialPageRoute(
-          builder: (_) => const AddPatientScreen(),
-          settings: settings,
-        );
+      // case AppRoutes.addPatient:
+      //   return MaterialPageRoute(
+      //     builder: (_) => const AddPatientScreen(),
+      //     settings: settings,
+      //   );
 
       default:
         // Unknown route - redirect to landing

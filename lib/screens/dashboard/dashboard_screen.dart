@@ -2,6 +2,7 @@ import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/app_bar_logo_title.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../features/consultation/consultation_cubit.dart';
@@ -42,31 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         // titleSpacing: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              width: 32,
-              height: 32,
-              'assets/icons/logo.svg',
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(width: 12),
-            const Text(
-              'Aura Connect',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        title: const AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,

@@ -9,6 +9,8 @@ import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
 import '../../../core/constants/consultation_status.dart';
 import 'widgets/filter_dropdown.dart';
+import '../widgets/screen_header.dart';
+import '../widgets/app_bar_logo_title.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -67,31 +69,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              width: 32,
-              height: 32,
-              'assets/icons/logo.svg',
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(width: 12),
-            const Text(
-              'Aura Connect',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        title: const AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -172,32 +150,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: Column(
               children: [
                 // Search and Filters Card
-                Container(
-                  width: double.infinity,
-                  color: AppColors.primaryLight.withValues(alpha: 0.1),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Consultation History',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                          fontFamily: "Fraunces",
-                        ),
-                      ),
-                      Text(
-                        '${completedConsultations.length} of ${completedConsultations.length + activeConsultations.length} Consultations',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
+                ScreenHeader(
+                  title: 'Consultation History',
+                  subtitle: '${completedConsultations.length} of ${completedConsultations.length + activeConsultations.length} Consultations',
                 ),
                 Container(
                   color: AppColors.white,

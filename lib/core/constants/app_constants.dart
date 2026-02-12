@@ -172,6 +172,19 @@ class AppConstants {
     'HIPAA compliance',
     '24/7 support',
   ];
+
+  // Medical flags for patient Medical Information card
+  static const List<String> medicalFlagOptions = [
+    'Allergies',
+    'Special Diet',
+    'Senior Care',
+    'Indoor Only',
+    'Aggressive',
+    'Anxious',
+    'Exotic',
+    'Microchipped',
+    'Spayed/Neutered',
+  ];
 }
 
 /// Data for a single "How it works" step (number, title, description).

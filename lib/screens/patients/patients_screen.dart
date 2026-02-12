@@ -1,4 +1,5 @@
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
+import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -11,6 +12,8 @@ import '../../../features/patient/patient_cubit.dart';
 import '../../../features/patient/patient_state.dart';
 import '../../../models/patient_model.dart';
 import '../history/widgets/filter_dropdown.dart';
+import '../widgets/screen_header.dart';
+import '../widgets/app_bar_logo_title.dart';
 
 class PatientsScreen extends StatefulWidget {
   const PatientsScreen({super.key});
@@ -92,14 +95,18 @@ class _PatientsScreenState extends State<PatientsScreen> {
         patientId,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
           SnackBar(
+            key: ValueKey('snack_${DateTime.now().millisecondsSinceEpoch}'),
             content: Text(
               success
                   ? 'Patient deleted successfully'
                   : context.read<PatientCubit>().state.errorMessage,
             ),
             backgroundColor: success ? AppColors.success : AppColors.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -137,55 +144,35 @@ class _PatientsScreenState extends State<PatientsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              width: 32,
-              height: 32,
-              'assets/icons/logo.svg',
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(width: 12),
-            const Text(
-              'Aura Connect',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        title: const AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: IconButton(
-              onPressed: _handleAddPatient,
-              icon: const Icon(
-                Icons.add_circle_outline_sharp,
-                size: 26,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Container(
+        //     padding: const EdgeInsets.symmetric(horizontal: 16),
+        //     width: 160,
+        //     child: PrimaryIconButton(
+        //       onPressed: () => _handleAddPatient(),
+        //       icon: Icons.add,
+        //       text: 'Add Patient',
+        //       fontSize: 14,
+        //       verticalPadding: 8,
+        //     ),
+        //   ),
+        // ],
       ),
       body: BlocListener<PatientCubit, PatientState>(
         listener: (context, state) {
           if (state.errorMessage.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(
               SnackBar(
+                key: ValueKey('snack_${DateTime.now().millisecondsSinceEpoch}'),
                 content: Text(state.errorMessage),
                 backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
               ),
             );
             context.read<PatientCubit>().clearError();
@@ -237,226 +224,222 @@ class _PatientsScreenState extends State<PatientsScreen> {
 
             final filteredPatients = state.filteredPatients;
 
-            return Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  color: AppColors.primaryLight.withValues(alpha: 0.1),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Patient Management',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                          fontFamily: "Fraunces",
-                        ),
-                      ),
-                      Text(
+            return SafeArea(
+              child: Column(
+                children: [
+                  ScreenHeader(
+                    title: 'Patient Management',
+                    subtitle:
                         '${filteredPatients.length} Patient${filteredPatients.length != 1 ? 's' : ''} Found',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-                // Search and Filters
-                Container(
-                  color: AppColors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    children: [
-                      // Search Field
-                      TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search patients, owners, or breeds...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          hintStyle: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        onChanged: (value) {
-                          context.read<PatientCubit>().setSearchTerm(value);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Filters Row
-                      Row(
-                        children: [
-                          // Species Filter
-                          Expanded(
-                            child: FilterDropdown(
-                              value: _selectedSpecies,
-                              labelText: 'Species',
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text(
-                                    'All Species',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'dog',
-                                  child: Text(
-                                    'Dogs',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'cat',
-                                  child: Text(
-                                    'Cats',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'bird',
-                                  child: Text(
-                                    'Birds',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'rabbit',
-                                  child: Text(
-                                    'Rabbits',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'other',
-                                  child: Text(
-                                    'Other',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedSpecies = value ?? 'all';
-                                });
-                                context.read<PatientCubit>().setFilterSpecies(
-                                  _selectedSpecies == 'all'
-                                      ? null
-                                      : _selectedSpecies,
-                                );
-                              },
+                  // Search and Filters
+                  Container(
+                    color: AppColors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      children: [
+                        // Search Field
+                        TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search patients, owners, or breeds...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          // Status Filter
-                          Expanded(
-                            child: FilterDropdown(
-                              value: _selectedStatus,
-                              labelText: 'Status',
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text(
-                                    'All Status',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Active',
-                                  child: Text(
-                                    'Active',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Inactive',
-                                  child: Text(
-                                    'Inactive',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedStatus = value ?? 'all';
-                                });
-                                context.read<PatientCubit>().setFilterStatus(
-                                  _selectedStatus == 'all'
-                                      ? null
-                                      : _selectedStatus,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Patients List
-                Expanded(
-                  child: filteredPatients.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredPatients.length,
-                          itemBuilder: (context, index) {
-                            final patient = filteredPatients[index];
-                            return _buildPatientCard(patient);
+                          onChanged: (value) {
+                            context.read<PatientCubit>().setSearchTerm(value);
                           },
                         ),
-                ),
-              ],
+                        const SizedBox(height: 12),
+                        // Filters Row
+                        Row(
+                          children: [
+                            // Species Filter
+                            Expanded(
+                              child: FilterDropdown(
+                                value: _selectedSpecies,
+                                labelText: 'Species',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'all',
+                                    child: Text(
+                                      'All Species',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'dog',
+                                    child: Text(
+                                      'Dogs',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'cat',
+                                    child: Text(
+                                      'Cats',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'bird',
+                                    child: Text(
+                                      'Birds',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'rabbit',
+                                    child: Text(
+                                      'Rabbits',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'other',
+                                    child: Text(
+                                      'Other',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedSpecies = value ?? 'all';
+                                  });
+                                  context.read<PatientCubit>().setFilterSpecies(
+                                    _selectedSpecies == 'all'
+                                        ? null
+                                        : _selectedSpecies,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Status Filter
+                            Expanded(
+                              child: FilterDropdown(
+                                value: _selectedStatus,
+                                labelText: 'Status',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'all',
+                                    child: Text(
+                                      'All Status',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Active',
+                                    child: Text(
+                                      'Active',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Inactive',
+                                    child: Text(
+                                      'Inactive',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedStatus = value ?? 'all';
+                                  });
+                                  context.read<PatientCubit>().setFilterStatus(
+                                    _selectedStatus == 'all'
+                                        ? null
+                                        : _selectedStatus,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Patients List
+                  Expanded(
+                    child: filteredPatients.isEmpty
+                        ? _buildEmptyState()
+                        : Container(
+                            margin: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListView.builder(
+                              // padding: const EdgeInsets.all(16),
+                              itemCount: filteredPatients.length,
+                              itemBuilder: (context, index) {
+                                final patient = filteredPatients[index];
+                                return Column(
+                                  children: [
+                                    _buildPatientCard(patient),
+                                    if (index < filteredPatients.length - 1)
+                                      const Divider(
+                                        color: AppColors.border,
+                                        height: 1,
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -508,20 +491,17 @@ class _PatientsScreenState extends State<PatientsScreen> {
               style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _handleAddPatient,
-              icon: const Icon(Icons.add),
-              label: const Text(
-                'Add Patient',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.all(12),
-              ),
-            ),
+            // const SizedBox(height: 24),
+            // SizedBox(
+            //   width: 140,
+            //   child: PrimaryIconButton(
+            //     onPressed: _handleAddPatient,
+            //     icon: Icons.add,
+            //     text: 'Add Patient',
+            //     fontSize: 14,
+            // verticalPadding: 12,
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -532,10 +512,8 @@ class _PatientsScreenState extends State<PatientsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border, width: 1),
-      ),
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
