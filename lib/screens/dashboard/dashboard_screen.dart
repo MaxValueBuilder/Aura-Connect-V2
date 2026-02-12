@@ -12,7 +12,6 @@ import '../../../features/notification/notification_cubit.dart';
 import '../../../features/patient/patient_cubit.dart';
 import '../../../models/consultation_model.dart';
 import '../../../core/constants/consultation_status.dart';
-import '../../../core/utils/consultation_status_utils.dart';
 import 'widgets/dashboard_stat_card.dart';
 import 'widgets/app_bar_icon_button.dart';
 import '../widgets/primary_icon_button.dart';

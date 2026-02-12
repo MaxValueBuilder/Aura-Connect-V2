@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
@@ -66,12 +67,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Consultation History',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              width: 32,
+              height: 32,
+              'assets/icons/logo.svg',
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+              fit: BoxFit.contain,
+            ),
+
+            const SizedBox(width: 12),
+            const Text(
+              'Aura Connect',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -81,6 +100,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         builder: (context, state) {
           // Get completed consultations
           final completedConsultations = state.completedConsultations;
+          final activeConsultations = state.activeConsultations;
 
           // Get unique veterinarians and types for filters
           final veterinarians =
@@ -153,6 +173,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 // Search and Filters Card
                 Container(
+                  width: double.infinity,
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Consultation History',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                          fontFamily: "Fraunces",
+                        ),
+                      ),
+                      Text(
+                        '${completedConsultations.length} of ${completedConsultations.length + activeConsultations.length} Consultations',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
                   color: AppColors.white,
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -175,6 +222,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
+                                  fontFamily: "Fraunces",
                                 ),
                               ),
                             ],
@@ -211,6 +259,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               controller: _searchController,
                               decoration: InputDecoration(
                                 hintText: 'Search consultations...',
+                                hintStyle: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14,
+                                ),
                                 prefixIcon: const Icon(Icons.search, size: 20),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -364,30 +416,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ),
                         ],
                       ),
-                      // Clear Filters
-                      if (_searchController.text.isNotEmpty ||
-                          _filterVet != 'all' ||
-                          _filterType != 'all' ||
-                          _sortBy != 'date-desc')
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${filteredConsultations.length} results found',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Icon(Icons.description_outlined, size: 20),
+                                Text(
+                                  'Completed Consultations',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.black,
+                                    fontFamily: "Fraunces",
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
+                              ],
+                            ),
+                            Text(
+                              '${filteredConsultations.length} Consultations',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
                               ),
-                              TextButton(
-                                onPressed: _clearFilters,
-                                child: const Text('Clear all filters'),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -424,7 +482,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.white,
           border: Border.all(
@@ -487,6 +545,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
+                        fontFamily: "Fraunces",
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -499,9 +558,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    OutlinedButton(
+                    ElevatedButton(
                       onPressed: _clearFilters,
-                      child: const Text('Clear Filters'),
+                      child: const Text(
+                        'Clear Filters',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
