@@ -1,5 +1,10 @@
+import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
+import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
+import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -51,7 +56,7 @@ class _SOAPViewState extends State<SOAPView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _subjectiveController = TextEditingController(
       text: _soapNote?.subjective ?? '',
     );
@@ -263,6 +268,17 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
   }
 
   Future<void> _shareContent() async {
+    if (_tabController.index == 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Billing has no content to share'),
+            backgroundColor: AppColors.textSecondary,
+          ),
+        );
+      }
+      return;
+    }
     try {
       final text = _tabController.index == 0
           ? _getSoapText()
@@ -300,6 +316,17 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
   }
 
   Future<void> _exportContent() async {
+    if (_tabController.index == 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Billing has no content to export'),
+            backgroundColor: AppColors.textSecondary,
+          ),
+        );
+      }
+      return;
+    }
     try {
       final text = _tabController.index == 0
           ? _getSoapText()
@@ -410,6 +437,8 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
       );
     }
 
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -417,276 +446,688 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () {
-            // Navigate to dashboard
-            AppRouter.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.dashboard,
-              predicate: (route) => false,
-            );
+            Navigator.of(context).pop();
           },
         ),
-        title: Text(
-          "${widget.patientName}'s Summary",
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: [
-          AnimatedBuilder(
-            animation: _tabController,
-            builder: (context, child) {
-              // Show actions based on current tab and edit state
-              final isSOAPTab = _tabController.index == 0;
-              final isEditing = isSOAPTab ? _isEditing : _isEditingHandout;
-              final isSaving = isSOAPTab ? _isSaving : _isSavingHandout;
-
-              if (!isEditing) {
-                // View mode - show Share, Export, and Edit buttons
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.share,
-                        color: AppColors.textPrimary,
-                        size: 20,
-                      ),
-                      onPressed: _shareContent,
-                      tooltip: isSOAPTab
-                          ? 'Share SOAP Note'
-                          : 'Share Client Handout',
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.download,
-                        color: AppColors.textPrimary,
-                        size: 20,
-                      ),
-                      onPressed: _exportContent,
-                      tooltip: isSOAPTab
-                          ? 'Export SOAP Note'
-                          : 'Export Client Handout',
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit,
-                        color: AppColors.textPrimary,
-                        size: 20,
-                      ),
-                      onPressed: isSOAPTab ? _handleEdit : _handleEditHandout,
-                      tooltip: 'Edit',
-                    ),
-                  ],
-                );
-              } else {
-                // Edit mode - show Cancel and Save buttons
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: AppColors.textPrimary,
-                        size: 20,
-                      ),
-                      onPressed: isSaving
-                          ? null
-                          : (isSOAPTab ? _handleCancel : _handleCancelHandout),
-                      tooltip: 'Cancel',
-                    ),
-                    IconButton(
-                      icon: isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primary,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.check,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                      onPressed: isSaving
-                          ? null
-                          : (isSOAPTab ? _handleSave : _handleSaveHandout),
-                      tooltip: 'Save',
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(icon: Icon(Icons.description, size: 20), text: 'SOAP Note'),
-            Tab(icon: Icon(Icons.people, size: 20), text: 'Client Handout'),
-          ],
-        ),
-      ),
-      body: SafeArea(
-        child: TabBarView(
-          controller: _tabController,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // SOAP Note Tab
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SUBJECTIVE Section
-                  _buildSection(
-                    title: 'SUBJECTIVE',
-                    icon: Icons.record_voice_over,
-                    controller: _subjectiveController,
-                    isEditing: _isEditing,
-                    placeholder:
-                        'Subjective:\n- Patient presents with [symptoms]\n- Owner reports [observations]',
-                  ),
-                  const SizedBox(height: 24),
-
-                  // OBJECTIVE Section
-                  _buildSection(
-                    title: 'OBJECTIVE',
-                    icon: Icons.visibility,
-                    controller: _objectiveController,
-                    isEditing: _isEditing,
-                    placeholder:
-                        'Objective:\nT: [temperature]  BCS: [body condition score]  PE:BAR\n\nEars: [ear findings]\nEyes: [eye findings]\nGI/Abdominal Palpation: [abdominal findings]\nHeart/Cardiovascular: [cardiac findings]\nLungs/Trachea: [respiratory findings]\nLymph nodes/Thyroid gland: [lymph node findings]\nMouth/Teeth/Gums: [oral findings]\nMusculoskeletal: [musculoskeletal findings]\nNervous System: [neurological findings]\nNose/Throat: [nasal/throat findings]\nSkin/Haircoat: [dermatological findings]\nUrinary/Reproductive: [urogenital findings]',
-                    minLines: 8,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ASSESSMENT Section
-                  _buildSection(
-                    title: 'ASSESSMENT',
-                    icon: Icons.assessment,
-                    controller: _assessmentController,
-                    isEditing: _isEditing,
-                    placeholder:
-                        'Assessment:\n- Primary diagnosis: [specific diagnosis]\n- Differential diagnoses: [list of differentials]',
-                  ),
-                  const SizedBox(height: 24),
-
-                  // PLAN Section
-                  _buildSection(
-                    title: 'PLAN',
-                    icon: Icons.assignment,
-                    controller: _planController,
-                    isEditing: _isEditing,
-                    placeholder:
-                        'Plan:\n- Treatment recommendations: [specific treatments]\n- Follow-up instructions: [specific follow-up plan]',
-                  ),
-                  const SizedBox(height: 24),
-                ],
+            SvgPicture.asset(
+              'assets/icons/logo.svg',
+              width: 32,
+              height: 32,
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Aura Connect',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            // Client Handout Tab
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_clientHandout == null && !_isEditingHandout)
-                    Center(
+          ],
+        ),
+        actions: [
+          AppBarIconButton(
+            backgroundColor: AppColors.error,
+            icon: Icons.logout,
+            onPressed: () {},
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverToBoxAdapter(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withAlpha(25),
+                      ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.people_outline,
-                            size: 64,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No client handout available',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                          Text(
+                            'Final Consult',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              fontFamily: 'Fraunces',
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'The client handout will be generated after\ncompleting the consultation.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
+                          Text(
+                            'Step 4 of 4',
+                            style: const TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          ConsultationProgressIndicator(value: 4 / 4),
+                          const SizedBox(height: 16),
+
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: PrimaryIconButton(
+                                      onPressed: () {},
+                                      icon: Icons.edit,
+                                      text: 'Tasks & lab ',
+                                      fontSize: 14,
+                                      verticalPadding: 14,
+                                      enabled: true,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: PrimaryIconButton(
+                                      onPressed: () {},
+                                      icon: Icons.chat_bubble_outline,
+                                      text: 'Initial Recording',
+                                      fontSize: 14,
+                                      verticalPadding: 14,
+                                      enabled: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  LabelChip(
+                                    label: 'INITIAL CONSULT',
+                                    textColor: AppColors.primary,
+                                    backgroundColor: AppColors.primaryLight
+                                        .withValues(alpha: 0.1),
+                                  ),
+                                  LabelChip(
+                                    label: 'Final Recorded',
+                                    textColor: const Color(0xFF5F9C75),
+                                    backgroundColor: const Color(0xFFDCFCE7),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                    )
-                  else ...[
-                    // Summary Section
-                    _buildHandoutSection(
-                      title: 'Letter Opening & Summary',
-                      icon: Icons.mail_outline,
-                      controller: _summaryController,
-                      isEditing: _isEditingHandout,
-                      placeholder:
-                          'Dear [Owner Name],\n\nI hope this message finds you well. I wanted to follow up on [Pet Name]\'s recent visit to our clinic. [Summary of findings and diagnosis]',
-                      minLines: 5,
                     ),
-                    const SizedBox(height: 24),
-
-                    // Home Care Section
-                    _buildHandoutSection(
-                      title: 'Home Care Instructions',
-                      icon: Icons.home,
-                      controller: _homeCareController,
-                      isEditing: _isEditingHandout,
-                      placeholder:
-                          'Home Care Instructions:\n\n[Specific home care instructions based on diagnosis]',
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primary.withAlpha(200),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: TabBar(
+                          controller: _tabController,
+                          labelColor: AppColors.primary,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          dividerColor: Colors.transparent,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.gray100,
+                              width: 2,
+                            ),
+                            color: AppColors.white,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 2,
+                            vertical: 2,
+                          ),
+                          tabs: const [
+                            Tab(text: 'SOAP Note'),
+                            Tab(text: 'Client Handout'),
+                            Tab(text: 'Billing'),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Medications Section
-                    _buildHandoutSection(
-                      title: 'Medication Instructions',
-                      icon: Icons.medication,
-                      controller: _medicationsController,
-                      isEditing: _isEditingHandout,
-                      placeholder:
-                          'Medication Instructions:\n\n[Specific medication instructions if prescribed]',
+                  ),
+                ],
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // SOAP Note Tab
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(24.0),
+                      child: _buildSoapNoteCard(),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Follow-up Section
-                    _buildHandoutSection(
-                      title: 'Follow-up Requirements',
-                      icon: Icons.calendar_today,
-                      controller: _followUpController,
-                      isEditing: _isEditingHandout,
-                      placeholder:
-                          'Follow-up Requirements:\n\n[Specific follow-up requirements and timeline]',
+                    // Client Handout Tab
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(24.0),
+                      child: _clientHandout == null && !_isEditingHandout
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.people_outline,
+                                    size: 64,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'No client handout available',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'The client handout will be generated after\ncompleting the consultation.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _buildClientHandoutCard(),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Emergency Signs Section
-                    _buildHandoutSection(
-                      title: 'Emergency Signs',
-                      icon: Icons.warning,
-                      controller: _emergencySignsController,
-                      isEditing: _isEditingHandout,
-                      placeholder:
-                          'Emergency Signs to Watch For:\n\n[Specific signs to watch for]',
+                    // Billing Tab
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(24.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 120,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Billing',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 24),
                   ],
+                ),
+              ),
+            ),
+            _buildBottomActionButtons(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomActionButtons() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textSecondary.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _bottomActionButton(
+                    label: 'Export SOAP',
+                    icon: Icons.download_outlined,
+                    backgroundColor: const Color(0xFFE8E0F5),
+                    borderColor: const Color(0xFF9B87C4),
+                    foregroundColor: const Color(0xFF6B5B95),
+                    onPressed: () => _exportContentWithText(
+                      _getSoapText(),
+                      isHandout: false,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _bottomActionButton(
+                    label: 'Share',
+                    icon: Icons.share_outlined,
+                    backgroundColor: const Color(0xFFF5E0F0),
+                    borderColor: const Color(0xFFC49BB4),
+                    foregroundColor: const Color(0xFF9B6B8B),
+                    onPressed: () => _shareContent(),
+                  ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _bottomActionButton(
+                    label: 'Export Handout',
+                    icon: Icons.download_outlined,
+                    backgroundColor: const Color(0xFFD4EDDA),
+                    borderColor: const Color(0xFF5F9C75),
+                    foregroundColor: const Color(0xFF2D6A3E),
+                    onPressed: () => _exportContentWithText(
+                      _getHandoutText(),
+                      isHandout: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _bottomActionButton(
+                    label: 'Print All',
+                    icon: Icons.print_outlined,
+                    backgroundColor: AppColors.primary,
+                    borderColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    filled: true,
+                    onPressed: () {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Print not available'),
+                            backgroundColor: AppColors.textSecondary,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportContentWithText(
+    String text, {
+    required bool isHandout,
+  }) async {
+    try {
+      final fileName = isHandout
+          ? 'Client_Handout_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt'
+          : 'SOAP_Note_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt';
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsString(text);
+      final xFile = XFile(file.path, mimeType: 'text/plain');
+      await Share.shareXFiles(
+        [xFile],
+        subject: isHandout
+            ? 'Client Handout - ${widget.patientName}'
+            : 'SOAP Note - ${widget.patientName}',
+        text: isHandout
+            ? 'Client Handout for ${widget.patientName}'
+            : 'SOAP Note for ${widget.patientName}',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exported successfully'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _bottomActionButton({
+    required String label,
+    required IconData icon,
+    required Color backgroundColor,
+    required Color borderColor,
+    required Color foregroundColor,
+    bool filled = false,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: filled
+          ? ElevatedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, size: 20, color: foregroundColor),
+              label: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: foregroundColor,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: backgroundColor,
+                foregroundColor: foregroundColor,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+            )
+          : OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, size: 20, color: foregroundColor),
+              label: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: foregroundColor,
+                  fontSize: 14,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: backgroundColor,
+                foregroundColor: foregroundColor,
+                side: BorderSide(color: borderColor),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildSoapNoteCard() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/soap_icon.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.black,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'SOAP Note',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (_isEditing) ...[
+                  _outlinedIconButton(
+                    icon: Icons.close,
+                    onPressed: () => setState(() => _handleCancel()),
+                  ),
+                  const SizedBox(width: 8),
+                  _outlinedIconButton(
+                    icon: Icons.save_outlined,
+                    onPressed: () async => await _handleSave(),
+                  ),
+                ] else ...[
+                  _outlinedIconButton(
+                    icon: Icons.edit,
+                    onPressed: () => setState(() => _handleEdit()),
+                  ),
+                  const SizedBox(width: 8),
+                  _outlinedIconButton(
+                    icon: Icons.copy,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _getSoapText()));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('SOAP note copied to clipboard'),
+                            backgroundColor: AppColors.success,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              title: 'SUBJECTIVE',
+              icon: Icons.record_voice_over,
+              controller: _subjectiveController,
+              isEditing: _isEditing,
+              placeholder:
+                  'Subjective:\n- Patient presents with [symptoms]\n- Owner reports [observations]',
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildSection(
+              title: 'OBJECTIVE',
+              icon: Icons.visibility,
+              controller: _objectiveController,
+              isEditing: _isEditing,
+              placeholder:
+                  'Objective:\nT: [temperature]  BCS: [body condition score]  PE:BAR\n\nEars: [ear findings]\nEyes: [eye findings]\nGI/Abdominal Palpation: [abdominal findings]\nHeart/Cardiovascular: [cardiac findings]\nLungs/Trachea: [respiratory findings]\nLymph nodes/Thyroid gland: [lymph node findings]\nMouth/Teeth/Gums: [oral findings]\nMusculoskeletal: [musculoskeletal findings]\nNervous System: [neurological findings]\nNose/Throat: [nasal/throat findings]\nSkin/Haircoat: [dermatological findings]\nUrinary/Reproductive: [urogenital findings]',
+              minLines: 8,
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildSection(
+              title: 'ASSESSMENT',
+              icon: Icons.assessment,
+              controller: _assessmentController,
+              isEditing: _isEditing,
+              placeholder:
+                  'Assessment:\n- Primary diagnosis: [specific diagnosis]\n- Differential diagnoses: [list of differentials]',
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildSection(
+              title: 'PLAN',
+              icon: Icons.assignment,
+              controller: _planController,
+              isEditing: _isEditing,
+              placeholder:
+                  'Plan:\n- Treatment recommendations: [specific treatments]\n- Follow-up instructions: [specific follow-up plan]',
+              inCard: false,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _outlinedIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20, color: AppColors.primary),
+      style: IconButton.styleFrom(
+        side: const BorderSide(color: AppColors.primary),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  Widget _buildClientHandoutCard() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/handout_icon.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.black,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Client Handout',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (_isEditingHandout) ...[
+                  _outlinedIconButton(
+                    icon: Icons.close,
+                    onPressed: () => setState(() => _handleCancelHandout()),
+                  ),
+                  const SizedBox(width: 8),
+                  _outlinedIconButton(
+                    icon: Icons.save_outlined,
+                    onPressed: () async => await _handleSaveHandout(),
+                  ),
+                ] else ...[
+                  _outlinedIconButton(
+                    icon: Icons.edit,
+                    onPressed: () => setState(() => _handleEditHandout()),
+                  ),
+                  const SizedBox(width: 8),
+                  _outlinedIconButton(
+                    icon: Icons.copy,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _getHandoutText()));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Client handout copied to clipboard'),
+                            backgroundColor: AppColors.success,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildHandoutSection(
+              title: 'Letter Opening & Summary',
+              icon: Icons.mail_outline,
+              controller: _summaryController,
+              isEditing: _isEditingHandout,
+              placeholder:
+                  'Dear [Owner Name],\n\nI hope this message finds you well. I wanted to follow up on [Pet Name]\'s recent visit to our clinic. [Summary of findings and diagnosis]',
+              minLines: 5,
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildHandoutSection(
+              title: 'Home Care Instructions',
+              icon: Icons.home,
+              controller: _homeCareController,
+              isEditing: _isEditingHandout,
+              placeholder:
+                  'Home Care Instructions:\n\n[Specific home care instructions based on diagnosis]',
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildHandoutSection(
+              title: 'Medication Instructions',
+              icon: Icons.medication,
+              controller: _medicationsController,
+              isEditing: _isEditingHandout,
+              placeholder:
+                  'Medication Instructions:\n\n[Specific medication instructions if prescribed]',
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildHandoutSection(
+              title: 'Follow-up Requirements',
+              icon: Icons.calendar_today,
+              controller: _followUpController,
+              isEditing: _isEditingHandout,
+              placeholder:
+                  'Follow-up Requirements:\n\n[Specific follow-up requirements and timeline]',
+              inCard: false,
+            ),
+            const SizedBox(height: 16),
+            _buildHandoutSection(
+              title: 'Emergency Signs',
+              icon: Icons.warning,
+              controller: _emergencySignsController,
+              isEditing: _isEditingHandout,
+              placeholder:
+                  'Emergency Signs to Watch For:\n\n[Specific signs to watch for]',
+              inCard: false,
             ),
           ],
         ),
@@ -701,85 +1142,64 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
     required bool isEditing,
     required String placeholder,
     int minLines = 4,
+    bool inCard = true,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppColors.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (isEditing)
-              TextField(
-                controller: controller,
-                maxLines: null,
-                minLines: minLines,
-                decoration: InputDecoration(
-                  hintText: placeholder,
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary.withOpacity(0.6),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                  height: 1.5,
-                ),
-              )
-            else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.gray50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  controller.text.isEmpty ? 'No data' : controller.text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: controller.text.isEmpty
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
-                    height: 1.5,
-                  ),
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isEditing)
+          TextField(
+            controller: controller,
+            maxLines: null,
+            minLines: minLines,
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary.withOpacity(0.6),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
                 ),
               ),
-          ],
-        ),
-      ),
+              contentPadding: const EdgeInsets.all(8),
+            ),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              height: 1.5,
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              controller.text.isEmpty ? 'No data' : controller.text,
+              style: TextStyle(
+                fontSize: 14,
+                color: controller.text.isEmpty
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+          ),
+      ],
     );
+    if (!inCard) return content;
+    return Card(child: content);
   }
 
   Widget _buildHandoutSection({
@@ -789,86 +1209,63 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
     required bool isEditing,
     required String placeholder,
     int minLines = 4,
+    bool inCard = true,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppColors.primary, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (isEditing)
-              TextField(
-                controller: controller,
-                maxLines: null,
-                minLines: minLines,
-                decoration: InputDecoration(
-                  hintText: placeholder,
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary.withOpacity(0.6),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                  height: 1.5,
-                ),
-              )
-            else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.gray50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  controller.text.isEmpty ? 'No data' : controller.text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: controller.text.isEmpty
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
-                    height: 1.5,
-                  ),
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isEditing)
+          TextField(
+            controller: controller,
+            maxLines: null,
+            minLines: minLines,
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary.withOpacity(0.6),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
                 ),
               ),
-          ],
-        ),
-      ),
+              contentPadding: const EdgeInsets.all(8),
+            ),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              height: 1.5,
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              controller.text.isEmpty ? 'No data' : controller.text,
+              style: TextStyle(
+                fontSize: 14,
+                color: controller.text.isEmpty
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+          ),
+      ],
     );
+    if (!inCard) return content;
+    return Card(child: content);
   }
 }

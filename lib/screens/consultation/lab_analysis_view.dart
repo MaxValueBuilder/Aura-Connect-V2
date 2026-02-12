@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'widgets/consultation_progress_indicator.dart';
 
 class LabAnalysisView extends StatefulWidget {
   final Map<String, dynamic> stepInfo;
@@ -173,15 +174,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                         ],
                       ),
                       const SizedBox(height: 12),
-                      LinearProgressIndicator(
-                        value: _progress,
-                        backgroundColor: AppColors.gray200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
-                        ),
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                      ConsultationProgressIndicator(value: _progress),
                       const SizedBox(height: 12),
                       Text(
                         _getProgressMessage(),

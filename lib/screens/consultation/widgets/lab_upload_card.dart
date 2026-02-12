@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'dart:io';
-import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/consultation/consultation_cubit.dart';
+import 'consultation_progress_indicator.dart';
+import '../../../../features/consultation/consultation_state.dart';
 
 /// Reusable card for uploading lab results. Can be embedded in TasksLabsView
 /// or used inside LabUploadView. Matches Figma: white card, blue border,
@@ -12,13 +14,11 @@ import '../../../../features/consultation/consultation_cubit.dart';
 class LabUploadCard extends StatefulWidget {
   final VoidCallback onUploadComplete;
   final Function(String imageUrl)? onUploadSuccess;
-  final VoidCallback onCancel;
 
   const LabUploadCard({
     super.key,
     required this.onUploadComplete,
     this.onUploadSuccess,
-    required this.onCancel,
   });
 
   @override
@@ -34,11 +34,35 @@ class _LabUploadCardState extends State<LabUploadCard> {
   DateTime? _analysisCompletedTime;
   String _clinicalSummary = '';
   String _confidence = '95%';
+  double _analyzingProgress = 0.0;
+  Timer? _analyzingTimer;
+  bool _hadDocxUploaded = false;
+  bool _uploadSuccessCalled = false;
 
   @override
   void dispose() {
+    _analyzingTimer?.cancel();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _startAnalyzingProgress() {
+    _analyzingTimer?.cancel();
+    _analyzingProgress = 0.0;
+    _analyzingTimer = Timer.periodic(const Duration(milliseconds: 400), (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_analyzingProgress < 0.95) {
+          _analyzingProgress += 0.03;
+          if (_analyzingProgress > 0.95) _analyzingProgress = 0.95;
+        }
+      });
+    });
+  }
+
+  void _stopAnalyzingProgress() {
+    _analyzingTimer?.cancel();
+    _analyzingTimer = null;
   }
 
   Future<void> _pickFile() async {
@@ -77,6 +101,7 @@ class _LabUploadCardState extends State<LabUploadCard> {
       _isUploading = true;
       _uploadError = null;
     });
+    _startAnalyzingProgress();
 
     try {
       widget.onUploadComplete();
@@ -96,9 +121,6 @@ class _LabUploadCardState extends State<LabUploadCard> {
         }
       }
 
-      if (uploadedUrls.isNotEmpty && widget.onUploadSuccess != null) {
-        widget.onUploadSuccess!(uploadedUrls.first);
-      }
       final hadDocx = _selectedFiles.any((f) {
         final name = f.path.split(RegExp(r'[/\\]')).last.toLowerCase();
         return name.endsWith('.docx') || name.endsWith('.doc');
@@ -106,15 +128,16 @@ class _LabUploadCardState extends State<LabUploadCard> {
       if (mounted) {
         setState(() {
           _isUploading = false;
-          _uploadCompleted = true;
-          _analysisCompletedTime = DateTime.now();
-          _clinicalSummary = hadDocx
-              ? 'Docx file uploaded successfully. AI analysis is only available for image files(JPG, PNG, GIF, WebP, BMP) and PDF documents.'
-              : 'Lab results uploaded successfully. AI analysis has been run on the uploaded documents.';
+          _hadDocxUploaded = hadDocx;
         });
+      }
+      if (uploadedUrls.isNotEmpty && widget.onUploadSuccess != null) {
+        _uploadSuccessCalled = true;
+        widget.onUploadSuccess!(uploadedUrls.first);
       }
     } catch (e) {
       if (mounted) {
+        _stopAnalyzingProgress();
         setState(() {
           _isUploading = false;
           _uploadError = 'Upload failed: ${e.toString()}';
@@ -124,13 +147,120 @@ class _LabUploadCardState extends State<LabUploadCard> {
   }
 
   void _handleCancel() {
+    _stopAnalyzingProgress();
     setState(() {
       _selectedFiles.clear();
       _notesController.clear();
       _uploadError = null;
       _uploadCompleted = false;
+      _analyzingProgress = 0.0;
+      _hadDocxUploaded = false;
+      _uploadSuccessCalled = false;
     });
-    widget.onCancel();
+  }
+
+  Widget _buildAIAnalyzingCard() {
+    final progressPercent = (_analyzingProgress * 100).round().clamp(0, 95);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title: brain icon + "AI Analyzing Lab Results"
+          Row(
+            children: [
+              Icon(Icons.psychology, color: AppColors.primary, size: 24),
+              const SizedBox(width: 10),
+              const Text(
+                'AI Analyzing Lab Results',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          // Central brain icon in light blue rounded square
+          Center(
+            child: Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppColors.infoLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.psychology,
+                size: 48,
+                color: AppColors.primary.withOpacity(0.8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Main status
+          const Center(
+            child: Text(
+              'Processing Lab Results',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Subtitle
+          Center(
+            child: Text(
+              'Analysing blood chemistry, CBC, and urinalysis...',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary.withOpacity(0.9),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Progress bar
+          ConsultationProgressIndicator(value: _analyzingProgress),
+          const SizedBox(height: 10),
+          Center(
+            child: Text(
+              '$progressPercent% Complete',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Estimated time (blue text)
+          Center(
+            child: Text(
+              'This usually takes 10-15 seconds',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.primary.withOpacity(0.9),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLabAnalysisCompleteCard() {
@@ -139,11 +269,17 @@ class _LabUploadCardState extends State<LabUploadCard> {
         : '--';
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.successLight,
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withAlpha(25)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,29 +288,42 @@ class _LabUploadCardState extends State<LabUploadCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.check_circle_outline_rounded,
-                color: AppColors.success,
-                size: 24,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF4CAF50),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 20),
               ),
-
-              const SizedBox(width: 4),
+              const SizedBox(width: 10),
               const Expanded(
                 child: Text(
                   'Lab Analysis Complete',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                    fontFamily: 'Fraunces',
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
-              LabelChip(
-                label: 'AI Generated',
-                textColor: AppColors.success,
-                backgroundColor: AppColors.success.withAlpha(25),
-                padding: 4,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC8E6C9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'AI Generated',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF388E3C),
+                  ),
+                ),
               ),
             ],
           ),
@@ -193,7 +342,7 @@ class _LabUploadCardState extends State<LabUploadCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.gray100,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -210,7 +359,6 @@ class _LabUploadCardState extends State<LabUploadCard> {
           const SizedBox(height: 16),
           // Key Findings + Recommendations row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Icon(
                 Icons.warning_amber_rounded,
@@ -244,8 +392,7 @@ class _LabUploadCardState extends State<LabUploadCard> {
             ],
           ),
           const SizedBox(height: 16),
-          Divider(color: AppColors.gray200, height: 4),
-          const SizedBox(height: 16),
+          // Footer: Analysis Completed time | Confidence
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -280,9 +427,38 @@ class _LabUploadCardState extends State<LabUploadCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (_uploadCompleted) {
-      return _buildLabAnalysisCompleteCard();
-    }
+    return BlocConsumer<ConsultationCubit, ConsultationState>(
+      listenWhen: (prev, curr) =>
+          prev.isProcessingAI && !curr.isProcessingAI && _uploadSuccessCalled,
+      listener: (context, state) {
+        _stopAnalyzingProgress();
+        setState(() {
+          _uploadCompleted = true;
+          _analysisCompletedTime = DateTime.now();
+          _clinicalSummary = _hadDocxUploaded
+              ? 'Docx file uploaded successfully. AI analysis is only available for image files(JPG, PNG, GIF, WebP, BMP) and PDF documents.'
+              : 'Lab results uploaded successfully. AI analysis has been run on the uploaded documents.';
+        });
+      },
+      builder: (context, state) {
+        final showAIAnalyzing = state.isProcessingAI || _isUploading;
+        if (_uploadCompleted) {
+          return _buildLabAnalysisCompleteCard();
+        }
+        if (showAIAnalyzing) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _analyzingTimer == null && !_uploadCompleted) {
+              _startAnalyzingProgress();
+            }
+          });
+          return _buildAIAnalyzingCard();
+        }
+        return _buildUploadForm();
+      },
+    );
+  }
+
+  Widget _buildUploadForm() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -511,9 +687,7 @@ class _LabUploadCardState extends State<LabUploadCard> {
                           ),
                         )
                       : const Icon(Icons.upload, size: 20),
-                  label: Text(
-                    _isUploading ? 'Uploading...' : 'Upload Lab Results',
-                  ),
+                  label: Text('Upload Lab Results'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,
@@ -615,13 +789,9 @@ class _LabUploadViewState extends State<LabUploadView> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (widget.stepInfo['step'] as int) / widget.totalSteps,
-                    backgroundColor: AppColors.gray200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                    minHeight: 2,
+                  ConsultationProgressIndicator(
+                    value: (widget.stepInfo['step'] as int) /
+                        widget.totalSteps,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -666,7 +836,6 @@ class _LabUploadViewState extends State<LabUploadView> {
               LabUploadCard(
                 onUploadComplete: widget.onUploadComplete,
                 onUploadSuccess: widget.onUploadSuccess,
-                onCancel: widget.onSkip,
               ),
 
               const SizedBox(height: 24),

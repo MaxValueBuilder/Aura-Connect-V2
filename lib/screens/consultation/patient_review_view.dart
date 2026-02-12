@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'widgets/consultation_progress_indicator.dart';
 
 class PatientReviewView extends StatefulWidget {
   final Map<String, dynamic> extractedPatientInfo;
@@ -95,11 +96,9 @@ class _PatientReviewViewState extends State<PatientReviewView> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (widget.stepInfo['step'] as int) / widget.totalSteps,
-                    backgroundColor: AppColors.gray200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    minHeight: 2,
+                  ConsultationProgressIndicator(
+                    value: (widget.stepInfo['step'] as int) /
+                        widget.totalSteps,
                   ),
                   const SizedBox(height: 4),
                   Text(

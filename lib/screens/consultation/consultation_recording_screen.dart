@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:aura/screens/consultation/tasks_labs_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -10,12 +11,9 @@ import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
 import 'recording_view.dart';
+import 'final_consult_recording_view.dart';
 import 'widgets/patient_extraction_view.dart';
 import 'patient_review_view.dart';
-import 'tasks_labs_view.dart';
-import 'widgets/lab_upload_card.dart';
-import 'lab_analysis_view.dart';
-import 'widgets/lab_results_view.dart';
 import 'soap_view.dart';
 import 'widgets/processing_view.dart';
 
@@ -56,6 +54,7 @@ class _ConsultationRecordingScreenState
   bool _isPaused = false;
   bool _showLabResults = false;
   bool _labUploadCompleted = false;
+  bool _labUploadSuccessCalled = false;
   final TextEditingController _manualTranscriptController =
       TextEditingController();
 
@@ -613,10 +612,9 @@ class _ConsultationRecordingScreenState
   Future<void> _handleLabUploadSuccess(String imageUrl) async {
     try {
       if (!mounted) return;
-      // Show "Ready for Final Consultation" and lab complete card immediately (same time as LabUploadCard)
       setState(() {
-        _isLoading = false;
-        _labUploadCompleted = true;
+        _isLoading = true;
+        _labUploadSuccessCalled = true;
       });
 
       // imageUrl is already the uploaded URL from backend
@@ -677,12 +675,14 @@ class _ConsultationRecordingScreenState
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _showLabResults = true;
+        _showLabResults =
+            true; // Show results instead of going directly to final consult
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _labUploadSuccessCalled = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -693,15 +693,6 @@ class _ConsultationRecordingScreenState
         );
       }
     }
-  }
-
-  void _handleSkipLabUpload() {
-    setState(() {
-      _currentStatus = ConsultationStatus.finalConsult;
-      _recordingDuration = 0;
-      _manualTranscriptController
-          .clear(); // Clear manual transcript for final consult
-    });
   }
 
   void _handleContinueToFinal() {
@@ -729,13 +720,33 @@ class _ConsultationRecordingScreenState
 
     final stepInfo = _getCurrentStepInfo();
 
-    // Recording Interface for Initial and Final Consults
-    if (_currentStatus == ConsultationStatus.initialConsult ||
-        _currentStatus == ConsultationStatus.finalConsult) {
+    // Recording Interface: initial consult uses RecordingView, final consult uses dedicated view
+    if (_currentStatus == ConsultationStatus.initialConsult) {
       return BlocBuilder<ConsultationCubit, ConsultationState>(
         builder: (context, state) {
           return RecordingView(
             consultationStatus: _currentStatus,
+            patientName: _patientName,
+            recordingDuration: _recordingDuration,
+            isRecording: _recordingService.isRecording,
+            isPaused: _isPaused,
+            stepInfo: stepInfo,
+            totalSteps: _getTotalSteps(),
+            manualTranscriptController: _manualTranscriptController,
+            onStartRecording: _handleStartRecording,
+            onStopRecording: _handleStopRecording,
+            onPauseRecording: _handlePauseRecording,
+            onResumeRecording: _handleResumeRecording,
+            onManualSubmit: _handleManualSubmit,
+            onBack: _handleBack,
+          );
+        },
+      );
+    }
+    if (_currentStatus == ConsultationStatus.finalConsult) {
+      return BlocBuilder<ConsultationCubit, ConsultationState>(
+        builder: (context, state) {
+          return FinalConsultRecordingView(
             patientName: _patientName,
             recordingDuration: _recordingDuration,
             isRecording: _recordingService.isRecording,
@@ -774,55 +785,33 @@ class _ConsultationRecordingScreenState
     }
 
     // Tasks & Labs Step (includes Upload Lab Result card per Figma)
-    if (_currentStatus == ConsultationStatus.initialComplete) {
-      return TasksLabsView(
-        patientName: _patientName,
-        extractedPatientInfo: _extractedPatientInfo,
-        generatedTasks: _generatedTasks,
-        stepInfo: stepInfo,
-        totalSteps: _getTotalSteps(),
-        onContinue: _handleSkipLabUpload,
-        onUploadComplete: _handleLabUploadComplete,
-        onUploadSuccess: _handleLabUploadSuccess,
-        onSkipLabUpload: _handleSkipLabUpload,
-        labUploadCompleted: _labUploadCompleted,
-        consultationId: _currentConsultationId,
-        initialPriority: _priority,
-        initialIsEmergency: _isEmergency,
-        initialNotes: _notes,
-        onConsultationUpdated: _refreshAfterEditConsultation,
-      );
-    }
 
-    // Lab Upload & Analysis Step
-    if (_currentStatus == ConsultationStatus.labAnalysis) {
-      // Show lab results after analysis completes
-      if (_showLabResults && _labAnalysis != null) {
-        return LabResultsView(
-          labAnalysis: _labAnalysis!,
+    if (_currentStatus == ConsultationStatus.initialComplete) {
+      return BlocListener<ConsultationCubit, ConsultationState>(
+        listenWhen: (prev, curr) =>
+            prev.isProcessingAI && !curr.isProcessingAI && _labUploadSuccessCalled,
+        listener: (context, state) {
+          setState(() {
+            _labUploadCompleted = true;
+            _labUploadSuccessCalled = false;
+          });
+        },
+        child: TasksLabsView(
+          patientName: _patientName,
+          extractedPatientInfo: _extractedPatientInfo,
+          generatedTasks: _generatedTasks,
           stepInfo: stepInfo,
           totalSteps: _getTotalSteps(),
           onContinue: _handleContinueToFinal,
-        );
-      }
-      // Show lab analysis processing view when analyzing
-      if (_isLoading) {
-        return LabAnalysisView(
-          stepInfo: stepInfo,
-          totalSteps: _getTotalSteps(),
-          onComplete: () {
-            // Analysis complete - handled by _handleLabUploadSuccess
-          },
-        );
-      }
-      // Show lab upload view when not analyzing
-      return LabUploadView(
-        patientName: _patientName,
-        stepInfo: stepInfo,
-        totalSteps: _getTotalSteps(),
-        onUploadComplete: _handleLabUploadComplete,
-        onSkip: _handleSkipLabUpload,
-        onUploadSuccess: _handleLabUploadSuccess,
+          onUploadComplete: _handleLabUploadComplete,
+          onUploadSuccess: _handleLabUploadSuccess,
+          labUploadCompleted: _labUploadCompleted,
+          consultationId: _currentConsultationId,
+          initialPriority: _priority,
+          initialIsEmergency: _isEmergency,
+          initialNotes: _notes,
+          onConsultationUpdated: _refreshAfterEditConsultation,
+        ),
       );
     }
 

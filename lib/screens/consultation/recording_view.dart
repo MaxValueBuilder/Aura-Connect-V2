@@ -1,3 +1,4 @@
+import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
 import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
@@ -48,9 +49,7 @@ class RecordingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInitial = consultationStatus == ConsultationStatus.initialConsult;
     final step = stepInfo['step'] as int;
-    final recordLabel = isInitial ? 'Record Initial' : 'Record Final';
 
     return Scaffold(
       appBar: AppBar(
@@ -112,7 +111,7 @@ class RecordingView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$patientName - $recordLabel',
+                      'Initial Consultation Recording',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -129,14 +128,8 @@ class RecordingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    LinearProgressIndicator(
+                    ConsultationProgressIndicator(
                       value: step / totalSteps,
-                      backgroundColor: AppColors.gray200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
                     ),
                     const SizedBox(height: 12),
                     Center(
@@ -193,9 +186,8 @@ class RecordingView extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                isInitial
-                                    ? 'Initial Consultation Recording'
-                                    : 'Final Consultation Recording',
+                                'Initial Consultation Recording',
+
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,

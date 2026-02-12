@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'consultation_progress_indicator.dart';
 
 class ProcessingView extends StatefulWidget {
   final Map<String, dynamic> stepInfo;
@@ -29,7 +30,7 @@ class _ProcessingViewState extends State<ProcessingView>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
-    
+
     // Simulate progress
     _simulateProgress();
   }
@@ -97,49 +98,7 @@ class _ProcessingViewState extends State<ProcessingView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress Bar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.stepInfo['title'] as String,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const Text(
-                        '100%',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const LinearProgressIndicator(
-                    value: 1.0,
-                    backgroundColor: AppColors.gray200,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    minHeight: 2,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.stepInfo['description'] as String,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 48),
-
               // AI Processing
               Center(
                 child: Column(
@@ -171,6 +130,7 @@ class _ProcessingViewState extends State<ProcessingView>
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
+                        fontFamily: "Fraunces",
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -189,6 +149,7 @@ class _ProcessingViewState extends State<ProcessingView>
 
               // Progress Card
               Card(
+                elevation: 0,
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
@@ -214,11 +175,7 @@ class _ProcessingViewState extends State<ProcessingView>
                         ],
                       ),
                       const SizedBox(height: 12),
-                      LinearProgressIndicator(
-                        value: _progress,
-                        backgroundColor: AppColors.gray200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                      ),
+                      ConsultationProgressIndicator(value: _progress),
                       const SizedBox(height: 12),
                       Text(
                         _getProgressMessage(),
@@ -239,4 +196,3 @@ class _ProcessingViewState extends State<ProcessingView>
     );
   }
 }
-

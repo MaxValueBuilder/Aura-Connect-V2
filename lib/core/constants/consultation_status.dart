@@ -97,12 +97,12 @@ enum ConsultationStatus {
       case ConsultationStatus.labAnalysis:
         return 3;
       case ConsultationStatus.finalConsult:
-        return 4;
+        return 3;
       case ConsultationStatus.finalComplete:
       case ConsultationStatus.processing:
-        return 5;
+        return 4;
       case ConsultationStatus.complete:
-        return 5;
+        return 4;
     }
   }
 

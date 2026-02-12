@@ -2,6 +2,7 @@ import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
+import 'widgets/consultation_progress_indicator.dart';
 import 'widgets/edit_consultation_modal.dart';
 import 'widgets/lab_upload_card.dart';
 import 'widgets/label_chip.dart';
@@ -17,7 +18,6 @@ class TasksLabsView extends StatefulWidget {
   /// When set, the Upload Lab Result card is shown and these callbacks are used.
   final VoidCallback? onUploadComplete;
   final void Function(String imageUrl)? onUploadSuccess;
-  final VoidCallback? onSkipLabUpload;
 
   /// When true, show "Ready for Final Consultation" card; when false, show "Initial Recording Complete" alert.
   final bool labUploadCompleted;
@@ -39,7 +39,6 @@ class TasksLabsView extends StatefulWidget {
     required this.onContinue,
     this.onUploadComplete,
     this.onUploadSuccess,
-    this.onSkipLabUpload,
     this.labUploadCompleted = false,
     this.consultationId,
     this.initialPriority = 'medium',
@@ -230,15 +229,9 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    LinearProgressIndicator(
+                    ConsultationProgressIndicator(
                       value:
                           (widget.stepInfo['step'] as int) / widget.totalSteps,
-                      backgroundColor: AppColors.gray200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -282,7 +275,7 @@ class _TasksLabsViewState extends State<TasksLabsView> {
 
               // Padded main content
               Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -291,72 +284,84 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                       // Ready for Final Consultation card (light green) - shown after lab upload
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.successLight,
+                          color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.success.withAlpha(25),
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.check_circle_outline_rounded,
-                              color: AppColors.success,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF4CAF50),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
                                     'Ready for Final Consultation',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.success,
-                                      fontFamily: 'Fraunces',
+                                      color: Color(0xFF388E3C),
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'Lab analysis is complete. You can now proceed to the final consultation and generate documentation.',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.success,
-                                      height: 1.4,
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Lab analysis is complete. You can now proceed to the final consultation and generate documentation.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF66BB6A),
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Center(
+                              child: ElevatedButton.icon(
+                                onPressed: widget.onContinue,
+                                icon: const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'Complete Consultation',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  const SizedBox(height: 20),
-                                  ElevatedButton.icon(
-                                    onPressed: widget.onContinue,
-                                    icon: const Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    label: const Text(
-                                      'Complete Consultation',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.success,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
                                   ),
-                                ],
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -370,9 +375,7 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEFCE8),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.inProgressStatusText.withAlpha(51),
-                          ),
+                          border: Border.all(color: Color(0xFF8F5C23)),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,12 +418,10 @@ class _TasksLabsViewState extends State<TasksLabsView> {
 
                     // Upload Lab Result card (embedded from lab_upload_view)
                     if (widget.onUploadComplete != null &&
-                        widget.onUploadSuccess != null &&
-                        widget.onSkipLabUpload != null)
+                        widget.onUploadSuccess != null)
                       LabUploadCard(
                         onUploadComplete: widget.onUploadComplete!,
                         onUploadSuccess: widget.onUploadSuccess,
-                        onCancel: widget.onSkipLabUpload!,
                       ),
                     if (widget.onUploadComplete != null)
                       const SizedBox(height: 24),
