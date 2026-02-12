@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../core/utils/patient_utils.dart';
 import '../../../features/patient/patient_cubit.dart';
 import '../../../features/patient/patient_state.dart';
 
@@ -50,44 +51,6 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _ownerEmailController.dispose();
     _medicalHistoryController.dispose();
     super.dispose();
-  }
-
-  String? _validateRequired(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
-    }
-    return null;
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Email is required';
-    }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Phone number is required';
-    }
-    if (!RegExp(r'^[\d\s\-\(\)\+]+$').hasMatch(value)) {
-      return 'Please enter a valid phone number';
-    }
-    return null;
-  }
-
-  String? _validateNumber(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
-    }
-    final num = double.tryParse(value);
-    if (num == null || num <= 0) {
-      return 'Please enter a valid $fieldName';
-    }
-    return null;
   }
 
   Future<void> _handleSubmit() async {
@@ -291,7 +254,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       label: 'Patient Name',
                       hint: 'e.g., Bella, Max, Whiskers',
                       validator: (value) =>
-                          _validateRequired(value, 'Patient name'),
+                          PatientUtils.validateRequired(value, 'Patient name'),
                       required: true,
                     ),
                     const SizedBox(height: 16),
@@ -351,7 +314,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       controller: _breedController,
                       label: 'Breed',
                       hint: 'e.g., Golden Retriever, Persian',
-                      validator: (value) => _validateRequired(value, 'Breed'),
+                      validator: (value) =>
+                          PatientUtils.validateRequired(value, 'Breed'),
                       required: true,
                     ),
                     const SizedBox(height: 16),
@@ -364,7 +328,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                             label: 'Age',
                             hint: '3',
                             keyboardType: TextInputType.number,
-                            validator: (value) => _validateNumber(value, 'Age'),
+                            validator: (value) =>
+                                PatientUtils.validateNumber(value, 'Age'),
                             required: true,
                           ),
                         ),
@@ -401,7 +366,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                             hint: '22',
                             keyboardType: TextInputType.number,
                             validator: (value) =>
-                                _validateNumber(value, 'Weight'),
+                                PatientUtils.validateNumber(value, 'Weight'),
                             required: true,
                           ),
                         ),
@@ -446,7 +411,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       label: 'Owner Name',
                       hint: 'e.g., Sarah Johnson',
                       validator: (value) =>
-                          _validateRequired(value, 'Owner name'),
+                          PatientUtils.validateRequired(value, 'Owner name'),
                       required: true,
                     ),
                     const SizedBox(height: 16),
@@ -455,7 +420,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       label: 'Phone Number',
                       hint: '(555) 123-4567',
                       keyboardType: TextInputType.phone,
-                      validator: _validatePhone,
+                      validator: PatientUtils.validatePhone,
                       required: true,
                     ),
                     const SizedBox(height: 16),
@@ -464,7 +429,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       label: 'Email Address',
                       hint: 'sarah.johnson@email.com',
                       keyboardType: TextInputType.emailAddress,
-                      validator: _validateEmail,
+                      validator: PatientUtils.validateEmail,
                       required: true,
                     ),
                   ],

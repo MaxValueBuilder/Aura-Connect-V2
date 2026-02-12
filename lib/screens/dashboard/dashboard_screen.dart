@@ -558,13 +558,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Started ${_formatDate(consultation.startTime)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
+                Row(
+                  spacing: 8,
+                  children: [
+                    Icon(Icons.calendar_month, size: 16),
+                    Text(
+                      'Started ${_formatDate(consultation.startTime)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -807,23 +813,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   //   }
   // }
 
-  Color _getStatusColor(ConsultationStatus status) {
-    switch (status) {
-      case ConsultationStatus.initialConsult:
-        return AppColors.primary;
-      case ConsultationStatus.initialComplete:
-        return AppColors.success;
-      case ConsultationStatus.finalConsult:
-        return AppColors.warning;
-      case ConsultationStatus.processing:
-        return AppColors.info;
-      case ConsultationStatus.complete:
-      case ConsultationStatus.finalComplete:
-        return AppColors.success;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();

@@ -1,12 +1,16 @@
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../core/utils/patient_utils.dart';
 import '../../../core/constants/consultation_status.dart';
 import '../../../features/patient/patient_cubit.dart';
 import '../../../features/patient/patient_state.dart';
 import '../../../models/patient_model.dart';
+import '../history/widgets/filter_dropdown.dart';
 
 class PatientsScreen extends StatefulWidget {
   const PatientsScreen({super.key});
@@ -116,21 +120,6 @@ class _PatientsScreenState extends State<PatientsScreen> {
     );
   }
 
-  IconData _getSpeciesIcon(String species) {
-    switch (species.toLowerCase()) {
-      case 'dog':
-        return Icons.pets;
-      case 'cat':
-        return Icons.cruelty_free;
-      case 'bird':
-        return Icons.air;
-      case 'rabbit':
-        return Icons.pets;
-      default:
-        return Icons.favorite;
-    }
-  }
-
   Color _getStatusColor(bool isActive) {
     return isActive ? AppColors.success : AppColors.textSecondary;
   }
@@ -148,12 +137,30 @@ class _PatientsScreenState extends State<PatientsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Patient Management',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              width: 32,
+              height: 32,
+              'assets/icons/logo.svg',
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+              fit: BoxFit.contain,
+            ),
+
+            const SizedBox(width: 12),
+            const Text(
+              'Aura Connect',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -232,6 +239,33 @@ class _PatientsScreenState extends State<PatientsScreen> {
 
             return Column(
               children: [
+                Container(
+                  width: double.infinity,
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Patient Management',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                          fontFamily: "Fraunces",
+                        ),
+                      ),
+                      Text(
+                        '${filteredPatients.length} Patient${filteredPatients.length != 1 ? 's' : ''} Found',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // Search and Filters
                 Container(
                   color: AppColors.white,
@@ -247,6 +281,10 @@ class _PatientsScreenState extends State<PatientsScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search patients, owners, or breeds...',
                           prefixIcon: const Icon(Icons.search, size: 20),
+                          hintStyle: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -265,42 +303,73 @@ class _PatientsScreenState extends State<PatientsScreen> {
                         children: [
                           // Species Filter
                           Expanded(
-                            child: DropdownButtonFormField<String>(
+                            child: FilterDropdown(
                               value: _selectedSpecies,
-                              decoration: InputDecoration(
-                                labelText: 'Species',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
+                              labelText: 'Species',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
                               ),
                               items: const [
                                 DropdownMenuItem(
                                   value: 'all',
-                                  child: Text('All Species'),
+                                  child: Text(
+                                    'All Species',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'dog',
-                                  child: Text('Dogs'),
+                                  child: Text(
+                                    'Dogs',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'cat',
-                                  child: Text('Cats'),
+                                  child: Text(
+                                    'Cats',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'bird',
-                                  child: Text('Birds'),
+                                  child: Text(
+                                    'Birds',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'rabbit',
-                                  child: Text('Rabbits'),
+                                  child: Text(
+                                    'Rabbits',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'other',
-                                  child: Text('Other'),
+                                  child: Text(
+                                    'Other',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                               ],
                               onChanged: (value) {
@@ -318,30 +387,43 @@ class _PatientsScreenState extends State<PatientsScreen> {
                           const SizedBox(width: 12),
                           // Status Filter
                           Expanded(
-                            child: DropdownButtonFormField<String>(
+                            child: FilterDropdown(
                               value: _selectedStatus,
-                              decoration: InputDecoration(
-                                labelText: 'Status',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
+                              labelText: 'Status',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
                               ),
                               items: const [
                                 DropdownMenuItem(
                                   value: 'all',
-                                  child: Text('All Status'),
+                                  child: Text(
+                                    'All Status',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'Active',
-                                  child: Text('Active'),
+                                  child: Text(
+                                    'Active',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'Inactive',
-                                  child: Text('Inactive'),
+                                  child: Text(
+                                    'Inactive',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
                               ],
                               onChanged: (value) {
@@ -384,8 +466,14 @@ class _PatientsScreenState extends State<PatientsScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(32.0),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -404,11 +492,12 @@ class _PatientsScreenState extends State<PatientsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No patients found',
+              'No Patients Found',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
+                fontFamily: "Fraunces",
               ),
             ),
             const SizedBox(height: 8),
@@ -423,10 +512,14 @@ class _PatientsScreenState extends State<PatientsScreen> {
             ElevatedButton.icon(
               onPressed: _handleAddPatient,
               icon: const Icon(Icons.add),
-              label: const Text('Add Patient'),
+              label: const Text(
+                'Add Patient',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
+                padding: const EdgeInsets.all(12),
               ),
             ),
           ],
@@ -444,263 +537,145 @@ class _PatientsScreenState extends State<PatientsScreen> {
         side: const BorderSide(color: AppColors.border, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header: avatar, name + status pill, edit/delete icons
             Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: PatientUtils.getSpeciesBackgroundColor(
+                      patient.species,
+                    ),
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: Icon(
-                    _getSpeciesIcon(patient.species),
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              patient.name,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(
-                                patient.isActive,
-                              ).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _getStatusLabel(patient.isActive),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _getStatusColor(patient.isActive),
-                              ),
-                            ),
-                          ),
-                          if (patient.medicalHistory != null &&
-                              patient.medicalHistory!.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: AppColors.border,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                'Medical History',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.info,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 8,
-                        children: [
-                          _buildInfoChip(
-                            Icons.pets,
-                            patient.breed ?? 'Unknown Breed',
-                          ),
-                          if (patient.age != null)
-                            _buildInfoChip(
-                              Icons.calendar_today,
-                              '${patient.age} years',
-                            ),
-                          _buildInfoChip(Icons.person_outline, patient.gender),
-                          if (patient.weight != null)
-                            _buildInfoChip(
-                              Icons.monitor_weight,
-                              '${patient.weight} kg',
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.person,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              patient.ownerName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (patient.ownerPhone != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.phone,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                patient.ownerPhone!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (patient.ownerEmail != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.email,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                patient.ownerEmail!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Created: ${_formatDate(patient.createdAt)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                  child: Center(
+                    child: SvgPicture.asset(
+                      PatientUtils.getSpeciesIconPath(patient.species),
+                      width: 26,
+                      height: 26,
                     ),
-                    if (patient.microchipNumber != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Chip: ${patient.microchipNumber}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                    if (patient.color != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Color: ${patient.color}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          patient.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      LabelChip(
+                        label: _getStatusLabel(patient.isActive),
+                        textColor: _getStatusColor(patient.isActive),
+                        backgroundColor: _getStatusColor(
+                          patient.isActive,
+                        ).withValues(alpha: 0.15),
+                        padding: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
                   onPressed: () => _handleEditPatient(patient),
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Edit', style: TextStyle(fontSize: 14)),
+                  icon: Icon(Icons.edit, size: 22, color: AppColors.primary),
+                  style: IconButton.styleFrom(minimumSize: const Size(40, 40)),
                 ),
-                const SizedBox(width: 8),
-                TextButton.icon(
+                IconButton(
                   onPressed: () => _handleDeletePatient(patient.id),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 16,
+                  icon: Icon(
+                    Icons.delete_outline_outlined,
+                    size: 22,
                     color: AppColors.error,
                   ),
-                  label: const Text(
-                    'Delete',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.error,
-                    ),
+                  style: IconButton.styleFrom(minimumSize: const Size(40, 40)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Row 1: Breed
+            _buildCardInfoRow(
+              Icons.pets_outlined,
+              patient.breed ?? 'Mixed breed',
+            ),
+            const SizedBox(height: 10),
+            // Row 2: Age & Weight (spaced apart)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCardInfoRow(
+                    Icons.schedule_outlined,
+                    patient.age != null
+                        ? '${patient.age} years'
+                        : 'Age Unknown',
                   ),
+                ),
+                Expanded(
+                  child: _buildCardInfoRow(
+                    Icons.monitor_weight_outlined,
+                    patient.weight != null
+                        ? '${patient.weight} kg'
+                        : 'Weight Unknown',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Row 3: Owner & Created date (spaced apart)
+            Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          patient.ownerName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.description_outlined,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Created: ${_formatDate(patient.createdAt)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -710,15 +685,17 @@ class _PatientsScreenState extends State<PatientsScreen> {
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text) {
+  Widget _buildCardInfoRow(IconData icon, String text) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -751,13 +728,17 @@ class _PatientsScreenState extends State<PatientsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: PatientUtils.getSpeciesBackgroundColor(
+                        patient.species,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(
-                      _getSpeciesIcon(patient.species),
-                      color: AppColors.primary,
-                      size: 20,
+                    child: Center(
+                      child: SvgPicture.asset(
+                        PatientUtils.getSpeciesIconPath(patient.species),
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
