@@ -15,7 +15,7 @@ class ConsultationService {
 
   ConsultationService(this._dio, this._storage);
 
-  /// Get all consultations with optional filters
+  /// Get all consultations with optional filters (by clinicId from stored user)
   Future<Map<String, dynamic>> getConsultations({
     int page = 1,
     int limit = 10,
@@ -23,26 +23,40 @@ class ConsultationService {
     String? priority,
   }) async {
     try {
-      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
-      if (status != null) queryParams['status'] = status;
-      if (priority != null) queryParams['priority'] = priority;
+      final userPayload = await _getStoredUserForConsultation();
+      if (userPayload == null) {
+        throw Exception(
+          'User or clinic not set up. Please complete clinic setup and try again.',
+        );
+      }
+      final clinicId = userPayload['clinicId'] as String?;
+      if (clinicId == null || clinicId.isEmpty) {
+        throw Exception(
+          'User or clinic not set up. Please complete clinic setup and try again.',
+        );
+      }
 
       final response = await _dio.get(
-        '/consultations',
-        queryParameters: queryParams,
+        '/consultations/getconsultations/$clinicId',
       );
 
-      final consultationsList = response.data['consultations'] as List;
+      log('Consultations response: ${response.data}');
+
+      final consultationsList = response.data['consultations'] as List? ?? [];
       final consultations = consultationsList
           .map(
             (json) => ConsultationModel.fromJson(json as Map<String, dynamic>),
           )
           .toList();
 
-      return {
-        'consultations': consultations,
-        'pagination': response.data['pagination'],
+      // Server returns list only; build pagination for cubit compatibility
+      final pagination = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'total': consultations.length,
       };
+
+      return {'consultations': consultations, 'pagination': pagination};
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -115,7 +129,7 @@ class ConsultationService {
     }
   }
 
-  /// Reads stored user JSON and returns { clinicId, role } for consultation API.
+  // / Reads stored user JSON and returns { clinicId, role } for consultation API.
   Future<Map<String, dynamic>?> _getStoredUserForConsultation() async {
     final userJson = await _storage.read(key: AppConstants.userDataKey);
     if (userJson == null || userJson.isEmpty) return null;
@@ -352,14 +366,19 @@ class ConsultationService {
     }
   }
 
-  /// Handle Dio errors
+  /// Handle Dio errors (safe when response.data is HTML or non-JSON)
   Exception _handleError(DioException error) {
     if (error.response != null) {
-      final statusCode = error.response!.statusCode;
-      final message =
-          error.response!.data['error'] ??
-          error.response!.data['message'] ??
-          'An error occurred';
+      final statusCode = error.response!.statusCode ?? 0;
+      final data = error.response!.data;
+      String message = 'An error occurred';
+      if (data is Map<String, dynamic>) {
+        message = (data['error'] ?? data['message'] ?? message).toString();
+      } else if (data is String && data.isNotEmpty) {
+        message = statusCode == 404
+            ? 'Consultation not found'
+            : 'Request failed (${statusCode > 0 ? statusCode : "error"})';
+      }
 
       if (statusCode == 401) {
         return AuthException(message: message, statusCode: statusCode);

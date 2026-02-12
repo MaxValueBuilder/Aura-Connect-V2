@@ -26,7 +26,7 @@ class LabelChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           color: textColor,
         ),

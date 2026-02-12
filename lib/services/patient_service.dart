@@ -1,29 +1,47 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../core/constants/app_constants.dart';
 import '../core/error/exceptions.dart';
 import '../models/patient_model.dart';
 
 class PatientService {
   final Dio _dio;
+  final FlutterSecureStorage _storage;
 
-  PatientService(this._dio);
+  PatientService(this._dio, this._storage);
+
+  Future<String?> _getStoredClinicId() async {
+    final userJson = await _storage.read(key: AppConstants.userDataKey);
+    if (userJson == null || userJson.isEmpty) return null;
+    try {
+      final map = jsonDecode(userJson) as Map<String, dynamic>;
+      final clinicId = map['clinicId']?.toString();
+      return (clinicId != null && clinicId.isNotEmpty) ? clinicId : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<List<PatientModel>> getPatients({int? limit, int? offset}) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (limit != null) queryParams['limit'] = limit;
-      if (offset != null) queryParams['offset'] = offset;
+      final clinicId = await _getStoredClinicId();
+      if (clinicId == null) {
+        throw Exception(
+          'User or clinic not set up. Please complete clinic setup and try again.',
+        );
+      }
 
-      print('🔍 [PatientService] Fetching patients with params: $queryParams');
+      print(
+        '🔍 [PatientService] Fetching patients for clinicId: $clinicId',
+      );
       final response = await _dio.get(
-        '/patients',
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        '/patients/getpatientsbyclinicid/$clinicId',
       );
 
       print('🔍 [PatientService] Response status: ${response.statusCode}');
-      print(
-        '🔍 [PatientService] Response data type: ${response.data.runtimeType}',
-      );
-      print('🔍 [PatientService] Full response data: ${response.data}');
 
       final patientsList = response.data['patients'] as List<dynamic>? ?? [];
       print('🔍 [PatientService] Patients list length: ${patientsList.length}');
@@ -32,38 +50,11 @@ class PatientService {
       for (var i = 0; i < patientsList.length; i++) {
         try {
           final json = patientsList[i] as Map<String, dynamic>;
-          print('🔍 [PatientService] Processing patient $i: $json');
-
-          // Log each field to identify which one is null
-          print(
-            '🔍 [PatientService] Patient $i - id: ${json['id']} (type: ${json['id'].runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - name: ${json['name']} (type: ${json['name']?.runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - species: ${json['species']} (type: ${json['species']?.runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - ownerName: ${json['ownerName']} (type: ${json['ownerName']?.runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - gender: ${json['gender']} (type: ${json['gender']?.runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - createdAt: ${json['createdAt']} (type: ${json['createdAt']?.runtimeType})',
-          );
-          print(
-            '🔍 [PatientService] Patient $i - updatedAt: ${json['updatedAt']} (type: ${json['updatedAt']?.runtimeType})',
-          );
-
           final patient = PatientModel.fromJson(json);
           patients.add(patient);
-          print('✅ [PatientService] Successfully parsed patient $i');
         } catch (e, stackTrace) {
           print('❌ [PatientService] Error parsing patient $i: $e');
           print('❌ [PatientService] Stack trace: $stackTrace');
-          print('❌ [PatientService] Patient data: ${patientsList[i]}');
           rethrow;
         }
       }
@@ -187,11 +178,14 @@ class PatientService {
 
   Exception _handleError(DioException error) {
     if (error.response != null) {
-      final statusCode = error.response!.statusCode;
-      final message =
-          error.response!.data['error'] ??
-          error.response!.data['message'] ??
-          'An error occurred';
+      final statusCode = error.response!.statusCode ?? 0;
+      final data = error.response!.data;
+      String message = 'An error occurred';
+      if (data is Map<String, dynamic>) {
+        message = (data['error'] ?? data['message'] ?? message) as String;
+      } else if (data is String && data.isNotEmpty) {
+        message = 'Request failed (${statusCode > 0 ? statusCode : "error"})';
+      }
 
       if (statusCode == 401) {
         return AuthException(message: message, statusCode: statusCode);

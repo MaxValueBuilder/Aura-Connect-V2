@@ -1,3 +1,4 @@
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -411,10 +412,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onAction: () => _handleStartConsultation(context),
           )
         else
-          ...consultations.map(
-            (consultation) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildConsultationCard(consultation),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: AppColors.white,
+            ),
+            child: Column(
+              children: [
+                ...consultations.map(
+                  (consultation) => Column(
+                    children: [
+                      _buildActiveConsultationCard(consultation),
+                      if (consultations.indexOf(consultation) !=
+                          consultations.length - 1)
+                        Divider(color: AppColors.border),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
       ],
@@ -484,158 +499,199 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )
         else
           ...recentConsultations.map(
-            (consultation) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildConsultationCard(consultation, isCompleted: true),
-            ),
+            (consultation) => _buildCompletedConsultationCard(consultation),
           ),
       ],
     );
   }
 
-  Widget _buildConsultationCard(
-    ConsultationModel consultation, {
-    bool isCompleted = false,
-  }) {
+  Widget _buildActiveConsultationCard(ConsultationModel consultation) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: 0),
+      elevation: 0,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.success.withAlpha(25)
-                    : AppColors.primary.withAlpha(25),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isCompleted ? Icons.check_circle_outlined : Icons.person,
-                color: isCompleted ? AppColors.success : AppColors.primary,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 16),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    consultation.patientName ?? 'Unknown Patient',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${consultation.veterinarianName ?? "Unknown"} • ${consultation.aiAnalysis?.breed ?? "Unknown Breed"}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Chip(
-                        label: Text(
-                          ConsultationStatusUtils.getActionButtonText(
-                            consultation.status,
-                          ),
-                          style: const TextStyle(fontSize: 9, height: 1),
-                        ),
-                        backgroundColor: _getStatusColor(
-                          consultation.status,
-                        ).withOpacity(0.08),
-                        labelStyle: TextStyle(
-                          color: _getStatusColor(consultation.status),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 0,
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                        elevation: 0,
-                        side: BorderSide.none,
-                      ),
-                      const SizedBox(width: 8),
-                      Center(
-                        child: Text(
-                          _formatDate(consultation.startTime),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Actions
-            Column(
+            Row(
               children: [
-                if (!isCompleted)
-                  ElevatedButton(
-                    onPressed: () {
-                      // Navigate to consultation recording screen to continue
-                      AppRouter.pushNamed(
-                        context,
-                        AppRoutes.consultationRecording,
-                        arguments: ConsultationRecordingArguments(
-                          consultationId: consultation.id,
-                          initialStatus: consultation.status,
-                          initialPatientName:
-                              consultation.patientName ?? 'Unknown Patient',
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    child: const Text('Resume', style: TextStyle(fontSize: 14)),
-                  )
-                else
-                  OutlinedButton(
-                    onPressed: () {
-                      // Navigate to SOAP note view for completed consultations
-                      AppRouter.pushNamed(
-                        context,
-                        AppRoutes.soapNote,
-                        arguments: SOAPNoteArguments(
-                          consultationId: consultation.id,
-                        ),
-                      );
-                    },
-                    style: ButtonStyle(
-                      padding: WidgetStateProperty.all(
-                        const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.person, color: AppColors.primary, size: 18),
+                ),
+                SizedBox(width: 16),
+                Text(
+                  consultation.patientName ?? 'Unknown Patient',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${consultation.veterinarianName ?? "Unknown"} • ${consultation.aiAnalysis?.breed ?? "Unknown Breed"}',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                LabelChip(
+                  label: "INITIAL COMPLETE",
+                  textColor: AppColors.success,
+                  backgroundColor: AppColors.successLight,
+                  padding: 4,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Started ${_formatDate(consultation.startTime)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to consultation recording screen to continue
+                    AppRouter.pushNamed(
+                      context,
+                      AppRoutes.consultationRecording,
+                      arguments: ConsultationRecordingArguments(
+                        consultationId: consultation.id,
+                        initialStatus: consultation.status,
+                        initialPatientName:
+                            consultation.patientName ?? 'Unknown Patient',
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text('Continue', style: TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedConsultationCard(ConsultationModel consultation) {
+    return Card(
+      elevation: 0,
+      color: AppColors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withAlpha(25),
+
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle_outlined,
+
+                        color: AppColors.success,
+                        size: 18,
                       ),
                     ),
-                    child: const Text('View', style: TextStyle(fontSize: 14)),
+                    SizedBox(width: 16),
+                    Text(
+                      consultation.patientName ?? 'Unknown Patient',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                OutlinedButton(
+                  onPressed: () {
+                    // Navigate to consultation recording screen to continue
+                    AppRouter.pushNamed(
+                      context,
+                      AppRoutes.consultationRecording,
+                      arguments: ConsultationRecordingArguments(
+                        consultationId: consultation.id,
+                        initialStatus: consultation.status,
+                        initialPatientName:
+                            consultation.patientName ?? 'Unknown Patient',
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
                   ),
-                // const SizedBox(height: 8),
-                // IconButton(
-                //   icon: const Icon(Icons.delete_outline, size: 20),
-                //   color: AppColors.error,
-                //   onPressed: () =>
-                //       _handleDeleteConsultation(context, consultation.id),
-                // ),
+
+                  child: const Text(
+                    'View Details',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${consultation.veterinarianName ?? "Unknown"} • ${consultation.aiAnalysis?.breed ?? "Unknown Breed"}',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+
+            Row(
+              spacing: 8,
+              children: [
+                LabelChip(
+                  label: "COMPLETED",
+                  textColor: AppColors.success,
+                  backgroundColor: AppColors.successLight,
+                  padding: 4,
+                ),
+                Text(
+                  'Started ${_formatDate(consultation.startTime)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ],

@@ -48,7 +48,7 @@ Future<void> setupDependencies() async {
 
   // Patient Service
   getIt.registerLazySingleton<PatientService>(
-    () => PatientService(getIt<Dio>()),
+    () => PatientService(getIt<Dio>(), getIt<FlutterSecureStorage>()),
   );
 
   // Subscription Service

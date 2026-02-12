@@ -7,6 +7,7 @@ import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
 import '../../../core/constants/consultation_status.dart';
+import 'widgets/filter_dropdown.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -227,125 +228,139 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               },
                             ),
                           ),
-                          // Veterinarian Filter
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width > 600
-                                ? 180
-                                : double.infinity,
-                            child: DropdownButtonFormField<String>(
-                              value: _filterVet,
-                              decoration: InputDecoration(
-                                labelText: 'Veterinarian',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                          // Veterinarian, Type, Sort by in one Row
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: FilterDropdown(
+                                  value: _filterVet,
+                                  labelText: 'Veterinarian',
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: 'all',
+                                      child: Text(
+                                        'All',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    ...veterinarians.map(
+                                      (vet) => DropdownMenuItem(
+                                        value: vet,
+                                        child: Text(
+                                          vet,
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _filterVet = value ?? 'all';
+                                    });
+                                  },
                                 ),
                               ),
-                              items: [
-                                const DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('All Veterinarians'),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: FilterDropdown(
+                                  value: _filterType,
+                                  labelText: 'Type',
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: 'all',
+                                      child: Text(
+                                        'All',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    ...consultationTypes.map(
+                                      (type) => DropdownMenuItem(
+                                        value: type,
+                                        child: Text(
+                                          type,
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _filterType = value ?? 'all';
+                                    });
+                                  },
                                 ),
-                                ...veterinarians.map(
-                                  (vet) => DropdownMenuItem(
-                                    value: vet,
-                                    child: Text(vet),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: FilterDropdown(
+                                  value: _sortBy,
+                                  labelText: 'Sort by',
+                                  contentPadding: const EdgeInsets.only(
+                                    left: 8,
                                   ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _filterVet = value ?? 'all';
-                                });
-                              },
-                            ),
-                          ),
-                          // Type Filter
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width > 600
-                                ? 180
-                                : double.infinity,
-                            child: DropdownButtonFormField<String>(
-                              value: _filterType,
-                              decoration: InputDecoration(
-                                labelText: 'Type',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              items: [
-                                const DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('All Types'),
-                                ),
-                                ...consultationTypes.map(
-                                  (type) => DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _filterType = value ?? 'all';
-                                });
-                              },
-                            ),
-                          ),
-                          // Sort
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width > 600
-                                ? 180
-                                : double.infinity,
-                            child: DropdownButtonFormField<String>(
-                              value: _sortBy,
-                              decoration: InputDecoration(
-                                labelText: 'Sort by',
-                                prefixIcon: Icon(
-                                  _sortBy.contains('desc')
-                                      ? Icons.arrow_downward
-                                      : Icons.arrow_upward,
-                                  size: 20,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'date-desc',
+                                      child: Text(
+                                        'Newest',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'date-asc',
+                                      child: Text(
+                                        'Oldest',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'patient-asc',
+                                      child: Text(
+                                        'A-Z',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'patient-desc',
+                                      child: Text(
+                                        'Z-A',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _sortBy = value ?? 'date-desc';
+                                    });
+                                  },
                                 ),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'date-desc',
-                                  child: Text('Newest First'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'date-asc',
-                                  child: Text('Oldest First'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'patient-asc',
-                                  child: Text('Patient A-Z'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'patient-desc',
-                                  child: Text('Patient Z-A'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _sortBy = value ?? 'date-desc';
-                                });
-                              },
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -380,9 +395,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Expanded(
                   child: filteredConsultations.isEmpty
                       ? _buildEmptyState()
-                      : _isListView
-                      ? _buildListView(filteredConsultations)
-                      : _buildGridView(filteredConsultations),
+                      : Container(
+                          margin: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _isListView
+                                ? AppColors.white
+                                : AppColors.background,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: _isListView
+                              ? _buildListView(filteredConsultations)
+                              : _buildGridView(filteredConsultations),
+                        ),
                 ),
               ],
             ),
@@ -491,28 +515,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildListView(List<ConsultationModel> consultations) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
       itemCount: consultations.length,
       itemBuilder: (context, index) {
         final consultation = consultations[index];
-        return _buildConsultationCard(consultation, isList: true);
+        return Column(
+          children: [
+            _buildConsultationCard(consultation, isList: true),
+            if (index != consultations.length - 1)
+              Divider(color: AppColors.border),
+          ],
+        );
       },
     );
   }
 
   Widget _buildGridView(List<ConsultationModel> consultations) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width > 900 ? 3 : 2,
-        childAspectRatio: 0.95, // Adjusted to give more vertical space
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
+    return ListView.builder(
       itemCount: consultations.length,
       itemBuilder: (context, index) {
         final consultation = consultations[index];
-        return _buildConsultationCard(consultation, isList: false);
+        return Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: AppColors.white,
+              ),
+              padding: const EdgeInsets.all(8),
+              child: _buildConsultationCard(consultation, isList: false),
+            ),
+            if (index != consultations.length - 1) SizedBox(height: 16),
+          ],
+        );
       },
     );
   }
@@ -525,12 +559,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final timeFormat = DateFormat('MMM d, h:mm a');
 
     return Card(
-      margin: EdgeInsets.only(bottom: isList ? 12 : 0),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border, width: 1),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => _handleViewConsultation(consultation.id, consultation),
         borderRadius: BorderRadius.circular(12),
@@ -546,41 +578,70 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  consultation.patientName ?? 'Unknown Patient',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                              Row(
+                                spacing: 8,
+                                children: [
+                                  Text(
+                                    consultation.patientName ??
+                                        'Unknown Patient',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  _buildStatusBadge(consultation.status),
+                                ],
+                              ),
+
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6.0),
+                                    side: BorderSide(color: AppColors.primary),
+                                  ),
+                                ),
+                                onPressed: () => _handleViewConsultation(
+                                  consultation.id,
+                                  consultation,
+                                ),
+                                icon: const Icon(Icons.visibility_outlined),
+                                iconAlignment: IconAlignment.start,
+                                label: const Text(
+                                  'View',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
-                              _buildStatusBadge(consultation.status),
                             ],
                           ),
                           const SizedBox(height: 12),
+                          _buildInfoRow(
+                            Icons.person_outline,
+                            consultation.veterinarianName ??
+                                'Unknown Veterinarian',
+                          ),
+                          const SizedBox(height: 8),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            spacing: 12,
                             children: [
-                              Expanded(
-                                child: _buildInfoRow(
-                                  Icons.calendar_today,
-                                  dateFormat.format(consultation.startTime),
-                                ),
+                              _buildInfoRow(
+                                Icons.calendar_today,
+                                dateFormat.format(consultation.startTime),
                               ),
-                              Expanded(
-                                child: _buildInfoRow(
-                                  Icons.person_outline,
-                                  consultation.veterinarianName ??
-                                      'Unknown Veterinarian',
-                                ),
-                              ),
-                              Expanded(
-                                child: _buildInfoRow(
-                                  Icons.description_outlined,
-                                  consultation.symptoms ?? 'General Checkup',
-                                ),
+
+                              _buildInfoRow(
+                                Icons.description_outlined,
+                                consultation.symptoms ?? 'General Checkup',
                               ),
                             ],
                           ),
@@ -593,26 +654,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                           ],
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    OutlinedButton(
-                      onPressed: () => _handleViewConsultation(
-                        consultation.id,
-                        consultation,
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        'View',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     ),
                   ],
@@ -686,6 +727,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               vertical: 10,
                             ),
                             minimumSize: const Size(0, 36),
+                            side: BorderSide(color: AppColors.primary),
                           ),
                         ),
                       ),
@@ -697,21 +739,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, {double fontSize = 14}) {
+  Widget _buildInfoRow(IconData icon, String text, {double fontSize = 12}) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: fontSize,
-              color: AppColors.textSecondary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+        const SizedBox(width: 4),
+
+        Text(
+          text,
+          style: TextStyle(fontSize: fontSize, color: AppColors.textSecondary),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
