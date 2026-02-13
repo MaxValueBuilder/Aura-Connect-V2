@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:aura/screens/consultation/final_recording_view.dart';
 import 'package:aura/screens/consultation/tasks_and_labs_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,9 +12,7 @@ import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
 import 'initial_recording_view.dart';
-import 'final_recording_view.dart';
 import 'patient_extraction_progress_view.dart';
-import '_patient_info_review_view.dart';
 import 'documentation_view.dart';
 import 'ai_processing_view.dart';
 import '../widgets/app_bar_logo_title.dart';
@@ -548,12 +547,6 @@ class _ConsultationWorkflowScreenState
     }
   }
 
-  void _handlePatientReviewComplete() {
-    setState(() {
-      _currentStatus = ConsultationStatus.initialComplete;
-    });
-  }
-
   void _handleLabUploadComplete() {
     // Keep user on TasksLabsView while upload runs; don't switch to labAnalysis yet
     setState(() {
@@ -707,29 +700,29 @@ class _ConsultationWorkflowScreenState
         },
       );
     }
-    // if (_currentStatus == ConsultationStatus.finalConsult) {
-    //   return BlocBuilder<ConsultationCubit, ConsultationState>(
-    //     builder: (context, state) {
-    //       return FinalRecordingView(
-    //         patientName: _patientName,
-    //         recordingDuration: _recordingDuration,
-    //         isRecording: _recordingService.isRecording,
-    //         isPaused: _isPaused,
-    //         stepInfo: stepInfo,
-    //         totalSteps: _getTotalSteps(),
-    //         manualTranscriptController: _manualTranscriptController,
-    //         onStartRecording: _handleStartRecording,
-    //         onStopRecording: _handleStopRecording,
-    //         onPauseRecording: _handlePauseRecording,
-    //         onResumeRecording: _handleResumeRecording,
-    //         onManualSubmit: _handleManualSubmit,
-    //         onBack: _handleBack,
-    //         onNavigateToTasksLabs: _handleNavigateToTasksLabs,
-    //         onNavigateToInitialRecording: _handleNavigateToInitialRecording,
-    //       );
-    //     },
-    //   );
-    // }
+    if (_currentStatus == ConsultationStatus.finalConsult) {
+      return BlocBuilder<ConsultationCubit, ConsultationState>(
+        builder: (context, state) {
+          return FinalRecordingView(
+            patientName: _patientName,
+            recordingDuration: _recordingDuration,
+            isRecording: _recordingService.isRecording,
+            isPaused: _isPaused,
+            stepInfo: stepInfo,
+            totalSteps: _getTotalSteps(),
+            manualTranscriptController: _manualTranscriptController,
+            onStartRecording: _handleStartRecording,
+            onStopRecording: _handleStopRecording,
+            onPauseRecording: _handlePauseRecording,
+            onResumeRecording: _handleResumeRecording,
+            onManualSubmit: _handleManualSubmit,
+            onBack: _handleBack,
+            onNavigateToTasksLabs: _handleNavigateToTasksLabs,
+            onNavigateToInitialRecording: _handleNavigateToInitialRecording,
+          );
+        },
+      );
+    }
 
     // Patient Extraction Processing
     if (_currentStatus == ConsultationStatus.patientExtraction) {

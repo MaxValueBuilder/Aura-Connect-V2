@@ -1,3 +1,4 @@
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import 'widgets/consultation_progress_indicator.dart';
@@ -67,6 +68,7 @@ class _PatientExtractionProgressViewState
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
+        title: AppBarLogoTitle(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: null, // Disabled during extraction

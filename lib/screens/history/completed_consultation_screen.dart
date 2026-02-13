@@ -1,3 +1,4 @@
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:developer' as developer;
@@ -88,13 +89,7 @@ class _CompletedConsultationScreenState
               );
             },
           ),
-          title: const Text(
-            'Loading...',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          title: AppBarLogoTitle(),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );

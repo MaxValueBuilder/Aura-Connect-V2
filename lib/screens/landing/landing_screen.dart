@@ -1,6 +1,7 @@
 import 'package:aura/core/constants/app_constants.dart';
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/custom_landing_page_button.dart';
 import 'package:aura/screens/landing/widgets/testimonial_card.dart';
 import 'package:aura/screens/landing/widgets/feature_card.dart';
@@ -69,30 +70,7 @@ class LandingScreen extends StatelessWidget {
                 Scaffold(
                   appBar: AppBar(
                     automaticallyImplyLeading: false,
-                    title: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: SvgPicture.asset(
-                              'assets/icons/logo.svg',
-                              // fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          'Aura Connect',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                    title: AppBarLogoTitle(),
                     actions: [
                       CustomLandingPageButton(
                         onPressed: () =>

@@ -1,3 +1,4 @@
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -174,6 +175,7 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: null, // Disabled during tasks
         ),
+        title: AppBarLogoTitle(),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),

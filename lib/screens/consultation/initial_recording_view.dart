@@ -1,5 +1,6 @@
 import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
 import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
@@ -60,30 +61,7 @@ class InitialRecordingView extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: isRecording ? null : onBack,
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/logo.svg',
-              width: 32,
-              height: 32,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Aura Connect',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        title: AppBarLogoTitle(),
         actions: [const LogoutButton(), const SizedBox(width: 16)],
       ),
       body: SafeArea(
