@@ -663,23 +663,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
                     // Billing Tab
                     SingleChildScrollView(
                       padding: const EdgeInsets.all(24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 120,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Billing',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: _buildBillingCard(),
                     ),
                   ],
                 ),
@@ -915,6 +899,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
+                      fontFamily: 'Fraunces',
                     ),
                   ),
                 ),
@@ -953,7 +938,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
               ],
             ),
             const SizedBox(height: 20),
-            _buildSection(
+            _buildSoapSection(
               title: 'SUBJECTIVE',
               icon: Icons.record_voice_over,
               controller: _subjectiveController,
@@ -963,7 +948,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
               inCard: false,
             ),
             const SizedBox(height: 16),
-            _buildSection(
+            _buildSoapSection(
               title: 'OBJECTIVE',
               icon: Icons.visibility,
               controller: _objectiveController,
@@ -974,7 +959,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
               inCard: false,
             ),
             const SizedBox(height: 16),
-            _buildSection(
+            _buildSoapSection(
               title: 'ASSESSMENT',
               icon: Icons.assessment,
               controller: _assessmentController,
@@ -984,7 +969,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
               inCard: false,
             ),
             const SizedBox(height: 16),
-            _buildSection(
+            _buildSoapSection(
               title: 'PLAN',
               icon: Icons.assignment,
               controller: _planController,
@@ -995,20 +980,6 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _outlinedIconButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return IconButton(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: AppColors.primary),
-      style: IconButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -1041,6 +1012,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
+                      fontFamily: 'Fraunces',
                     ),
                   ),
                 ),
@@ -1135,7 +1107,97 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
     );
   }
 
-  Widget _buildSection({
+  Widget _buildBillingBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '• ',
+            style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingCard() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.credit_card, color: AppColors.black),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Billing Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      fontFamily: 'Fraunces',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            Text(
+              'Procedures (suggestions only):',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildBillingBullet('Physical Examination (recommendation only)'),
+            _buildBillingBullet(
+              'Radiographs (if needed to rule out foreign body, recommendation only)',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Medications (suggestions only):',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildBillingBullet(
+              'Anti-emetic (if vomiting persists, recommendation only) - As prescribed by veterinarian',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Pricing is not included here. Please consult with your practice management or billing system for actual charges.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSoapSection({
     required String title,
     required IconData icon,
     required TextEditingController controller,
@@ -1267,5 +1329,19 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
     );
     if (!inCard) return content;
     return Card(child: content);
+  }
+
+  Widget _outlinedIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20, color: AppColors.primary),
+      style: IconButton.styleFrom(
+        side: const BorderSide(color: AppColors.primary),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 }

@@ -78,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 }
               },
             ),
+            const SizedBox(width: 16),
           ],
         ),
         body: BlocListener<SettingsCubit, SettingsState>(
