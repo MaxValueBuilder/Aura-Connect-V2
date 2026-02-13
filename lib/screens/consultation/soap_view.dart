@@ -5,11 +5,9 @@ import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
-import 'dart:io';
 import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:cross_file/cross_file.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/patient_utils.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../models/consultation_model.dart';
 
@@ -37,9 +35,7 @@ class _SOAPViewState extends State<SOAPView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isEditing = false;
-  bool _isSaving = false;
   bool _isEditingHandout = false;
-  bool _isSavingHandout = false;
   late TextEditingController _subjectiveController;
   late TextEditingController _objectiveController;
   late TextEditingController _assessmentController;
@@ -135,10 +131,6 @@ class _SOAPViewState extends State<SOAPView>
   }
 
   Future<void> _handleSave() async {
-    setState(() {
-      _isSaving = true;
-    });
-
     try {
       final updatedSOAP = SOAPNoteModel(
         subjective: _subjectiveController.text.trim(),
@@ -173,20 +165,10 @@ class _SOAPViewState extends State<SOAPView>
           ),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
     }
   }
 
   Future<void> _handleSaveHandout() async {
-    setState(() {
-      _isSavingHandout = true;
-    });
-
     try {
       final updatedHandout = ClientHandoutModel(
         summary: _summaryController.text.trim(),
@@ -221,12 +203,6 @@ class _SOAPViewState extends State<SOAPView>
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSavingHandout = false;
-        });
       }
     }
   }
@@ -315,71 +291,45 @@ class _SOAPViewState extends State<SOAPView>
     }
   }
 
-  // Future<void> _exportContent() async {
-  //   if (_tabController.index == 2) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Billing has no content to export'),
-  //           backgroundColor: AppColors.textSecondary,
-  //         ),
-  //       );
-  //     }
-  //     return;
-  //   }
-  //   try {
-  //     final text = _tabController.index == 0
-  //         ? _getSoapText()
-  //         : _getHandoutText();
-  //     final fileName = _tabController.index == 0
-  //         ? 'SOAP_Note_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt'
-  //         : 'Client_Handout_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt';
-
-  //     // Get temporary directory
-  //     final directory = await getTemporaryDirectory();
-  //     final file = File('${directory.path}/$fileName');
-
-  //     // Write content to file
-  //     await file.writeAsString(text);
-
-  //     // Create XFile for sharing
-  //     final xFile = XFile(file.path, mimeType: 'text/plain');
-
-  //     // Share the file - this opens the system share dialog where users can save it
-  //     final result = await Share.shareXFiles(
-  //       [xFile],
-  //       subject: _tabController.index == 0
-  //           ? 'SOAP Note - ${widget.patientName}'
-  //           : 'Client Handout - ${widget.patientName}',
-  //       text: _tabController.index == 0
-  //           ? 'SOAP Note for ${widget.patientName}'
-  //           : 'Client Handout for ${widget.patientName}',
-  //     );
-
-  //     if (mounted && result.status == ShareResultStatus.success) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text(
-  //             _tabController.index == 0
-  //                 ? 'SOAP note saved successfully'
-  //                 : 'Client handout saved successfully',
-  //           ),
-  //           backgroundColor: AppColors.success,
-  //           duration: const Duration(seconds: 2),
-  //         ),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Error exporting: ${e.toString()}'),
-  //           backgroundColor: AppColors.error,
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
+  Future<void> _exportContentWithText(
+    String text, {
+    required bool isHandout,
+  }) async {
+    try {
+      final result = await PatientUtils.shareSoapOrHandoutAsFile(
+        text: text,
+        patientName: widget.patientName,
+        isHandout: isHandout,
+      );
+      if (!mounted) return;
+      if (result.status == ShareResultStatus.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exported successfully'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else if (result.status == ShareResultStatus.dismissed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Export cancelled'),
+            backgroundColor: AppColors.textSecondary,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -763,57 +713,6 @@ class _SOAPViewState extends State<SOAPView>
         ),
       ),
     );
-  }
-
-  Future<void> _exportContentWithText(
-    String text, {
-    required bool isHandout,
-  }) async {
-    try {
-      final fileName = isHandout
-          ? 'Client_Handout_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt'
-          : 'SOAP_Note_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt';
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsString(text);
-      final xFile = XFile(file.path, mimeType: 'text/plain');
-      final result = await SharePlus.instance.share(
-        ShareParams(
-          text: text,
-          subject: isHandout
-              ? 'Client Handout - ${widget.patientName}'
-              : 'SOAP Note - ${widget.patientName}',
-          files: [xFile],
-        ),
-      );
-      if (!mounted) return;
-      if (result.status == ShareResultStatus.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exported successfully'),
-            backgroundColor: AppColors.success,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else if (result.status == ShareResultStatus.dismissed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Export cancelled'),
-            backgroundColor: AppColors.textSecondary,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error exporting: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
   }
 
   Widget _bottomActionButton({

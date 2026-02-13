@@ -1,6 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-/// Utilities for species icon asset paths, colors, and form validation.
+import 'package:cross_file/cross_file.dart';
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+/// Utilities for species icon asset paths, colors, form validation, and sharing.
 /// Uses SVG assets from assets/icons/.
 class PatientUtils {
   // --- Form validation ---
@@ -107,5 +112,34 @@ class PatientUtils {
       default:
         return '$_basePath/default_pet.svg';
     }
+  }
+
+  // --- Share / Export ---
+
+  /// Shares SOAP note or client handout as a text file via system share sheet.
+  /// Returns [ShareResult] so the caller can show appropriate UI (success/cancelled).
+  static Future<ShareResult> shareSoapOrHandoutAsFile({
+    required String text,
+    required String patientName,
+    required bool isHandout,
+  }) async {
+    final dateStr = DateTime.now().toString().substring(0, 10).replaceAll('-', '_');
+    final fileName = isHandout
+        ? 'Client_Handout_${patientName}_$dateStr.txt'
+        : 'SOAP_Note_${patientName}_$dateStr.txt';
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsString(text);
+    final xFile = XFile(file.path, mimeType: 'text/plain');
+    final result = await SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        subject: isHandout
+            ? 'Client Handout - $patientName'
+            : 'SOAP Note - $patientName',
+        files: [xFile],
+      ),
+    );
+    return result;
   }
 }
