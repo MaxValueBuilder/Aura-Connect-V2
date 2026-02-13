@@ -19,6 +19,10 @@ class DocumentationView extends StatefulWidget {
   final Function(SOAPNoteModel)? onSave;
   final Function(ClientHandoutModel)? onSaveHandout;
 
+  /// When true, shows the workflow step bar (Final Consult, Step 4/4, Tasks & lab / Initial Recording buttons).
+  /// Use false when viewing from history (completed consultation screen).
+  final bool showStepBar;
+
   const DocumentationView({
     super.key,
     required this.documentation,
@@ -26,6 +30,7 @@ class DocumentationView extends StatefulWidget {
     required this.onBack,
     this.onSave,
     this.onSaveHandout,
+    this.showStepBar = true,
   });
 
   @override
@@ -407,92 +412,93 @@ class _DocumentationViewState extends State<DocumentationView>
             Expanded(
               child: NestedScrollView(
                 headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                  SliverToBoxAdapter(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withAlpha(25),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Final Consult',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              fontFamily: 'Fraunces',
+                  if (widget.showStepBar)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight.withAlpha(25),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Final Consult',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Fraunces',
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Step 4 of 4',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Step 4 of 4',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          ConsultationProgressIndicator(value: 4 / 4),
-                          const SizedBox(height: 16),
+                            const SizedBox(height: 8),
+                            ConsultationProgressIndicator(value: 4 / 4),
+                            const SizedBox(height: 16),
 
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: PrimaryIconButton(
-                                      onPressed: () {},
-                                      icon: Icons.edit,
-                                      text: 'Tasks & lab ',
-                                      fontSize: 14,
-                                      verticalPadding: 14,
-                                      enabled: true,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: PrimaryIconButton(
+                                        onPressed: () {},
+                                        icon: Icons.edit,
+                                        text: 'Tasks & lab ',
+                                        fontSize: 14,
+                                        verticalPadding: 14,
+                                        enabled: true,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 16),
-                                  Expanded(
-                                    child: PrimaryIconButton(
-                                      onPressed: () {},
-                                      icon: Icons.chat_bubble_outline,
-                                      text: 'Initial Recording',
-                                      fontSize: 14,
-                                      verticalPadding: 14,
-                                      enabled: true,
+                                    SizedBox(width: 16),
+                                    Expanded(
+                                      child: PrimaryIconButton(
+                                        onPressed: () {},
+                                        icon: Icons.chat_bubble_outline,
+                                        text: 'Initial Recording',
+                                        fontSize: 14,
+                                        verticalPadding: 14,
+                                        enabled: true,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  LabelChip(
-                                    label: 'INITIAL CONSULT',
-                                    textColor: AppColors.primary,
-                                    backgroundColor: AppColors.primaryLight
-                                        .withValues(alpha: 0.1),
-                                  ),
-                                  LabelChip(
-                                    label: 'Final Recorded',
-                                    textColor: const Color(0xFF5F9C75),
-                                    backgroundColor: const Color(0xFFDCFCE7),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    LabelChip(
+                                      label: 'INITIAL CONSULT',
+                                      textColor: AppColors.primary,
+                                      backgroundColor: AppColors.primaryLight
+                                          .withValues(alpha: 0.1),
+                                    ),
+                                    LabelChip(
+                                      label: 'Final Recorded',
+                                      textColor: const Color(0xFF5F9C75),
+                                      backgroundColor: const Color(0xFFDCFCE7),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

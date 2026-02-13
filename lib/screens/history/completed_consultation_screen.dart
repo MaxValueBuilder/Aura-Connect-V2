@@ -98,6 +98,7 @@ class _CompletedConsultationScreenState
     return DocumentationView(
       documentation: _documentation,
       patientName: _patientName ?? 'Unknown Patient',
+      showStepBar: false,
       onBack: () {
         AppRouter.pushNamedAndRemoveUntil(
           context,
