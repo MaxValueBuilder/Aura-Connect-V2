@@ -5,18 +5,20 @@ import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../features/consultation/consultation_cubit.dart';
 import '../../models/consultation_model.dart';
-import 'soap_view.dart';
+import '../consultation/documentation_view.dart';
 
-class SOAPNoteScreen extends StatefulWidget {
+class CompletedConsultationScreen extends StatefulWidget {
   final String consultationId;
 
-  const SOAPNoteScreen({super.key, required this.consultationId});
+  const CompletedConsultationScreen({super.key, required this.consultationId});
 
   @override
-  State<SOAPNoteScreen> createState() => _SOAPNoteScreenState();
+  State<CompletedConsultationScreen> createState() =>
+      _CompletedConsultationScreenState();
 }
 
-class _SOAPNoteScreenState extends State<SOAPNoteScreen> {
+class _CompletedConsultationScreenState
+    extends State<CompletedConsultationScreen> {
   bool _isLoading = true;
   DocumentationModel? _documentation;
   String? _patientName;
@@ -98,7 +100,7 @@ class _SOAPNoteScreenState extends State<SOAPNoteScreen> {
       );
     }
 
-    return SOAPView(
+    return DocumentationView(
       documentation: _documentation,
       patientName: _patientName ?? 'Unknown Patient',
       onBack: () {

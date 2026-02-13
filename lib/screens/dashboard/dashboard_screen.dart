@@ -38,6 +38,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _handleViewConsultation(
+    String consultationId,
+    ConsultationModel consultation,
+  ) {
+    // Navigate to SOAP note view for completed consultations
+    AppRouter.pushNamed(
+      context,
+      AppRoutes.soapNote,
+      arguments: SOAPNoteArguments(consultationId: consultationId),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -622,16 +634,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 OutlinedButton(
                   onPressed: () {
                     // Navigate to consultation recording screen to continue
-                    AppRouter.pushNamed(
-                      context,
-                      AppRoutes.consultationRecording,
-                      arguments: ConsultationRecordingArguments(
-                        consultationId: consultation.id,
-                        initialStatus: consultation.status,
-                        initialPatientName:
-                            consultation.patientName ?? 'Unknown Patient',
-                      ),
-                    );
+                    _handleViewConsultation(consultation.id, consultation);
                   },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -724,12 +727,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Always reserve space for button to keep consistent layout
             SizedBox(height: actionLabel != null && onAction != null ? 24 : 0),
             if (actionLabel != null && onAction != null)
-              PrimaryIconButton(
-                onPressed: onAction,
-                icon: actionIcon,
-                text: actionLabel,
-                fontSize: 16,
-                verticalPadding: 12,
+              SizedBox(
+                width: 240,
+                child: PrimaryIconButton(
+                  onPressed: onAction,
+                  icon: actionIcon,
+                  text: actionLabel,
+                  fontSize: 16,
+                  verticalPadding: 12,
+                ),
               )
             else
               // Placeholder to maintain consistent spacing when no button

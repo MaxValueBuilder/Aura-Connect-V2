@@ -8,7 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/consultation_status.dart';
 
-class RecordingView extends StatelessWidget {
+class InitialRecordingView extends StatelessWidget {
   final ConsultationStatus consultationStatus;
   final String patientName;
   final int recordingDuration;
@@ -24,7 +24,7 @@ class RecordingView extends StatelessWidget {
   final VoidCallback onManualSubmit;
   final VoidCallback onBack;
 
-  const RecordingView({
+  const InitialRecordingView({
     super.key,
     required this.consultationStatus,
     required this.patientName,

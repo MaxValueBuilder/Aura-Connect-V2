@@ -2,8 +2,8 @@ import 'package:aura/core/constants/consultation_status.dart';
 import 'package:aura/screens/auth/login_screen.dart';
 import 'package:aura/screens/auth/sign_up_screen.dart';
 import 'package:aura/screens/clinic_setup/clinic_setup_screen.dart';
-import 'package:aura/screens/consultation/consultation_recording_screen.dart';
-import 'package:aura/screens/consultation/soap_note_screen.dart';
+import 'package:aura/screens/consultation/consultation_workflow_screen.dart';
+import 'package:aura/screens/history/completed_consultation_screen.dart';
 import 'package:aura/screens/history/history_screen.dart';
 import 'package:aura/screens/landing/landing_screen.dart';
 import 'package:aura/screens/main_navigation_screen.dart';
@@ -118,7 +118,7 @@ class AppRouter {
       case AppRoutes.consultationRecording:
         final typedArgs = args is ConsultationRecordingArguments ? args : null;
         return MaterialPageRoute(
-          builder: (_) => ConsultationRecordingScreen(
+          builder: (_) => ConsultationWorkflowScreen(
             // consultationId: typedArgs?.consultationId,
             initialStatus:
                 typedArgs?.initialStatus ?? ConsultationStatus.initialConsult,
@@ -137,8 +137,9 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(
-          builder: (_) =>
-              SOAPNoteScreen(consultationId: typedArgs.consultationId),
+          builder: (_) => CompletedConsultationScreen(
+            consultationId: typedArgs.consultationId,
+          ),
           settings: settings,
         );
 

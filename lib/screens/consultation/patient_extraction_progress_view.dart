@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import 'consultation_progress_indicator.dart';
+import '../../../core/theme/app_colors.dart';
+import 'widgets/consultation_progress_indicator.dart';
 
-class PatientExtractionView extends StatefulWidget {
+class PatientExtractionProgressView extends StatefulWidget {
   final Map<String, dynamic> stepInfo;
   final int totalSteps;
 
-  const PatientExtractionView({
+  const PatientExtractionProgressView({
     super.key,
     required this.stepInfo,
     required this.totalSteps,
   });
 
   @override
-  State<PatientExtractionView> createState() => _PatientExtractionViewState();
+  State<PatientExtractionProgressView> createState() =>
+      _PatientExtractionProgressViewState();
 }
 
-class _PatientExtractionViewState extends State<PatientExtractionView>
+class _PatientExtractionProgressViewState
+    extends State<PatientExtractionProgressView>
     with SingleTickerProviderStateMixin {
   double _progress = 0.0;
   late AnimationController _animationController;

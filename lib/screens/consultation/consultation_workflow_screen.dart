@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:aura/screens/consultation/tasks_labs_view.dart';
+import 'package:aura/screens/consultation/tasks_and_labs_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -10,21 +10,21 @@ import '../../../services/recording_service.dart';
 import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
 import '../../../models/consultation_model.dart';
-import 'recording_view.dart';
-import 'final_consult_recording_view.dart';
-import 'widgets/patient_extraction_view.dart';
-import 'patient_review_view.dart';
-import 'soap_view.dart';
-import 'widgets/processing_view.dart';
+import 'initial_recording_view.dart';
+import 'final_recording_view.dart';
+import 'patient_extraction_progress_view.dart';
+import '_patient_info_review_view.dart';
+import 'documentation_view.dart';
+import 'ai_processing_view.dart';
 import '../widgets/app_bar_logo_title.dart';
 
 /// Main consultation recording screen that manages the consultation workflow
-class ConsultationRecordingScreen extends StatefulWidget {
+class ConsultationWorkflowScreen extends StatefulWidget {
   final String? consultationId;
   final ConsultationStatus initialStatus;
   final String initialPatientName;
 
-  const ConsultationRecordingScreen({
+  const ConsultationWorkflowScreen({
     super.key,
     this.consultationId,
     this.initialStatus = ConsultationStatus.initialConsult,
@@ -32,12 +32,12 @@ class ConsultationRecordingScreen extends StatefulWidget {
   });
 
   @override
-  State<ConsultationRecordingScreen> createState() =>
-      _ConsultationRecordingScreenState();
+  State<ConsultationWorkflowScreen> createState() =>
+      _ConsultationWorkflowScreenState();
 }
 
-class _ConsultationRecordingScreenState
-    extends State<ConsultationRecordingScreen> {
+class _ConsultationWorkflowScreenState
+    extends State<ConsultationWorkflowScreen> {
   late ConsultationStatus _currentStatus;
   late String _patientName;
   final RecordingService _recordingService = RecordingService();
@@ -657,6 +657,18 @@ class _ConsultationRecordingScreenState
     });
   }
 
+  void _handleNavigateToTasksLabs() {
+    setState(() {
+      _currentStatus = ConsultationStatus.initialComplete;
+    });
+  }
+
+  void _handleNavigateToInitialRecording() {
+    setState(() {
+      _currentStatus = ConsultationStatus.initialConsult;
+    });
+  }
+
   void _handleBack() {
     Navigator.of(context).pop();
   }
@@ -664,7 +676,7 @@ class _ConsultationRecordingScreenState
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _currentStatus == ConsultationStatus.patientExtraction) {
-      return PatientExtractionView(
+      return PatientExtractionProgressView(
         stepInfo: ConsultationStatusUtils.getCurrentStepInfo(_currentStatus),
         totalSteps: _getTotalSteps(),
       );
@@ -676,7 +688,7 @@ class _ConsultationRecordingScreenState
     if (_currentStatus == ConsultationStatus.initialConsult) {
       return BlocBuilder<ConsultationCubit, ConsultationState>(
         builder: (context, state) {
-          return RecordingView(
+          return InitialRecordingView(
             consultationStatus: _currentStatus,
             patientName: _patientName,
             recordingDuration: _recordingDuration,
@@ -695,46 +707,48 @@ class _ConsultationRecordingScreenState
         },
       );
     }
-    if (_currentStatus == ConsultationStatus.finalConsult) {
-      return BlocBuilder<ConsultationCubit, ConsultationState>(
-        builder: (context, state) {
-          return FinalConsultRecordingView(
-            patientName: _patientName,
-            recordingDuration: _recordingDuration,
-            isRecording: _recordingService.isRecording,
-            isPaused: _isPaused,
-            stepInfo: stepInfo,
-            totalSteps: _getTotalSteps(),
-            manualTranscriptController: _manualTranscriptController,
-            onStartRecording: _handleStartRecording,
-            onStopRecording: _handleStopRecording,
-            onPauseRecording: _handlePauseRecording,
-            onResumeRecording: _handleResumeRecording,
-            onManualSubmit: _handleManualSubmit,
-            onBack: _handleBack,
-          );
-        },
-      );
-    }
+    // if (_currentStatus == ConsultationStatus.finalConsult) {
+    //   return BlocBuilder<ConsultationCubit, ConsultationState>(
+    //     builder: (context, state) {
+    //       return FinalRecordingView(
+    //         patientName: _patientName,
+    //         recordingDuration: _recordingDuration,
+    //         isRecording: _recordingService.isRecording,
+    //         isPaused: _isPaused,
+    //         stepInfo: stepInfo,
+    //         totalSteps: _getTotalSteps(),
+    //         manualTranscriptController: _manualTranscriptController,
+    //         onStartRecording: _handleStartRecording,
+    //         onStopRecording: _handleStopRecording,
+    //         onPauseRecording: _handlePauseRecording,
+    //         onResumeRecording: _handleResumeRecording,
+    //         onManualSubmit: _handleManualSubmit,
+    //         onBack: _handleBack,
+    //         onNavigateToTasksLabs: _handleNavigateToTasksLabs,
+    //         onNavigateToInitialRecording: _handleNavigateToInitialRecording,
+    //       );
+    //     },
+    //   );
+    // }
 
     // Patient Extraction Processing
     if (_currentStatus == ConsultationStatus.patientExtraction) {
-      return PatientExtractionView(
+      return PatientExtractionProgressView(
         stepInfo: stepInfo,
         totalSteps: _getTotalSteps(),
       );
     }
 
     // Patient Review
-    if (_currentStatus == ConsultationStatus.patientReview &&
-        _extractedPatientInfo != null) {
-      return PatientReviewView(
-        extractedPatientInfo: _extractedPatientInfo!,
-        stepInfo: stepInfo,
-        totalSteps: _getTotalSteps(),
-        onComplete: _handlePatientReviewComplete,
-      );
-    }
+    // if (_currentStatus == ConsultationStatus.patientReview &&
+    //     _extractedPatientInfo != null) {
+    //   return PatientInfoReviewView(
+    //     extractedPatientInfo: _extractedPatientInfo!,
+    //     stepInfo: stepInfo,
+    //     totalSteps: _getTotalSteps(),
+    //     onComplete: _handlePatientReviewComplete,
+    //   );
+    // }
 
     // Tasks & Labs Step (includes Upload Lab Result card per Figma)
 
@@ -750,7 +764,7 @@ class _ConsultationRecordingScreenState
             _labUploadSuccessCalled = false;
           });
         },
-        child: TasksLabsView(
+        child: TasksAndLabsView(
           patientName: _patientName,
           extractedPatientInfo: _extractedPatientInfo,
           generatedTasks: _generatedTasks,
@@ -778,7 +792,7 @@ class _ConsultationRecordingScreenState
               _currentStatus == ConsultationStatus.processing) {
             // Processing is done, but we're still in processing state
             // The _processFinalConsultation will handle the completion
-            return ProcessingView(
+            return AIProcessingProgressView(
               stepInfo: stepInfo,
               totalSteps: _getTotalSteps(),
               onComplete: () {
@@ -788,7 +802,7 @@ class _ConsultationRecordingScreenState
             );
           }
 
-          return ProcessingView(
+          return AIProcessingProgressView(
             stepInfo: stepInfo,
             totalSteps: _getTotalSteps(),
             onComplete: () {
@@ -801,7 +815,7 @@ class _ConsultationRecordingScreenState
 
     // Complete state - show SOAP note
     if (_currentStatus == ConsultationStatus.complete) {
-      return SOAPView(
+      return DocumentationView(
         documentation: _documentation,
         patientName: _patientName,
         onBack: () => Navigator.of(context).pop(),

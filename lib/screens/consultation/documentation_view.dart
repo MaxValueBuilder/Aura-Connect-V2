@@ -12,14 +12,14 @@ import '../../../core/utils/patient_utils.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../models/consultation_model.dart';
 
-class SOAPView extends StatefulWidget {
+class DocumentationView extends StatefulWidget {
   final DocumentationModel? documentation;
   final String patientName;
   final VoidCallback onBack;
   final Function(SOAPNoteModel)? onSave;
   final Function(ClientHandoutModel)? onSaveHandout;
 
-  const SOAPView({
+  const DocumentationView({
     super.key,
     required this.documentation,
     required this.patientName,
@@ -29,10 +29,10 @@ class SOAPView extends StatefulWidget {
   });
 
   @override
-  State<SOAPView> createState() => _SOAPViewState();
+  State<DocumentationView> createState() => _DocumentationViewState();
 }
 
-class _SOAPViewState extends State<SOAPView>
+class _DocumentationViewState extends State<DocumentationView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isEditing = false;

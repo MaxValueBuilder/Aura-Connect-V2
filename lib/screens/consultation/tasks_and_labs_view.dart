@@ -7,7 +7,7 @@ import 'widgets/edit_consultation_modal.dart';
 import 'widgets/lab_upload_card.dart';
 import 'widgets/label_chip.dart';
 
-class TasksLabsView extends StatefulWidget {
+class TasksAndLabsView extends StatefulWidget {
   final String patientName;
   final Map<String, dynamic>? extractedPatientInfo;
   final List<dynamic> generatedTasks;
@@ -29,7 +29,7 @@ class TasksLabsView extends StatefulWidget {
   final String initialNotes;
   final VoidCallback? onConsultationUpdated;
 
-  const TasksLabsView({
+  const TasksAndLabsView({
     super.key,
     required this.patientName,
     this.extractedPatientInfo,
@@ -48,10 +48,10 @@ class TasksLabsView extends StatefulWidget {
   });
 
   @override
-  State<TasksLabsView> createState() => _TasksLabsViewState();
+  State<TasksAndLabsView> createState() => _TasksAndLabsViewState();
 }
 
-class _TasksLabsViewState extends State<TasksLabsView> {
+class _TasksAndLabsViewState extends State<TasksAndLabsView> {
   late Map<String, bool> _taskStates;
 
   @override

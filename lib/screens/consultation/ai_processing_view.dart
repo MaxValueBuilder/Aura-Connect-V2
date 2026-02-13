@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import 'widgets/consultation_progress_indicator.dart';
 
-class LabAnalysisView extends StatefulWidget {
+class AIProcessingProgressView extends StatefulWidget {
   final Map<String, dynamic> stepInfo;
   final int totalSteps;
   final VoidCallback onComplete;
 
-  const LabAnalysisView({
+  const AIProcessingProgressView({
     super.key,
     required this.stepInfo,
     required this.totalSteps,
@@ -15,10 +15,11 @@ class LabAnalysisView extends StatefulWidget {
   });
 
   @override
-  State<LabAnalysisView> createState() => _LabAnalysisViewState();
+  State<AIProcessingProgressView> createState() =>
+      _AIProcessingProgressViewState();
 }
 
-class _LabAnalysisViewState extends State<LabAnalysisView>
+class _AIProcessingProgressViewState extends State<AIProcessingProgressView>
     with SingleTickerProviderStateMixin {
   double _progress = 0.0;
   late AnimationController _animationController;
@@ -31,20 +32,20 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Simulate progress up to 90%, then wait for actual completion
+    // Simulate progress
     _simulateProgress();
   }
 
   void _simulateProgress() {
-    Future.delayed(const Duration(milliseconds: 200), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         setState(() {
-          if (_progress < 0.9) {
-            _progress += 0.05;
+          _progress += 0.01;
+          if (_progress < 1.0) {
             _simulateProgress();
+          } else {
+            widget.onComplete();
           }
-          // Don't auto-complete - wait for actual analysis to finish
-          // The parent will handle completion when analysis is done
         });
       }
     });
@@ -57,10 +58,10 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
   }
 
   String _getProgressMessage() {
-    if (_progress < 0.25) return 'Uploading lab results...';
-    if (_progress < 0.5) return 'Analyzing lab images...';
-    if (_progress < 0.75) return 'Extracting key findings...';
-    return 'Generating recommendations...';
+    if (_progress < 0.3) return 'Analyzing consultation recordings...';
+    if (_progress < 0.6) return 'Processing patient information...';
+    if (_progress < 0.9) return 'Generating SOAP notes...';
+    return 'Finalizing documentation...';
   }
 
   @override
@@ -71,7 +72,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: null, // Disabled during analysis
+          onPressed: null, // Disabled during processing
         ),
         actions: [
           Container(
@@ -99,7 +100,6 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 48),
-
               // AI Processing
               Center(
                 child: Column(
@@ -115,16 +115,18 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                         animation: _animationController,
                         builder: (context, child) {
                           return Icon(
-                            Icons.science,
+                            Icons.psychology,
                             size: 40,
-                            color: AppColors.primary.withAlpha(50),
+                            color: AppColors.primary.withOpacity(
+                              0.5 + (_animationController.value * 0.5),
+                            ),
                           );
                         },
                       ),
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      'AI Analyzing Lab Results',
+                      'AI Creating Final Outputs',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
@@ -134,7 +136,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Processing lab images to extract findings and generate recommendations',
+                      'Processing recordings and patient data to generate comprehensive documentation',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -157,7 +159,7 @@ class _LabAnalysisViewState extends State<LabAnalysisView>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'Analyzing lab results...',
+                            'Generating documentation...',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
