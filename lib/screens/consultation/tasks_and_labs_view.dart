@@ -1,7 +1,6 @@
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import 'widgets/consultation_progress_indicator.dart';
 import 'widgets/edit_consultation_modal.dart';
@@ -208,7 +207,7 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
                   vertical: 20,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.12),
+                  color: AppColors.primaryLight.withAlpha(30),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,13 +291,6 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,7 +401,7 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: AppColors.inProgressStatusText
-                                          .withOpacity(0.9),
+                                          .withAlpha(230),
                                     ),
                                   ),
                                 ],
