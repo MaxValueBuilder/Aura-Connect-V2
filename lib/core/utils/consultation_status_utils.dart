@@ -89,6 +89,53 @@ class ConsultationStatusUtils {
         status == ConsultationStatus.finalComplete;
   }
 
+  /// Get current step info (step number, title, description) for UI display
+  static Map<String, dynamic> getCurrentStepInfo(ConsultationStatus status) {
+    final stepProgress = getWorkflowProgress(status);
+    final step = stepProgress['step'] as int;
+
+    String title;
+    String description;
+
+    switch (status) {
+      case ConsultationStatus.initialConsult:
+        title = 'Initial Recording';
+        description = 'Record consultation with patient';
+        break;
+      case ConsultationStatus.patientExtraction:
+        title = 'AI Processing';
+        description = 'Extracting patient information';
+        break;
+      case ConsultationStatus.patientReview:
+        title = 'Patient Review';
+        description = 'Review extracted patient info';
+        break;
+      case ConsultationStatus.initialComplete:
+        title = 'Tasks & Labs';
+        description = 'Complete any required tasks';
+        break;
+      case ConsultationStatus.labAnalysis:
+        title = 'Lab Analysis';
+        description = 'Upload and analyze lab results';
+        break;
+      case ConsultationStatus.finalConsult:
+        title = 'Final Recording';
+        description = 'Record final consultation';
+        break;
+      case ConsultationStatus.processing:
+        title = 'AI Processing';
+        description = 'Generating documentation';
+        break;
+      case ConsultationStatus.finalComplete:
+      case ConsultationStatus.complete:
+        title = 'Complete';
+        description = 'Consultation finished';
+        break;
+    }
+
+    return {'step': step, 'title': title, 'description': description};
+  }
+
   /// Get workflow progress information
   static Map<String, dynamic> getWorkflowProgress(ConsultationStatus status) {
     final step = status.stepNumber;

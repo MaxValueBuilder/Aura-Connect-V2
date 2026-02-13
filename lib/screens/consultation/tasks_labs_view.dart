@@ -166,7 +166,6 @@ class _TasksLabsViewState extends State<TasksLabsView> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -234,33 +233,36 @@ class _TasksLabsViewState extends State<TasksLabsView> {
                           (widget.stepInfo['step'] as int) / widget.totalSteps,
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
+                    Column(
                       spacing: 8,
-                      runSpacing: 8,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: screenSize.width * 0.42,
-                          child: PrimaryIconButton(
-                            onPressed: widget.consultationId != null
-                                ? () => _showEditConsultationModal(context)
-                                : () {},
-                            icon: Icons.edit,
-                            text: 'Edit Name & Priority',
-                            fontSize: 14,
-                            verticalPadding: 12,
-                            enabled: widget.consultationId != null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: screenSize.width * 0.42,
-                          child: PrimaryIconButton(
-                            onPressed: widget.onContinue,
-                            icon: Icons.chat_bubble_outline,
-                            text: 'Go to final consult',
-                            fontSize: 14,
-                            verticalPadding: 12,
-                            enabled: true,
-                          ),
+                        Row(
+                          spacing: 8,
+                          children: [
+                            Expanded(
+                              child: PrimaryIconButton(
+                                onPressed: widget.consultationId != null
+                                    ? () => _showEditConsultationModal(context)
+                                    : () {},
+                                icon: Icons.edit,
+                                text: 'Edit Name & Priority',
+                                fontSize: 14,
+                                verticalPadding: 14,
+                                enabled: widget.consultationId != null,
+                              ),
+                            ),
+                            Expanded(
+                              child: PrimaryIconButton(
+                                onPressed: widget.onContinue,
+                                icon: Icons.chat_bubble_outline,
+                                text: 'Go to final consult',
+                                fontSize: 14,
+                                verticalPadding: 12,
+                                enabled: true,
+                              ),
+                            ),
+                          ],
                         ),
                         LabelChip(
                           label: 'Needs lab upload',

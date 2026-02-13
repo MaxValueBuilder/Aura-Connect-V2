@@ -18,7 +18,7 @@ class LabelChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: padding),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: padding),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),

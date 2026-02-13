@@ -129,46 +129,52 @@ class FinalConsultRecordingView extends StatelessWidget {
                     ConsultationProgressIndicator(value: step / totalSteps),
                     const SizedBox(height: 16),
 
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      runAlignment: WrapAlignment.center,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: screenSize.width * 0.42,
-                          child: PrimaryIconButton(
-                            onPressed: () {},
-                            icon: Icons.edit,
-                            text: 'Tasks & lab ',
-                            fontSize: 14,
-                            verticalPadding: 12,
-                            enabled: true,
-                          ),
+                        Row(
+                          spacing: 16,
+                          children: [
+                            Expanded(
+                              child: PrimaryIconButton(
+                                onPressed: () {},
+                                icon: Icons.edit,
+                                text: 'Tasks & lab',
+                                fontSize: 14,
+                                verticalPadding: 14,
+                                enabled: true,
+                              ),
+                            ),
+
+                            Expanded(
+                              child: PrimaryIconButton(
+                                onPressed: () {},
+                                icon: Icons.chat_bubble_outline,
+                                text: 'Initial Recording',
+                                fontSize: 14,
+                                verticalPadding: 14,
+                                enabled: true,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(
-                          width: screenSize.width * 0.42,
-                          child: PrimaryIconButton(
-                            onPressed: () {},
-                            icon: Icons.chat_bubble_outline,
-                            text: 'Initial Recording',
-                            fontSize: 14,
-                            verticalPadding: 12,
-                            enabled: true,
-                          ),
-                        ),
-                        LabelChip(
-                          label: 'INITIAL CONSULT',
-                          textColor: AppColors.primary,
-                          backgroundColor: AppColors.primaryLight.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                        LabelChip(
-                          label: 'Final Recorded',
-                          textColor: const Color(0xFF5F9C75),
-                          backgroundColor: const Color(0xFFDCFCE7),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            LabelChip(
+                              label: 'INITIAL CONSULT',
+                              textColor: AppColors.primary,
+                              backgroundColor: AppColors.primaryLight
+                                  .withValues(alpha: 0.1),
+                            ),
+                            LabelChip(
+                              label: 'Final Recorded',
+                              textColor: const Color(0xFF5F9C75),
+                              backgroundColor: const Color(0xFFDCFCE7),
+                            ),
+                          ],
                         ),
                       ],
                     ),

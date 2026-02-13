@@ -479,7 +479,7 @@ class _SOAPViewState extends State<SOAPView>
                                       enabled: true,
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  SizedBox(width: 16),
                                   Expanded(
                                     child: PrimaryIconButton(
                                       onPressed: () {},
@@ -492,7 +492,7 @@ class _SOAPViewState extends State<SOAPView>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,

@@ -156,55 +156,6 @@ class _ConsultationRecordingScreenState
     }
   }
 
-  Map<String, dynamic> _getCurrentStepInfo() {
-    final stepProgress = ConsultationStatusUtils.getWorkflowProgress(
-      _currentStatus,
-    );
-    final step = stepProgress['step'] as int;
-
-    // Get title and description based on current status
-    String title;
-    String description;
-
-    switch (_currentStatus) {
-      case ConsultationStatus.initialConsult:
-        title = 'Initial Recording';
-        description = 'Record consultation with patient';
-        break;
-      case ConsultationStatus.patientExtraction:
-        title = 'AI Processing';
-        description = 'Extracting patient information';
-        break;
-      case ConsultationStatus.patientReview:
-        title = 'Patient Review';
-        description = 'Review extracted patient info';
-        break;
-      case ConsultationStatus.initialComplete:
-        title = 'Tasks & Labs';
-        description = 'Complete any required tasks';
-        break;
-      case ConsultationStatus.labAnalysis:
-        title = 'Lab Analysis';
-        description = 'Upload and analyze lab results';
-        break;
-      case ConsultationStatus.finalConsult:
-        title = 'Final Recording';
-        description = 'Record final consultation';
-        break;
-      case ConsultationStatus.processing:
-        title = 'AI Processing';
-        description = 'Generating documentation';
-        break;
-      case ConsultationStatus.finalComplete:
-      case ConsultationStatus.complete:
-        title = 'Complete';
-        description = 'Consultation finished';
-        break;
-    }
-
-    return {'step': step, 'title': title, 'description': description};
-  }
-
   Future<void> _handleStartRecording() async {
     try {
       await _recordingService.startRecording(
@@ -714,12 +665,12 @@ class _ConsultationRecordingScreenState
   Widget build(BuildContext context) {
     if (_isLoading && _currentStatus == ConsultationStatus.patientExtraction) {
       return PatientExtractionView(
-        stepInfo: _getCurrentStepInfo(),
+        stepInfo: ConsultationStatusUtils.getCurrentStepInfo(_currentStatus),
         totalSteps: _getTotalSteps(),
       );
     }
 
-    final stepInfo = _getCurrentStepInfo();
+    final stepInfo = ConsultationStatusUtils.getCurrentStepInfo(_currentStatus);
 
     // Recording Interface: initial consult uses RecordingView, final consult uses dedicated view
     if (_currentStatus == ConsultationStatus.initialConsult) {
@@ -790,7 +741,9 @@ class _ConsultationRecordingScreenState
     if (_currentStatus == ConsultationStatus.initialComplete) {
       return BlocListener<ConsultationCubit, ConsultationState>(
         listenWhen: (prev, curr) =>
-            prev.isProcessingAI && !curr.isProcessingAI && _labUploadSuccessCalled,
+            prev.isProcessingAI &&
+            !curr.isProcessingAI &&
+            _labUploadSuccessCalled,
         listener: (context, state) {
           setState(() {
             _labUploadCompleted = true;
