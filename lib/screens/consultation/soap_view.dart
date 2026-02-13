@@ -233,38 +233,38 @@ class _SOAPViewState extends State<SOAPView>
 
   String _getSoapText() {
     return '''
-SOAP Note - ${widget.patientName}
-Date: ${DateTime.now().toString().substring(0, 10)}
+       SOAP Note - ${widget.patientName}
+       Date: ${DateTime.now().toString().substring(0, 10)}
 
-SUBJECTIVE:
-${_soapNote?.subjective ?? 'No data'}
+      SUBJECTIVE:
+      ${_soapNote?.subjective ?? 'No data'}
 
-OBJECTIVE:
-${_soapNote?.objective ?? 'No data'}
+      OBJECTIVE:
+      ${_soapNote?.objective ?? 'No data'}
 
-ASSESSMENT:
-${_soapNote?.assessment ?? 'No data'}
+      ASSESSMENT:
+      ${_soapNote?.assessment ?? 'No data'}
 
-PLAN:
-${_soapNote?.plan ?? 'No data'}
-''';
+      PLAN:
+      ${_soapNote?.plan ?? 'No data'}
+        ''';
   }
 
   String _getHandoutText() {
     return '''
-Client Handout - ${widget.patientName}
-Date: ${DateTime.now().toString().substring(0, 10)}
+        Client Handout - ${widget.patientName}
+        Date: ${DateTime.now().toString().substring(0, 10)}
 
-${_clientHandout?.summary ?? 'Dear Pet Owner,\n\nI hope this message finds you well. I wanted to follow up on your pet\'s recent visit to our clinic.'}
+        ${_clientHandout?.summary ?? 'Dear Pet Owner,\n\nI hope this message finds you well. I wanted to follow up on your pet\'s recent visit to our clinic.'}
 
-${_clientHandout?.homeCare ?? 'Home Care Instructions:\nPlease follow the veterinarian\'s recommendations for home care.'}
+        ${_clientHandout?.homeCare ?? 'Home Care Instructions:\nPlease follow the veterinarian\'s recommendations for home care.'}
 
-${_clientHandout?.medications ?? 'Medication Instructions:\nMedications as prescribed during consultation.'}
+        ${_clientHandout?.medications ?? 'Medication Instructions:\nMedications as prescribed during consultation.'}
 
-${_clientHandout?.followUp ?? 'Follow-up Requirements:\nSchedule follow-up as recommended by veterinarian.'}
+        ${_clientHandout?.followUp ?? 'Follow-up Requirements:\nSchedule follow-up as recommended by veterinarian.'}
 
-${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact veterinarian if symptoms worsen or new concerns arise.'}
-''';
+        ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact veterinarian if symptoms worsen or new concerns arise.'}
+        ''';
   }
 
   Future<void> _shareContent() async {
@@ -315,71 +315,71 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
     }
   }
 
-  Future<void> _exportContent() async {
-    if (_tabController.index == 2) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Billing has no content to export'),
-            backgroundColor: AppColors.textSecondary,
-          ),
-        );
-      }
-      return;
-    }
-    try {
-      final text = _tabController.index == 0
-          ? _getSoapText()
-          : _getHandoutText();
-      final fileName = _tabController.index == 0
-          ? 'SOAP_Note_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt'
-          : 'Client_Handout_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt';
+  // Future<void> _exportContent() async {
+  //   if (_tabController.index == 2) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Billing has no content to export'),
+  //           backgroundColor: AppColors.textSecondary,
+  //         ),
+  //       );
+  //     }
+  //     return;
+  //   }
+  //   try {
+  //     final text = _tabController.index == 0
+  //         ? _getSoapText()
+  //         : _getHandoutText();
+  //     final fileName = _tabController.index == 0
+  //         ? 'SOAP_Note_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt'
+  //         : 'Client_Handout_${widget.patientName}_${DateTime.now().toString().substring(0, 10).replaceAll('-', '_')}.txt';
 
-      // Get temporary directory
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/$fileName');
+  //     // Get temporary directory
+  //     final directory = await getTemporaryDirectory();
+  //     final file = File('${directory.path}/$fileName');
 
-      // Write content to file
-      await file.writeAsString(text);
+  //     // Write content to file
+  //     await file.writeAsString(text);
 
-      // Create XFile for sharing
-      final xFile = XFile(file.path, mimeType: 'text/plain');
+  //     // Create XFile for sharing
+  //     final xFile = XFile(file.path, mimeType: 'text/plain');
 
-      // Share the file - this opens the system share dialog where users can save it
-      final result = await Share.shareXFiles(
-        [xFile],
-        subject: _tabController.index == 0
-            ? 'SOAP Note - ${widget.patientName}'
-            : 'Client Handout - ${widget.patientName}',
-        text: _tabController.index == 0
-            ? 'SOAP Note for ${widget.patientName}'
-            : 'Client Handout for ${widget.patientName}',
-      );
+  //     // Share the file - this opens the system share dialog where users can save it
+  //     final result = await Share.shareXFiles(
+  //       [xFile],
+  //       subject: _tabController.index == 0
+  //           ? 'SOAP Note - ${widget.patientName}'
+  //           : 'Client Handout - ${widget.patientName}',
+  //       text: _tabController.index == 0
+  //           ? 'SOAP Note for ${widget.patientName}'
+  //           : 'Client Handout for ${widget.patientName}',
+  //     );
 
-      if (mounted && result.status == ShareResultStatus.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _tabController.index == 0
-                  ? 'SOAP note saved successfully'
-                  : 'Client handout saved successfully',
-            ),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error exporting: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
+  //     if (mounted && result.status == ShareResultStatus.success) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             _tabController.index == 0
+  //                 ? 'SOAP note saved successfully'
+  //                 : 'Client handout saved successfully',
+  //           ),
+  //           backgroundColor: AppColors.success,
+  //           duration: const Duration(seconds: 2),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error exporting: ${e.toString()}'),
+  //           backgroundColor: AppColors.error,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -436,8 +436,6 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
         ),
       );
     }
-
-    final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: AppBar(
@@ -523,6 +521,7 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
                           const SizedBox(height: 16),
 
                           Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
@@ -550,9 +549,9 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: [
                                   LabelChip(
                                     label: 'INITIAL CONSULT',
@@ -778,20 +777,29 @@ ${_clientHandout?.emergencySigns ?? 'Emergency Signs to Watch For:\nContact vete
       final file = File('${directory.path}/$fileName');
       await file.writeAsString(text);
       final xFile = XFile(file.path, mimeType: 'text/plain');
-      await Share.shareXFiles(
-        [xFile],
-        subject: isHandout
-            ? 'Client Handout - ${widget.patientName}'
-            : 'SOAP Note - ${widget.patientName}',
-        text: isHandout
-            ? 'Client Handout for ${widget.patientName}'
-            : 'SOAP Note for ${widget.patientName}',
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: isHandout
+              ? 'Client Handout - ${widget.patientName}'
+              : 'SOAP Note - ${widget.patientName}',
+          files: [xFile],
+        ),
       );
-      if (mounted) {
+      if (!mounted) return;
+      if (result.status == ShareResultStatus.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Exported successfully'),
             backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else if (result.status == ShareResultStatus.dismissed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Export cancelled'),
+            backgroundColor: AppColors.textSecondary,
             duration: Duration(seconds: 2),
           ),
         );
