@@ -1,11 +1,8 @@
 import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
-import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/consultation_status.dart';
 

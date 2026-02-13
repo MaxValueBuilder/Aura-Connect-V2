@@ -52,7 +52,6 @@ class _ConsultationWorkflowScreenState
   String _notes = '';
   bool _isLoading = false;
   bool _isPaused = false;
-  bool _showLabResults = false;
   bool _labUploadCompleted = false;
   bool _labUploadSuccessCalled = false;
   final TextEditingController _manualTranscriptController =
@@ -620,8 +619,6 @@ class _ConsultationWorkflowScreenState
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _showLabResults =
-            true; // Show results instead of going directly to final consult
       });
     } catch (e) {
       if (!mounted) return;
@@ -644,7 +641,6 @@ class _ConsultationWorkflowScreenState
     setState(() {
       _currentStatus = ConsultationStatus.finalConsult;
       _recordingDuration = 0;
-      _showLabResults = false;
       _manualTranscriptController
           .clear(); // Clear manual transcript for final consult
     });

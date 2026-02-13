@@ -1,6 +1,5 @@
 import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
-import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';

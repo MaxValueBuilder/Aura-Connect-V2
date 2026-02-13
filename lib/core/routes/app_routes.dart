@@ -8,7 +8,6 @@ import 'package:aura/screens/history/history_screen.dart';
 import 'package:aura/screens/landing/landing_screen.dart';
 import 'package:aura/screens/main_navigation_screen.dart';
 import 'package:aura/screens/notifications/notification_history_screen.dart';
-import 'package:aura/screens/patients/add_patient_screen.dart';
 import 'package:aura/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 
