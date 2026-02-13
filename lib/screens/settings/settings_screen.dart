@@ -1,3 +1,6 @@
+import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
+import 'package:aura/screens/widgets/screen_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -25,17 +28,21 @@ class _SettingsScreenState extends State<SettingsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    // Load data when screen initializes
+    // Load data when screen initializes (matches web: getUserProfile, getClinicInfo, getClinicMembers, getNotifStatus)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthCubit>().state;
-      final userEmail = authState.userEmail;
-      if (userEmail != null) {
-        context.read<SettingsCubit>().setUserEmail(userEmail);
+      final user = authState.user;
+      final userId = user?.id;
+      final clinicId = user?.clinicId;
+
+      if (userId != null) {
+        context.read<SettingsCubit>().loadProfile(userId);
+        context.read<SettingsCubit>().loadNotificationPreferences(userId);
       }
-      context.read<SettingsCubit>().loadProfile(userEmail: userEmail);
-      context.read<SettingsCubit>().loadClinic();
-      context.read<SettingsCubit>().loadClinicUsers();
-      context.read<SettingsCubit>().loadNotificationPreferences();
+      if (clinicId != null) {
+        context.read<SettingsCubit>().loadClinic(clinicId);
+        context.read<SettingsCubit>().loadClinicMembers(clinicId);
+      }
     });
   }
 
@@ -56,37 +63,22 @@ class _SettingsScreenState extends State<SettingsScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Settings',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          title: AppBarLogoTitle(),
           backgroundColor: AppColors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
-          bottom: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(icon: Icon(Icons.person_outline, size: 20), text: 'Profile'),
-              Tab(
-                icon: Icon(Icons.business_outlined, size: 20),
-                text: 'Practice',
-              ),
-              Tab(
-                icon: Icon(Icons.credit_card_outlined, size: 20),
-                text: 'Billing',
-              ),
-              Tab(
-                icon: Icon(Icons.notifications_outlined, size: 20),
-                text: 'Notifications',
-              ),
-            ],
-          ),
+          actions: [
+            AppBarIconButton(
+              backgroundColor: AppColors.error,
+              icon: Icons.logout,
+              onPressed: () async {
+                await context.read<AuthCubit>().logout();
+                if (context.mounted) {
+                  AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.landing);
+                }
+              },
+            ),
+          ],
         ),
         body: BlocListener<SettingsCubit, SettingsState>(
           listener: (context, state) {
@@ -109,14 +101,107 @@ class _SettingsScreenState extends State<SettingsScreen>
               context.read<SettingsCubit>().clearSuccess();
             }
           },
-          child: TabBarView(
-            controller: _tabController,
-            children: const [
-              ProfileTab(),
-              PracticeTab(),
-              BillingTab(),
-              NotificationsTab(),
-            ],
+          child: SafeArea(
+            child: Column(
+              children: [
+                ScreenHeader(
+                  title: 'Settings',
+                  subtitle: 'Manage your account, clinic, and preference',
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withAlpha(200),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
+                      labelColor: AppColors.primary,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      dividerColor: Colors.transparent,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.gray100, width: 2),
+                        color: AppColors.white,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 2,
+                        vertical: 2,
+                      ),
+                      tabs: [
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.person_outline, size: 20),
+                              const SizedBox(width: 6),
+                              const Text('Profile'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.business_outlined, size: 20),
+                              const SizedBox(width: 6),
+                              const Text('Practice'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.credit_card_outlined, size: 20),
+                              const SizedBox(width: 6),
+                              const Text('Billing'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.notifications_outlined, size: 20),
+                              const SizedBox(width: 6),
+                              const Text('Notifications'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: const [
+                      ProfileTab(),
+                      PracticeTab(),
+                      BillingTab(),
+                      NotificationsTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

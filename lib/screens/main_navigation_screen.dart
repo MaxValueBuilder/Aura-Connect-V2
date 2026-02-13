@@ -88,6 +88,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       initialIndex: _navigationCubit.state.selectedIndex,
     );
     _tabController.addListener(_onTabIndexChanged);
+    // Load unread count so badge shows immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getIt<NotificationCubit>().refreshUnreadCount();
+    });
   }
 
   void _onTabIndexChanged() {
@@ -224,23 +228,29 @@ class _DarkStyleNavBar extends StatelessWidget {
                             ),
                             if (showBadge)
                               Positioned(
-                                right: -6,
-                                top: -4,
+                                right: -8,
+                                top: -6,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                                    horizontal: 0,
+                                    vertical: 0,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.error,
-                                    borderRadius: BorderRadius.circular(10),
+                                    shape: notificationUnreadCount <= 9
+                                        ? BoxShape.circle
+                                        : BoxShape.rectangle,
+                                    borderRadius: notificationUnreadCount > 9
+                                        ? BorderRadius.circular(12)
+                                        : null,
                                   ),
                                   constraints: const BoxConstraints(
-                                    minWidth: 18,
-                                    minHeight: 18,
+                                    minWidth: 20,
+                                    minHeight: 20,
                                   ),
                                   child: Center(
                                     child: Text(
+                                      // '45',
                                       notificationUnreadCount > 99
                                           ? '99+'
                                           : '$notificationUnreadCount',

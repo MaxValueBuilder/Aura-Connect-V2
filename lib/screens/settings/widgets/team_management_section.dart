@@ -179,7 +179,7 @@ class TeamManagementSection extends StatelessWidget {
     final emailController = TextEditingController();
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
-    String selectedRole = 'veterinarian';
+    String selectedRole = 'Veterinarian';
 
     showDialog(
       context: context,
@@ -249,15 +249,15 @@ class TeamManagementSection extends StatelessWidget {
                               ),
                               items: const [
                                 DropdownMenuItem(
-                                  value: 'veterinarian',
+                                  value: 'Veterinarian',
                                   child: Text('Veterinarian'),
                                 ),
                                 DropdownMenuItem(
-                                  value: 'assistant',
-                                  child: Text('Assistant'),
+                                  value: 'Veterinary Assistant',
+                                  child: Text('Veterinary Assistant'),
                                 ),
                                 DropdownMenuItem(
-                                  value: 'admin',
+                                  value: 'Admin',
                                   child: Text('Admin'),
                                 ),
                               ],
@@ -289,11 +289,14 @@ class TeamManagementSection extends StatelessWidget {
                               Navigator.pop(dialogContext);
 
                               // Invite user in background
+                              final clinicId = context.read<SettingsCubit>().state.clinic?['id']?.toString();
+                              if (clinicId == null) return;
                               await context.read<SettingsCubit>().inviteUser(
                                 email: emailController.text.trim(),
                                 firstName: firstNameController.text.trim(),
                                 lastName: lastNameController.text.trim(),
                                 role: selectedRole,
+                                clinicId: clinicId,
                               );
                             }
                           },
@@ -326,8 +329,11 @@ class TeamManagementSection extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              final clinicId = context.read<SettingsCubit>().state.clinic?['id']?.toString();
+              if (clinicId == null) return;
               final success = await context.read<SettingsCubit>().removeUser(
                 user['id'] as String,
+                clinicId,
               );
               if (success && context.mounted) {
                 Navigator.pop(dialogContext);

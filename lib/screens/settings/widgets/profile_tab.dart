@@ -1,3 +1,4 @@
+import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -73,242 +74,221 @@ class _ProfileTabState extends State<ProfileTab> {
       },
       child: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {
-        if (state.isLoading && state.profile == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          if (state.isLoading && state.profile == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        // Load profile data into controllers only when profile changes
-        // Use postFrameCallback to avoid overwriting user input during typing
-        if (state.profile != null &&
-            (_isInitialLoad || state.profile!.id != _lastLoadedProfileId)) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && state.profile != null) {
-              _loadProfileData(state);
-            }
-          });
-        }
+          // Load profile data into controllers only when profile changes
+          // Use postFrameCallback to avoid overwriting user input during typing
+          if (state.profile != null &&
+              (_isInitialLoad || state.profile!.id != _lastLoadedProfileId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && state.profile != null) {
+                _loadProfileData(state);
+              }
+            });
+          }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Personal Information',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildTextField(
-                  controller: _firstNameController,
-                  label: 'First Name',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 16),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
 
-                _buildTextField(
-                  controller: _lastNameController,
-                  label: 'Last Name',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: TextEditingController(
-                    text: state.profile?.email ?? '',
-                  ),
-                  label: 'Email Address',
-                  icon: Icons.email_outlined,
-                  enabled: false,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Email is linked to your account',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 24),
-                Text(
-                  'Professional Information',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildTextField(
-                  controller: _licenseController,
-                  label: 'Veterinary License',
-                  icon: Icons.badge_outlined,
-                ),
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _specializationController,
-                  label: 'Specialization',
-                  icon: Icons.medical_services_outlined,
-                ),
-
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: state.isSaving
-                        ? null
-                        : () async {
-                            if (_formKey.currentState!.validate()) {
-                              final success = await context
-                                  .read<SettingsCubit>()
-                                  .updateProfile(
-                                    firstName: _firstNameController.text.trim(),
-                                    lastName: _lastNameController.text.trim(),
-                                    phone: _phoneController.text.trim().isEmpty
-                                        ? null
-                                        : _phoneController.text.trim(),
-                                    licenseNumber:
-                                        _licenseController.text.trim().isEmpty
-                                        ? null
-                                        : _licenseController.text.trim(),
-                                    specialization:
-                                        _specializationController.text
-                                            .trim()
-                                            .isEmpty
-                                        ? null
-                                        : _specializationController.text.trim(),
-                                  );
-                              if (success && mounted) {
-                                // Update controllers with the saved profile data
-                                // The state already contains the updated profile from updateProfile
-                                WidgetsBinding.instance.addPostFrameCallback((
-                                  _,
-                                ) {
-                                  if (mounted) {
-                                    final currentState = context
-                                        .read<SettingsCubit>()
-                                        .state;
-                                    if (currentState.profile != null) {
-                                      _loadProfileData(
-                                        currentState,
-                                        forceUpdate: true,
-                                      );
-                                    }
-                                  }
-                                });
-                              }
-                            }
-                          },
-                    icon: state.isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.white,
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: Icon(Icons.person_outline, size: 24),
+                        ),
+                        const SizedBox(width: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Personal Information',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Fraunces',
                               ),
                             ),
-                          )
-                        : const Icon(Icons.save_outlined),
-                    label: Text(state.isSaving ? 'Saving...' : 'Save Changes'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                            Text(
+                              'Update your personal details and contact',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildTextField(
+                      controller: _firstNameController,
+                      label: 'First Name',
+                      icon: Icons.person_outlined,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildTextField(
+                      controller: _lastNameController,
+                      label: 'Last Name',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: TextEditingController(
+                        text: state.profile?.email ?? '',
+                      ),
+                      label: 'Email Address',
+                      icon: Icons.email_outlined,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Email is linked to your account',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 24),
-                BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, authState) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: authState.isLoading
-                            ? null
-                            : () async {
-                                // Show confirmation dialog
-                                final shouldLogout = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Sign Out'),
-                                    content: const Text(
-                                      'Are you sure you want to sign out?',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: AppColors.error,
-                                        ),
-                                        child: const Text('Sign Out'),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                    const SizedBox(height: 24),
+                    _buildTextField(
+                      controller: _phoneController,
+                      label: 'Phone Number',
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(Icons.school_outlined, size: 24),
+                        ),
+                        Text(
+                          'Professional Information',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            fontFamily: 'Fraunces',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildTextField(
+                      controller: _licenseController,
+                      label: 'Veterinary License',
+                      icon: Icons.badge_outlined,
+                    ),
+                    const SizedBox(height: 16),
 
-                                if (shouldLogout == true && mounted) {
-                                  await context.read<AuthCubit>().logout();
+                    _buildTextField(
+                      controller: _specializationController,
+                      label: 'Specialization',
+                      icon: Icons.medical_services_outlined,
+                    ),
+
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: 200,
+                      child: PrimaryIconButton(
+                        onPressed: state.isSaving
+                            ? () {}
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  final profile = context
+                                      .read<SettingsCubit>()
+                                      .state
+                                      .profile;
+                                  if (profile == null) return;
+                                  final success = await context
+                                      .read<SettingsCubit>()
+                                      .updateProfile(
+                                        profile.id,
+                                        firstName: _firstNameController.text
+                                            .trim(),
+                                        lastName: _lastNameController.text
+                                            .trim(),
+                                        phone:
+                                            _phoneController.text.trim().isEmpty
+                                            ? null
+                                            : _phoneController.text.trim(),
+                                        licenseNumber:
+                                            _licenseController.text
+                                                .trim()
+                                                .isEmpty
+                                            ? null
+                                            : _licenseController.text.trim(),
+                                        specialization:
+                                            _specializationController.text
+                                                .trim()
+                                                .isEmpty
+                                            ? null
+                                            : _specializationController.text
+                                                  .trim(),
+                                      );
+                                  if (success && mounted) {
+                                    // Update controllers with the saved profile data
+                                    // The state already contains the updated profile from updateProfile
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            final currentState = context
+                                                .read<SettingsCubit>()
+                                                .state;
+                                            if (currentState.profile != null) {
+                                              _loadProfileData(
+                                                currentState,
+                                                forceUpdate: true,
+                                              );
+                                            }
+                                          }
+                                        });
+                                  }
                                 }
                               },
-                        icon: authState.isLoading
+                        icon: state.isSaving
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.error,
+                                    AppColors.white,
                                   ),
                                 ),
                               )
-                            : const Icon(Icons.logout),
-                        label: Text(
-                          authState.isLoading ? 'Signing out...' : 'Sign Out',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: const BorderSide(color: AppColors.error),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
+                            : Icons.save_outlined,
+                        text: state.isSaving ? 'Saving...' : 'Save Changes',
+                        fontSize: 16,
+                        verticalPadding: 16,
+                        enabled: !state.isSaving,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
       ),
     );
   }

@@ -14,7 +14,9 @@ class PrimaryIconButton extends StatelessWidget {
   });
 
   final VoidCallback onPressed;
-  final IconData icon;
+
+  /// Icon: [IconData] for a simple icon, or [Widget] for custom content (e.g. loading spinner).
+  final Object icon;
   final String text;
   final double fontSize;
   final double verticalPadding;
@@ -23,13 +25,17 @@ class PrimaryIconButton extends StatelessWidget {
   /// and uses Flutter's default disabled styling.
   final bool enabled;
 
+  Widget get _iconWidget => icon is IconData
+      ? Icon(icon as IconData, size: fontSize + 2)
+      : icon as Widget;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: enabled ? onPressed : null,
-        icon: Icon(icon, size: fontSize + 2),
+        icon: _iconWidget,
         label: Text(text, style: TextStyle(fontSize: fontSize)),
         style: ElevatedButton.styleFrom(
           side: BorderSide(color: AppColors.primary),

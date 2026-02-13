@@ -18,14 +18,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
   bool _inAppNotifications = true;
   bool _isInitialized = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Load preferences when widget initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SettingsCubit>().loadNotificationPreferences();
-    });
-  }
+  // Notification preferences are loaded by SettingsScreen on init
 
   void _updateLocalStateFromBackend(SettingsState state) {
     if (state.notificationPreferences != null && !_isInitialized) {
@@ -53,53 +46,43 @@ class _NotificationsTabState extends State<NotificationsTab> {
     String key,
     bool value,
     SettingsCubit cubit,
+    String? userId,
   ) async {
+    if (userId == null) return;
+
     // Update local state immediately for responsive UI
+    final newConsultation = key == 'emailConsultationCompletion' ? value : _emailConsultationReminders;
+    final newSystemAlerts = key == 'emailSystemAlerts' ? value : _emailSystemAlerts;
+    final newBillingUpdates = key == 'emailBillingUpdates' ? value : _emailBillingUpdates;
+    final newInApp = key == 'inAppNotifications' ? value : _inAppNotifications;
+
     setState(() {
-      switch (key) {
-        case 'emailConsultationCompletion':
-          _emailConsultationReminders = value;
-          break;
-        case 'emailSystemAlerts':
-          _emailSystemAlerts = value;
-          break;
-        case 'emailBillingUpdates':
-          _emailBillingUpdates = value;
-          break;
-        case 'inAppNotifications':
-          _inAppNotifications = value;
-          break;
-      }
+      _emailConsultationReminders = newConsultation;
+      _emailSystemAlerts = newSystemAlerts;
+      _emailBillingUpdates = newBillingUpdates;
+      _inAppNotifications = newInApp;
     });
 
-    // Auto-save to backend
-    final success = await cubit.updateNotificationPreferences(
-      emailConsultationCompletion: key == 'emailConsultationCompletion'
-          ? value
-          : null,
-      emailSystemAlerts: key == 'emailSystemAlerts' ? value : null,
-      emailBillingUpdates: key == 'emailBillingUpdates' ? value : null,
-      inAppNotifications: key == 'inAppNotifications' ? value : null,
-    );
+    // Auto-save to backend (send full notif map, matches web)
+    final notif = <String, bool>{
+      'emailConsultationCompletion': newConsultation,
+      'emailSystemAlerts': newSystemAlerts,
+      'emailBillingUpdates': newBillingUpdates,
+      'inAppNotifications': newInApp,
+    };
+    final success = await cubit.updateNotificationPreferences(userId, notif);
 
     // Revert state on error
     if (!success && mounted) {
-      setState(() {
-        switch (key) {
-          case 'emailConsultationCompletion':
-            _emailConsultationReminders = !value;
-            break;
-          case 'emailSystemAlerts':
-            _emailSystemAlerts = !value;
-            break;
-          case 'emailBillingUpdates':
-            _emailBillingUpdates = !value;
-            break;
-          case 'inAppNotifications':
-            _inAppNotifications = !value;
-            break;
-        }
-      });
+      final prefs = cubit.state.notificationPreferences;
+      if (prefs != null) {
+        setState(() {
+          _emailConsultationReminders = prefs['emailConsultationCompletion'] ?? true;
+          _emailSystemAlerts = prefs['emailSystemAlerts'] ?? true;
+          _emailBillingUpdates = prefs['emailBillingUpdates'] ?? true;
+          _inAppNotifications = prefs['inAppNotifications'] ?? true;
+        });
+      }
     }
   }
 
@@ -169,6 +152,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
                     'emailConsultationCompletion',
                     value,
                     context.read<SettingsCubit>(),
+                    state.profile?.id,
                   );
                 },
               ),
@@ -183,6 +167,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
                     'emailSystemAlerts',
                     value,
                     context.read<SettingsCubit>(),
+                    state.profile?.id,
                   );
                 },
               ),
@@ -197,6 +182,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
                     'emailBillingUpdates',
                     value,
                     context.read<SettingsCubit>(),
+                    state.profile?.id,
                   );
                 },
               ),
@@ -232,6 +218,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
                     'inAppNotifications',
                     value,
                     context.read<SettingsCubit>(),
+                    state.profile?.id,
                   );
                 },
               ),

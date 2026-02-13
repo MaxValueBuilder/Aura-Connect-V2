@@ -5,22 +5,14 @@ import 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
   final SettingsService _settingsService;
-  String? _userEmail;
 
   SettingsCubit(this._settingsService) : super(const SettingsState());
 
-  /// Set user email for filtering profile
-  void setUserEmail(String email) {
-    _userEmail = email;
-  }
-
-  /// Load user profile
-  Future<void> loadProfile({String? userEmail}) async {
+  /// Load user profile – requires userId
+  Future<void> loadProfile(String userId) async {
     try {
       emit(state.copyWith(isLoading: true, errorMessage: null));
-      final profile = await _settingsService.getProfile(
-        userEmail: userEmail ?? _userEmail,
-      );
+      final profile = await _settingsService.getProfile(userId);
       emit(state.copyWith(profile: profile, isLoading: false));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
@@ -28,7 +20,10 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   /// Update user profile
-  Future<bool> updateProfile({
+  Future<bool> updateProfile(
+    String userId, {
+    String? avatar,
+    String? email,
     String? firstName,
     String? lastName,
     String? phone,
@@ -36,7 +31,6 @@ class SettingsCubit extends Cubit<SettingsState> {
     String? specialization,
   }) async {
     try {
-      log('🔍 [SettingsCubit] Updating profile...');
       emit(
         state.copyWith(
           isSaving: true,
@@ -45,8 +39,10 @@ class SettingsCubit extends Cubit<SettingsState> {
         ),
       );
 
-      log('🔍 [SettingsCubit] Calling settings service...');
       final updatedProfile = await _settingsService.updateProfile(
+        userId,
+        avatar: avatar,
+        email: email,
         firstName: firstName,
         lastName: lastName,
         phone: phone,
@@ -54,9 +50,6 @@ class SettingsCubit extends Cubit<SettingsState> {
         specialization: specialization,
       );
 
-      log(
-        '✅ [SettingsCubit] Profile updated successfully: ${updatedProfile.email}',
-      );
       emit(
         state.copyWith(
           profile: updatedProfile,
@@ -67,8 +60,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       );
       return true;
     } catch (e, stackTrace) {
-      log('❌ [SettingsCubit] Error updating profile: $e');
-      log('❌ [SettingsCubit] Stack trace: $stackTrace');
+      log('Error updating profile: $e\n$stackTrace');
       emit(
         state.copyWith(
           isSaving: false,
@@ -80,16 +72,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  /// Load clinic information
-  Future<void> loadClinic() async {
+  /// Load clinic information – requires clinicId
+  Future<void> loadClinic(String clinicId) async {
     try {
       emit(state.copyWith(isLoading: true, errorMessage: null));
-      final clinic = await _settingsService.getClinic();
-      final users = clinic['users'] as List<dynamic>? ?? [];
+      final clinic = await _settingsService.getClinic(clinicId);
       emit(
         state.copyWith(
           clinic: clinic,
-          clinicUsers: users.cast<Map<String, dynamic>>(),
           isLoading: false,
         ),
       );
@@ -99,7 +89,8 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   /// Update clinic information
-  Future<bool> updateClinic({
+  Future<bool> updateClinic(
+    String clinicId, {
     String? name,
     String? address,
     String? phone,
@@ -115,17 +106,19 @@ class SettingsCubit extends Cubit<SettingsState> {
           successMessage: null,
         ),
       );
-      final updatedClinic = await _settingsService.updateClinic(
-        name: name,
-        address: address,
+      await _settingsService.updateClinic(
+        clinicId,
+        clinicName: name,
+        clinicAddress: address,
         phone: phone,
         email: email,
         website: website,
-        licenseNumber: licenseNumber,
+        clinicLicense: licenseNumber,
       );
+      // Refetch clinic to get updated data (server may not return body on success)
+      await loadClinic(clinicId);
       emit(
         state.copyWith(
-          clinic: updatedClinic,
           isSaving: false,
           successMessage: 'Clinic updated successfully',
           clearError: true,
@@ -144,11 +137,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  /// Load clinic users
-  Future<void> loadClinicUsers() async {
+  /// Load clinic members (team) – requires clinicId
+  Future<void> loadClinicMembers(String clinicId) async {
     try {
       emit(state.copyWith(isLoading: true, errorMessage: null));
-      final users = await _settingsService.getClinicUsers();
+      final users = await _settingsService.getClinicMembers(clinicId);
       emit(state.copyWith(clinicUsers: users, isLoading: false));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
@@ -161,6 +154,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     required String firstName,
     required String lastName,
     required String role,
+    required String clinicId,
   }) async {
     try {
       emit(
@@ -176,8 +170,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         lastName: lastName,
         role: role,
       );
-      // Reload clinic users
-      await loadClinicUsers();
+      await loadClinicMembers(clinicId);
       emit(
         state.copyWith(
           isInviting: false,
@@ -199,18 +192,17 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   /// Remove user from clinic
-  Future<bool> removeUser(String userId) async {
+  Future<bool> removeUser(String userId, String clinicId) async {
     try {
       emit(
         state.copyWith(
-          isInviting: true, // Use isInviting for user removal too
+          isInviting: true,
           errorMessage: null,
           successMessage: null,
         ),
       );
       await _settingsService.removeUser(userId);
-      // Reload clinic users
-      await loadClinicUsers();
+      await loadClinicMembers(clinicId);
       emit(
         state.copyWith(
           isInviting: false,
@@ -231,21 +223,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  /// Clear error message
-  void clearError() {
-    emit(state.copyWith(clearError: true));
-  }
+  void clearError() => emit(state.copyWith(clearError: true));
+  void clearSuccess() => emit(state.copyWith(clearSuccess: true));
 
-  /// Clear success message
-  void clearSuccess() {
-    emit(state.copyWith(clearSuccess: true));
-  }
-
-  /// Load notification preferences
-  Future<void> loadNotificationPreferences() async {
+  /// Load notification preferences – requires userId
+  Future<void> loadNotificationPreferences(String userId) async {
     try {
       emit(state.copyWith(isLoadingNotifications: true, errorMessage: null));
-      final preferences = await _settingsService.getNotificationPreferences();
+      final preferences = await _settingsService.getNotificationPreferences(userId);
       emit(
         state.copyWith(
           notificationPreferences: preferences,
@@ -262,13 +247,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  /// Update notification preferences (auto-save)
-  Future<bool> updateNotificationPreferences({
-    bool? emailConsultationCompletion,
-    bool? emailSystemAlerts,
-    bool? emailBillingUpdates,
-    bool? inAppNotifications,
-  }) async {
+  /// Update notification preferences (sends full notif map, matches web)
+  Future<bool> updateNotificationPreferences(
+    String userId,
+    Map<String, bool> notif,
+  ) async {
     try {
       emit(
         state.copyWith(
@@ -277,19 +260,13 @@ class SettingsCubit extends Cubit<SettingsState> {
           successMessage: null,
         ),
       );
-      final updatedPreferences = await _settingsService
-          .updateNotificationPreferences(
-            emailConsultationCompletion: emailConsultationCompletion,
-            emailSystemAlerts: emailSystemAlerts,
-            emailBillingUpdates: emailBillingUpdates,
-            inAppNotifications: inAppNotifications,
-          );
+      await _settingsService.updateNotificationPreferences(userId, notif);
       emit(
         state.copyWith(
-          notificationPreferences: updatedPreferences,
+          notificationPreferences: notif,
           isSavingNotifications: false,
           clearError: true,
-          clearSuccess: true, // Don't show success message for auto-save
+          clearSuccess: true,
         ),
       );
       return true;

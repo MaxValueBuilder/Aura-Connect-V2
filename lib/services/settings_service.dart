@@ -2,72 +2,31 @@ import 'package:dio/dio.dart';
 import '../core/error/exceptions.dart';
 import '../models/user_model.dart';
 
-/// Service for settings-related API calls (profile, clinic, etc.)
+/// Service for settings-related API calls.
+/// Matches web API: getUserProfile, updateUserProfile, getClinicInfo, updateClinicInfo,
+/// getClinicMembers, removeUser, inviteUser, getNotifStatus, updateNotif.
 class SettingsService {
   final Dio _dio;
 
   SettingsService(this._dio);
 
-  /// Get current user profile
-  /// Note: Backend doesn't have a GET /users/profile endpoint,
-  /// so we get the user from the users list by email
-  Future<UserModel> getProfile({String? userEmail}) async {
+  /// Get user profile – GET /api/users/:userId
+  Future<UserModel> getProfile(String userId) async {
     try {
-      print('🔍 [SettingsService] Getting profile for email: $userEmail');
-      // Get all users and find the current user by email
-      // The backend returns users filtered by clinic
-      final response = await _dio.get('/users');
-      print('🔍 [SettingsService] Response status: ${response.statusCode}');
-      print(
-        '🔍 [SettingsService] Response data type: ${response.data.runtimeType}',
-      );
-      print('🔍 [SettingsService] Full response data: ${response.data}');
-
-      final users = response.data['users'] as List<dynamic>? ?? [];
-      print('🔍 [SettingsService] Users list length: ${users.length}');
-
-      if (users.isEmpty) {
-        throw Exception('User not found');
-      }
-
-      // If email is provided, filter by it; otherwise return first user
-      Map<String, dynamic> userMap;
-      if (userEmail != null) {
-        print('🔍 [SettingsService] Filtering by email: $userEmail');
-        final foundUser = users.firstWhere(
-          (user) => (user as Map<String, dynamic>)['email'] == userEmail,
-          orElse: () => users.first,
-        );
-        userMap = foundUser as Map<String, dynamic>;
-      } else {
-        userMap = users.first as Map<String, dynamic>;
-      }
-
-      print('🔍 [SettingsService] User map: $userMap');
-      print('🔍 [SettingsService] User map keys: ${userMap.keys.toList()}');
-
-      // Log each field
-      userMap.forEach((key, value) {
-        print(
-          '🔍 [SettingsService] User - $key: $value (type: ${value.runtimeType})',
-        );
-      });
-
-      final user = UserModel.fromJson(userMap);
-      print('✅ [SettingsService] Successfully parsed user: ${user.email}');
-      return user;
+      final response = await _dio.get('/users/$userId');
+      final userMap = response.data['user'] as Map<String, dynamic>?;
+      if (userMap == null) throw Exception('User not found');
+      return UserModel.fromJson(userMap);
     } on DioException catch (e) {
-      print('❌ [SettingsService] DioException: $e');
       throw _handleError(e);
-    } catch (e, stackTrace) {
-      print('❌ [SettingsService] Unexpected error: $e');
-      print('❌ [SettingsService] Stack trace: $stackTrace');
-      rethrow;
     }
   }
 
-  /// Update user profile
-  Future<UserModel> updateProfile({
+  /// Update user profile – PUT /api/users/:userId
+  Future<UserModel> updateProfile(
+    String userId, {
+    String? avatar,
+    String? email,
     String? firstName,
     String? lastName,
     String? phone,
@@ -75,203 +34,148 @@ class SettingsService {
     String? specialization,
   }) async {
     try {
-      print('🔍 [SettingsService] Updating profile with data:');
-      print('🔍 [SettingsService] - firstName: $firstName');
-      print('🔍 [SettingsService] - lastName: $lastName');
-      print('🔍 [SettingsService] - phone: $phone');
-      print('🔍 [SettingsService] - licenseNumber: $licenseNumber');
-      print('🔍 [SettingsService] - specialization: $specialization');
+      final data = <String, dynamic>{};
+      if (avatar != null) data['avatar'] = avatar;
+      if (email != null) data['email'] = email;
+      if (firstName != null) data['firstName'] = firstName;
+      if (lastName != null) data['lastName'] = lastName;
+      if (phone != null) data['phone'] = phone;
+      if (licenseNumber != null) data['licenseNumber'] = licenseNumber;
+      if (specialization != null) data['specialization'] = specialization;
 
-      final requestData = {
-        if (firstName != null) 'firstName': firstName,
-        if (lastName != null) 'lastName': lastName,
-        if (phone != null) 'phone': phone,
-        if (licenseNumber != null) 'licenseNumber': licenseNumber,
-        if (specialization != null) 'specialization': specialization,
-        'sendNotification': true, // Trigger system alert notification
-      };
-      print('🔍 [SettingsService] Request data: $requestData');
-
-      final response = await _dio.put('/users/profile', data: requestData);
-
-      print('🔍 [SettingsService] Response status: ${response.statusCode}');
-      print('🔍 [SettingsService] Response data: ${response.data}');
-      print(
-        '🔍 [SettingsService] Response data type: ${response.data.runtimeType}',
-      );
-
-      final userData =
-          response.data['user'] as Map<String, dynamic>? ?? response.data;
-      print('🔍 [SettingsService] User data: $userData');
-      print('🔍 [SettingsService] User data keys: ${userData.keys.toList()}');
-
-      // Log each field
-      userData.forEach((key, value) {
-        print(
-          '🔍 [SettingsService] User - $key: $value (type: ${value.runtimeType})',
-        );
-      });
-
-      final user = UserModel.fromJson(userData);
-      print(
-        '✅ [SettingsService] Successfully parsed updated user: ${user.email}',
-      );
-      return user;
+      final response = await _dio.put('/users/$userId', data: data);
+      final raw = response.data;
+      final userMap = raw is Map && raw['user'] != null
+          ? raw['user'] as Map<String, dynamic>
+          : raw as Map<String, dynamic>;
+      return UserModel.fromJson(Map<String, dynamic>.from(userMap));
     } on DioException catch (e) {
-      print('❌ [SettingsService] DioException: $e');
-      if (e.response != null) {
-        print('❌ [SettingsService] Response data: ${e.response!.data}');
-      }
       throw _handleError(e);
-    } catch (e, stackTrace) {
-      print('❌ [SettingsService] Unexpected error: $e');
-      print('❌ [SettingsService] Stack trace: $stackTrace');
-      rethrow;
     }
   }
 
-  /// Get clinic information
-  Future<Map<String, dynamic>> getClinic() async {
+  /// Get clinic info – GET /api/clinic/:clinicId
+  Future<Map<String, dynamic>> getClinic(String clinicId) async {
     try {
-      final response = await _dio.get('/clinic');
+      final response = await _dio.get('/clinic/$clinicId');
       return response.data['clinic'] as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Update clinic information
-  Future<Map<String, dynamic>> updateClinic({
-    String? name,
-    String? address,
+  /// Update clinic info – PUT /api/clinic/:clinicId
+  Future<void> updateClinic(
+    String clinicId, {
+    String? clinicName,
+    String? clinicAddress,
     String? phone,
     String? email,
     String? website,
-    String? licenseNumber,
+    String? clinicLicense,
   }) async {
     try {
-      final response = await _dio.put(
-        '/clinic',
-        data: {
-          if (name != null) 'name': name,
-          if (address != null) 'address': address,
-          if (phone != null) 'phone': phone,
-          if (email != null) 'email': email,
-          if (website != null) 'website': website,
-          if (licenseNumber != null) 'licenseNumber': licenseNumber,
-          'sendNotification': true,
-        },
-      );
-      return response.data['clinic'] as Map<String, dynamic>;
+      final data = <String, dynamic>{};
+      if (clinicName != null) data['clinicName'] = clinicName;
+      if (clinicAddress != null) data['clinicAddress'] = clinicAddress;
+      if (phone != null) data['phone'] = phone;
+      if (email != null) data['email'] = email;
+      if (website != null) data['website'] = website;
+      if (clinicLicense != null) data['clinicLicense'] = clinicLicense;
+
+      await _dio.put('/clinic/$clinicId', data: data);
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Get clinic users (team members)
-  Future<List<Map<String, dynamic>>> getClinicUsers() async {
+  /// Get clinic members – GET /api/clinic/getmembers/:clinicId
+  Future<List<Map<String, dynamic>>> getClinicMembers(String clinicId) async {
     try {
-      final response = await _dio.get('/clinic');
-      final clinic = response.data['clinic'] as Map<String, dynamic>;
-      final users = clinic['users'] as List<dynamic>? ?? [];
+      final response = await _dio.get('/clinic/getmembers/$clinicId');
+      final users = response.data['users'] as List<dynamic>? ?? [];
       return users.cast<Map<String, dynamic>>();
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Invite user to clinic
+  /// Remove user from clinic – DELETE /api/clinic/removeuser/:userId
+  Future<void> removeUser(String userId) async {
+    try {
+      await _dio.delete('/clinic/removeuser/$userId');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Invite user to clinic – POST /api/clinic/invite
   Future<Map<String, dynamic>> inviteUser({
-    required String email,
     required String firstName,
     required String lastName,
+    required String email,
     required String role,
   }) async {
     try {
       final response = await _dio.post(
         '/clinic/invite',
         data: {
-          'email': email,
           'firstName': firstName,
           'lastName': lastName,
+          'email': email,
           'role': role,
         },
       );
-      return response.data;
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Remove user from clinic
-  Future<void> removeUser(String userId) async {
+  /// Get notification preferences – GET /api/notifications/getstatus/:userId
+  /// Returns { success, status } with status: { emailConsultationCompletion, emailSystemAlerts, emailBillingUpdates, inAppNotifications }
+  Future<Map<String, bool>> getNotificationPreferences(String userId) async {
     try {
-      await _dio.delete('/clinic/users/$userId');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Get notification preferences
-  Future<Map<String, bool>> getNotificationPreferences() async {
-    try {
-      final response = await _dio.get('/users/notifications');
-      final preferences = response.data['preferences'] as Map<String, dynamic>;
+      final response = await _dio.get('/notifications/getstatus/$userId');
+      final status = response.data['status'] as Map<String, dynamic>?;
+      if (status == null) {
+        return {
+          'emailConsultationCompletion': true,
+          'emailSystemAlerts': true,
+          'emailBillingUpdates': true,
+          'inAppNotifications': true,
+        };
+      }
       return {
-        'emailConsultationCompletion':
-            preferences['emailConsultationCompletion'] as bool? ?? true,
-        'emailSystemAlerts': preferences['emailSystemAlerts'] as bool? ?? true,
-        'emailBillingUpdates':
-            preferences['emailBillingUpdates'] as bool? ?? true,
-        'inAppNotifications':
-            preferences['inAppNotifications'] as bool? ?? true,
+        'emailConsultationCompletion': status['emailConsultationCompletion'] as bool? ?? true,
+        'emailSystemAlerts': status['emailSystemAlerts'] as bool? ?? true,
+        'emailBillingUpdates': status['emailBillingUpdates'] as bool? ?? true,
+        'inAppNotifications': status['inAppNotifications'] as bool? ?? true,
       };
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Update notification preferences
-  Future<Map<String, bool>> updateNotificationPreferences({
-    bool? emailConsultationCompletion,
-    bool? emailSystemAlerts,
-    bool? emailBillingUpdates,
-    bool? inAppNotifications,
-  }) async {
+  /// Update notification preferences – PUT /api/notifications/update
+  /// Body: { userId, notif: { emailConsultationCompletion, emailSystemAlerts, emailBillingUpdates, inAppNotifications } }
+  Future<void> updateNotificationPreferences(
+    String userId,
+    Map<String, bool> notif,
+  ) async {
     try {
-      final requestData = <String, dynamic>{};
-      if (emailConsultationCompletion != null) {
-        requestData['emailConsultationCompletion'] =
-            emailConsultationCompletion;
-      }
-      if (emailSystemAlerts != null) {
-        requestData['emailSystemAlerts'] = emailSystemAlerts;
-      }
-      if (emailBillingUpdates != null) {
-        requestData['emailBillingUpdates'] = emailBillingUpdates;
-      }
-      if (inAppNotifications != null) {
-        requestData['inAppNotifications'] = inAppNotifications;
-      }
-
-      final response = await _dio.put(
-        '/users/notifications',
-        data: requestData,
-      );
-      final preferences = response.data['preferences'] as Map<String, dynamic>;
-      return {
-        'emailConsultationCompletion':
-            preferences['emailConsultationCompletion'] as bool,
-        'emailSystemAlerts': preferences['emailSystemAlerts'] as bool,
-        'emailBillingUpdates': preferences['emailBillingUpdates'] as bool,
-        'inAppNotifications': preferences['inAppNotifications'] as bool,
+      final notifMap = <String, dynamic>{
+        'emailConsultationCompletion': notif['emailConsultationCompletion'] ?? true,
+        'emailSystemAlerts': notif['emailSystemAlerts'] ?? true,
+        'emailBillingUpdates': notif['emailBillingUpdates'] ?? true,
+        'inAppNotifications': notif['inAppNotifications'] ?? true,
       };
+      await _dio.put('/notifications/update', data: {'userId': userId, 'notif': notifMap});
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Handle Dio errors
   Exception _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;

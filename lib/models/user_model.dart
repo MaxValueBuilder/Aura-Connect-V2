@@ -13,6 +13,8 @@ class UserModel extends Equatable {
   final String? licenseNumber;
   final String? specialization;
   final String? phone;
+  final String? clinicId;
+  final String? avatar;
   final bool isActive;
   final DateTime? lastLogin;
   final DateTime createdAt;
@@ -32,6 +34,8 @@ class UserModel extends Equatable {
     this.licenseNumber,
     this.specialization,
     this.phone,
+    this.clinicId,
+    this.avatar,
     required this.isActive,
     this.lastLogin,
     required this.createdAt,
@@ -55,6 +59,8 @@ class UserModel extends Equatable {
       licenseNumber: json['licenseNumber']?.toString(),
       specialization: json['specialization']?.toString(),
       phone: json['phone']?.toString(),
+      clinicId: json['clinicId']?.toString(),
+      avatar: json['avatar']?.toString(),
       isActive: json['isActive'] as bool? ?? true,
       lastLogin: json['lastLogin'] != null
           ? (json['lastLogin'] is String
@@ -99,6 +105,8 @@ class UserModel extends Equatable {
     String? licenseNumber,
     String? specialization,
     String? phone,
+    String? clinicId,
+    String? avatar,
     bool? isActive,
     DateTime? lastLogin,
     DateTime? createdAt,
@@ -117,6 +125,8 @@ class UserModel extends Equatable {
       licenseNumber: licenseNumber ?? this.licenseNumber,
       specialization: specialization ?? this.specialization,
       phone: phone ?? this.phone,
+      clinicId: clinicId ?? this.clinicId,
+      avatar: avatar ?? this.avatar,
       isActive: isActive ?? this.isActive,
       lastLogin: lastLogin ?? this.lastLogin,
       createdAt: createdAt ?? this.createdAt,
@@ -139,6 +149,8 @@ class UserModel extends Equatable {
     licenseNumber,
     specialization,
     phone,
+    clinicId,
+    avatar,
     isActive,
     lastLogin,
     createdAt,

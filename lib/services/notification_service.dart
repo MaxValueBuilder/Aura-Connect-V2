@@ -34,21 +34,15 @@ class NotificationService {
           )
           .toList();
 
+      // Server returns only { notifications }; derive counts client-side (matches web)
+      final totalCount = notifications.length;
+      final unreadCount = notifications.where((n) => !n.read).length;
+
       return {
         'notifications': notifications,
-        'totalCount': response.data['totalCount'] ?? 0,
-        'unreadCount': response.data['unreadCount'] ?? 0,
+        'totalCount': totalCount,
+        'unreadCount': unreadCount,
       };
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Get unread notification count
-  Future<int> getUnreadCount() async {
-    try {
-      final response = await _dio.get('/notifications/unread-count');
-      return response.data['count'] ?? 0;
     } on DioException catch (e) {
       throw _handleError(e);
     }
