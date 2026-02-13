@@ -1,3 +1,8 @@
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
+import 'package:aura/screens/widgets/app_bar_logo_title.dart';
+import 'package:aura/screens/widgets/primary_icon_button.dart';
+import 'package:aura/screens/widgets/screen_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -26,14 +31,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-
+        title: AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -61,50 +59,30 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
             child: Column(
               children: [
                 // Header with stats and mark all as read
-                Container(
-                  padding: const EdgeInsets.all(16),
-
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            state.unreadCount > 0
-                                ? '${state.unreadCount} unread'
-                                : 'All caught up •',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${state.totalCount} total',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (state.unreadCount > 0)
-                        TextButton.icon(
+                ScreenHeader(
+                  title: 'Notifications',
+                  subtitle: 'All caught up • ${state.totalCount} Total',
+                ),
+                const SizedBox(height: 16),
+                if (state.unreadCount > 0)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: SizedBox(
+                        width: 160,
+                        child: PrimaryIconButton(
                           onPressed: state.isMarkingAsRead
-                              ? null
+                              ? () {}
                               : () => context
                                     .read<NotificationCubit>()
                                     .markAllAsRead(),
-                          icon: const Icon(Icons.done_all, size: 18),
-                          label: const Text('Mark all as read'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                          ),
+                          icon: Icons.done_all,
+                          text: 'Mark all as read',
                         ),
-                    ],
+                      ),
+                    ),
                   ),
-                ),
 
                 // Notifications list
                 Expanded(
@@ -142,19 +120,19 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     NotificationModel notification,
     bool isExpanded,
   ) {
-    return Card(
-      elevation: notification.read ? 0 : 2,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: notification.read ? AppColors.border : AppColors.primary,
-          width: notification.read ? 1 : 2,
+        color: notification.read ? AppColors.white : AppColors.successLight,
+        border: Border(
+          left: BorderSide(
+            color: notification.read ? Colors.transparent : AppColors.success,
+            width: 4,
+          ),
         ),
       ),
-      color: notification.read
-          ? AppColors.white
-          : AppColors.white.withValues(alpha: 0.05),
+
       child: InkWell(
         onTap: () =>
             context.read<NotificationCubit>().toggleExpansion(notification.id),
@@ -162,137 +140,115 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Notification header
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _getNotificationIconColor(
-                        notification.type,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      _getNotificationIcon(notification.type),
-                      color: _getNotificationIconColor(notification.type),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  // Row 1: Icon + Title | Delete + Expand
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _getNotificationIcon(notification.type),
+                        color: _getNotificationIconColor(notification.type),
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: Row(
                           children: [
-                            Expanded(
+                            Flexible(
                               child: Text(
                                 notification.title,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
+                                  fontFamily: 'Fraunces',
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (!notification.read)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                  'New',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            if (!notification.read) ...[
+                              const SizedBox(width: 4),
+                              LabelChip(
+                                label: 'New',
+                                textColor: AppColors.white,
+                                backgroundColor: AppColors.primary,
+                                padding: 4,
                               ),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          notification.message,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: isExpanded ? null : 2,
-                          overflow: isExpanded ? null : TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Chip(
-                              label: Text(
-                                _getNotificationTypeLabel(notification.type),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              backgroundColor: AppColors.primaryLight
-                                  .withValues(alpha: 0.2),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 0,
-                              ),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              side: BorderSide.none,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _formatDate(notification.createdAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Actions
-                  Column(
-                    children: [
+                      ),
                       IconButton(
                         icon: Icon(
-                          isExpanded ? Icons.expand_less : Icons.expand_more,
+                          Icons.delete_outline,
+                          color: AppColors.error,
+                          size: 22,
+                        ),
+                        onPressed: () => _showDeleteDialog(notification),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        style: IconButton.styleFrom(
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(
+                          isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
                           color: AppColors.textSecondary,
+                          size: 24,
                         ),
                         onPressed: () => context
                             .read<NotificationCubit>()
                             .toggleExpansion(notification.id),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: AppColors.error,
-                          size: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        style: IconButton.styleFrom(
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        onPressed: () => _showDeleteDialog(notification),
                       ),
                     ],
+                  ),
+                  // Row 2: Category tag (pill)
+                  const SizedBox(height: 12),
+                  LabelChip(
+                    label: _getNotificationTypeLabel(notification.type),
+                    textColor: AppColors.textPrimary,
+                    backgroundColor: AppColors.primaryLight.withAlpha(25),
+                    padding: 6,
+                  ),
+                  // Row 3: Message/Description
+                  const SizedBox(height: 12),
+                  Text(
+                    notification.message,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: isExpanded ? null : 2,
+                    overflow: isExpanded ? null : TextOverflow.ellipsis,
+                  ),
+                  // Row 4: Timestamp (relative • absolute)
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatTimestamp(notification.createdAt),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-
             // Expanded details
             if (isExpanded) _buildNotificationDetails(notification),
           ],
@@ -307,11 +263,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.gray50,
+        color: AppColors.white,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(12),
           bottomRight: Radius.circular(12),
         ),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,31 +382,36 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Text(
-            'Consultation',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.info,
-            ),
-          ),
-        ),
-        if (data['consultationId'] != null)
-          _buildDetailRow('Consultation ID', data['consultationId'].toString()),
-        if (data['patientName'] != null)
-          _buildDetailRow('Patient', data['patientName'].toString()),
-        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             color: AppColors.infoLight,
             borderRadius: BorderRadius.circular(4),
+            border: Border(
+              left: BorderSide(color: AppColors.primary, width: 4),
+            ),
           ),
-          child: Text(
-            'Your consultation has been completed and saved. You can view it in the consultation history.',
-            style: TextStyle(fontSize: 12, color: AppColors.info),
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.info,
+                height: 1.5,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Note:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.info,
+                  ),
+                ),
+                TextSpan(
+                  text:
+                      ' Your consultation has been completed and saved. You can view it in the consultation history.',
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -610,6 +572,37 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
+  }
+
+  /// Format: "5 days ago • Dec 30, 2025, 4:03 PM"
+  String _formatTimestamp(DateTime date) {
+    final relative = _formatDate(date);
+    final hour12 = date.hour == 0
+        ? 12
+        : (date.hour > 12 ? date.hour - 12 : date.hour);
+    final amPm = date.hour >= 12 ? 'PM' : 'AM';
+    final absolute =
+        '${_monthAbbr(date.month)} ${date.day}, ${date.year}, '
+        '${hour12.toString()}:${date.minute.toString().padLeft(2, '0')} $amPm';
+    return '$relative • $absolute';
+  }
+
+  String _monthAbbr(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 
   String _capitalizeFirst(String text) {

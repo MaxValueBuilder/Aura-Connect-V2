@@ -27,6 +27,7 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
+        scrolledUnderElevation: 0,
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardBackground,

@@ -7,10 +7,6 @@ import 'package:flutter_svg/svg.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Final consultation recording view matching the Final Consult step UI.
-/// Uses same styling as [RecordingView] with layout from design:
-/// progress, step chips, info card, recording controls, Final Transcript field,
-/// manual transcript, and Back / Complete Consultation buttons.
 class FinalConsultRecordingView extends StatelessWidget {
   final String patientName;
   final int recordingDuration;
@@ -98,7 +94,7 @@ class FinalConsultRecordingView extends StatelessWidget {
           ),
           const SizedBox(width: 16),
         ],
-      ),  
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 24),
@@ -136,9 +132,7 @@ class FinalConsultRecordingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ConsultationProgressIndicator(
-                      value: step / totalSteps,
-                    ),
+                    ConsultationProgressIndicator(value: step / totalSteps),
                     const SizedBox(height: 16),
 
                     Wrap(

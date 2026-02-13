@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import '../core/error/exceptions.dart';
 import '../models/notification_model.dart';
@@ -24,9 +26,12 @@ class NotificationService {
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
-      final notificationsList = response.data['notifications'] as List<dynamic>? ?? [];
+      final notificationsList =
+          response.data['notifications'] as List<dynamic>? ?? [];
       final notifications = notificationsList
-          .map((json) => NotificationModel.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => NotificationModel.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
 
       return {
@@ -52,7 +57,9 @@ class NotificationService {
   /// Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
-      await _dio.put('/notifications/$notificationId/read');
+      log('Marking notification as read: $notificationId');
+      await _dio.patch('/notifications/$notificationId/read');
+      log('Notification marked as read: $notificationId');
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -61,7 +68,7 @@ class NotificationService {
   /// Mark all notifications as read
   Future<void> markAllAsRead() async {
     try {
-      await _dio.put('/notifications/read-all');
+      await _dio.patch('/notifications/read-all');
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -79,7 +86,10 @@ class NotificationService {
   Exception _handleError(DioException e) {
     if (e.response != null) {
       final statusCode = e.response!.statusCode;
-      final message = e.response!.data?['error'] ?? e.response!.data?['message'] ?? 'Unknown error';
+      final message =
+          e.response!.data?['error'] ??
+          e.response!.data?['message'] ??
+          'Unknown error';
 
       switch (statusCode) {
         case 401:
@@ -95,12 +105,15 @@ class NotificationService {
     } else if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout) {
-      return NetworkException(message: 'Connection timeout. Please check your internet connection.');
+      return NetworkException(
+        message: 'Connection timeout. Please check your internet connection.',
+      );
     } else if (e.type == DioExceptionType.connectionError) {
-      return NetworkException(message: 'No internet connection. Please check your network settings.');
+      return NetworkException(
+        message: 'No internet connection. Please check your network settings.',
+      );
     } else {
       return ServerException(message: e.message ?? 'Unknown error occurred');
     }
   }
 }
-

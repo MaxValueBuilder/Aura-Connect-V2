@@ -128,9 +128,7 @@ class RecordingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ConsultationProgressIndicator(
-                      value: step / totalSteps,
-                    ),
+                    ConsultationProgressIndicator(value: step / totalSteps),
                     const SizedBox(height: 12),
                     Center(
                       child: Container(
