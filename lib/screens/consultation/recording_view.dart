@@ -1,5 +1,6 @@
 import 'package:aura/screens/consultation/widgets/consultation_progress_indicator.dart';
 import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
+import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -83,14 +84,7 @@ class RecordingView extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          AppBarIconButton(
-            backgroundColor: AppColors.error,
-            icon: Icons.logout,
-            onPressed: isRecording ? () {} : onBack,
-          ),
-          const SizedBox(width: 16),
-        ],
+        actions: [const LogoutButton(), const SizedBox(width: 16)],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

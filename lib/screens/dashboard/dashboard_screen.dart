@@ -2,6 +2,7 @@ import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/app_bar_logo_title.dart';
+import '../widgets/logout_button.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../features/consultation/consultation_cubit.dart';
@@ -53,16 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () => _handleStartConsultation(context),
           ),
           const SizedBox(width: 8),
-          AppBarIconButton(
-            backgroundColor: AppColors.error,
-            icon: Icons.logout,
-            onPressed: () async {
-              await context.read<AuthCubit>().logout();
-              if (context.mounted) {
-                AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.landing);
-              }
-            },
-          ),
+          const LogoutButton(),
           const SizedBox(width: 16),
         ],
       ),
@@ -83,31 +75,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
 
           return SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header: Dashboard title, welcome, profile picture
-                  _buildHeaderSection(context),
-                  // Stats Cards (2x2 grid)
-                  Padding(
-                    padding: const EdgeInsets.all(18.0),
-                    child: _buildStatsSection(state, context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sticky header: Dashboard title, welcome, profile picture
+                _buildHeaderSection(context),
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Stats Cards (2x2 grid)
+                        Padding(
+                          padding: const EdgeInsets.all(18.0),
+                          child: _buildStatsSection(state, context),
+                        ),
+                        const SizedBox(height: 32),
+                        // Active Consultations Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                          child: _buildActiveConsultationsSection(state),
+                        ),
+                        const SizedBox(height: 32),
+                        // Recent Consultations Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                          child: _buildRecentConsultationsSection(state),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 32),
-                  // Active Consultations Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    child: _buildActiveConsultationsSection(state),
-                  ),
-                  const SizedBox(height: 32),
-                  // Recent Consultations Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    child: _buildRecentConsultationsSection(state),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -604,7 +604,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Icons.check_circle_outlined,
 
                         color: AppColors.success,
-                        size: 18,
+                        size: 28,
                       ),
                     ),
                     SizedBox(width: 16),

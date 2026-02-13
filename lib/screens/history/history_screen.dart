@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
@@ -149,277 +148,355 @@ class _HistoryScreenState extends State<HistoryScreen> {
           return SafeArea(
             child: Column(
               children: [
-                // Search and Filters Card
+                // Sticky header only
                 ScreenHeader(
                   title: 'Consultation History',
-                  subtitle: '${completedConsultations.length} of ${completedConsultations.length + activeConsultations.length} Consultations',
+                  subtitle:
+                      '${completedConsultations.length} of ${completedConsultations.length + activeConsultations.length} Consultations',
                 ),
-                Container(
-                  color: AppColors.white,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Header with view mode toggle
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.filter_list,
-                                size: 20,
-                                color: AppColors.textPrimary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Search & Filter',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                  fontFamily: "Fraunces",
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              _buildViewModeButton(
-                                'List',
-                                Icons.view_list,
-                                _isListView,
-                              ),
-                              const SizedBox(width: 8),
-                              _buildViewModeButton(
-                                'Grid',
-                                Icons.grid_view,
-                                !_isListView,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Search and filter inputs
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          // Search
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width > 600
-                                ? 300
-                                : double.infinity,
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Search consultations...',
-                                hintStyle: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 14,
-                                ),
-                                prefixIcon: const Icon(Icons.search, size: 20),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              onChanged: (value) {
-                                context.read<ConsultationCubit>().setSearchTerm(
-                                  value,
-                                );
-                                setState(() {});
-                              },
-                            ),
-                          ),
-                          // Veterinarian, Type, Sort by in one Row
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: FilterDropdown(
-                                  value: _filterVet,
-                                  labelText: 'Veterinarian',
-                                  items: [
-                                    const DropdownMenuItem(
-                                      value: 'all',
-                                      child: Text(
-                                        'All',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    ...veterinarians.map(
-                                      (vet) => DropdownMenuItem(
-                                        value: vet,
-                                        child: Text(
-                                          vet,
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _filterVet = value ?? 'all';
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: FilterDropdown(
-                                  value: _filterType,
-                                  labelText: 'Type',
-                                  items: [
-                                    const DropdownMenuItem(
-                                      value: 'all',
-                                      child: Text(
-                                        'All',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    ...consultationTypes.map(
-                                      (type) => DropdownMenuItem(
-                                        value: type,
-                                        child: Text(
-                                          type,
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _filterType = value ?? 'all';
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: FilterDropdown(
-                                  value: _sortBy,
-                                  labelText: 'Sort by',
-                                  contentPadding: const EdgeInsets.only(
-                                    left: 8,
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'date-desc',
-                                      child: Text(
-                                        'Newest',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'date-asc',
-                                      child: Text(
-                                        'Oldest',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'patient-asc',
-                                      child: Text(
-                                        'A-Z',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'patient-desc',
-                                      child: Text(
-                                        'Z-A',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _sortBy = value ?? 'date-desc';
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              spacing: 8,
-                              children: [
-                                Icon(Icons.description_outlined, size: 20),
-                                Text(
-                                  'Completed Consultations',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: AppColors.black,
-                                    fontFamily: "Fraunces",
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              '${filteredConsultations.length} Consultations',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Results
+                // Scrollable content: Search & Filter + Results
                 Expanded(
-                  child: filteredConsultations.isEmpty
-                      ? _buildEmptyState()
-                      : Container(
-                          margin: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _isListView
-                                ? AppColors.white
-                                : AppColors.background,
-                            borderRadius: BorderRadius.circular(12),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          color: AppColors.white,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              // Header with view mode toggle
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.filter_list,
+                                        size: 20,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Search & Filter',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                          fontFamily: "Fraunces",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      _buildViewModeButton(
+                                        'List',
+                                        Icons.view_list,
+                                        _isListView,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _buildViewModeButton(
+                                        'Grid',
+                                        Icons.grid_view,
+                                        !_isListView,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              // Search and filter inputs
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width > 600
+                                        ? 300
+                                        : double.infinity,
+                                    child: TextField(
+                                      controller: _searchController,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search consultations...',
+                                        hintStyle: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 14,
+                                        ),
+                                        prefixIcon: const Icon(
+                                          Icons.search,
+                                          size: 20,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                      ),
+                                      onChanged: (value) {
+                                        context
+                                            .read<ConsultationCubit>()
+                                            .setSearchTerm(value);
+                                        setState(() {});
+                                      },
+                                    ),
+                                  ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: FilterDropdown(
+                                          value: _filterVet,
+                                          labelText: 'Veterinarian',
+                                          items: [
+                                            const DropdownMenuItem(
+                                              value: 'all',
+                                              child: Text(
+                                                'All',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            ...veterinarians.map(
+                                              (vet) => DropdownMenuItem(
+                                                value: vet,
+                                                child: Text(
+                                                  vet,
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AppColors.textPrimary,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _filterVet = value ?? 'all';
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: FilterDropdown(
+                                          value: _filterType,
+                                          labelText: 'Type',
+                                          items: [
+                                            const DropdownMenuItem(
+                                              value: 'all',
+                                              child: Text(
+                                                'All',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            ...consultationTypes.map(
+                                              (type) => DropdownMenuItem(
+                                                value: type,
+                                                child: Text(
+                                                  type,
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AppColors.textPrimary,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _filterType = value ?? 'all';
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: FilterDropdown(
+                                          value: _sortBy,
+                                          labelText: 'Sort by',
+                                          contentPadding: const EdgeInsets.only(
+                                            left: 8,
+                                          ),
+                                          items: const [
+                                            DropdownMenuItem(
+                                              value: 'date-desc',
+                                              child: Text(
+                                                'Newest',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'date-asc',
+                                              child: Text(
+                                                'Oldest',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'patient-asc',
+                                              child: Text(
+                                                'A-Z',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'patient-desc',
+                                              child: Text(
+                                                'Z-A',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _sortBy = value ?? 'date-desc';
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      spacing: 8,
+                                      children: [
+                                        Icon(
+                                          Icons.description_outlined,
+                                          size: 20,
+                                        ),
+                                        Text(
+                                          'Completed Consultations',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: AppColors.black,
+                                            fontFamily: "Fraunces",
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '${filteredConsultations.length} Consultations',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          child: _isListView
-                              ? _buildListView(filteredConsultations)
-                              : _buildGridView(filteredConsultations),
                         ),
+                        if (filteredConsultations.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 280),
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.gray100,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.search,
+                                        size: 32,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No consultations found',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                        fontFamily: "Fraunces",
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Try adjusting your search criteria or filters.',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: _clearFilters,
+                                      child: const Text(
+                                        'Clear Filters',
+                                        style: TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            margin: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: _isListView
+                                  ? AppColors.white
+                                  : AppColors.background,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: _isListView
+                                ? _buildListView(filteredConsultations)
+                                : _buildGridView(filteredConsultations),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -467,75 +544,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppColors.gray100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.search,
-                        size: 32,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No consultations found',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        fontFamily: "Fraunces",
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Try adjusting your search criteria or filters.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _clearFilters,
-                      child: const Text(
-                        'Clear Filters',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildListView(List<ConsultationModel> consultations) {
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: consultations.length,
       itemBuilder: (context, index) {
         final consultation = consultations[index];
@@ -552,6 +564,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildGridView(List<ConsultationModel> consultations) {
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: consultations.length,
       itemBuilder: (context, index) {
         final consultation = consultations[index];

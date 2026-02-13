@@ -227,216 +227,239 @@ class _PatientsScreenState extends State<PatientsScreen> {
             return SafeArea(
               child: Column(
                 children: [
+                  // Sticky header only
                   ScreenHeader(
                     title: 'Patient Management',
                     subtitle:
                         '${filteredPatients.length} Patient${filteredPatients.length != 1 ? 's' : ''} Found',
                   ),
-                  // Search and Filters
-                  Container(
-                    color: AppColors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      children: [
-                        // Search Field
-                        TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search patients, owners, or breeds...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            hintStyle: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            context.read<PatientCubit>().setSearchTerm(value);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        // Filters Row
-                        Row(
-                          children: [
-                            // Species Filter
-                            Expanded(
-                              child: FilterDropdown(
-                                value: _selectedSpecies,
-                                labelText: 'Species',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'all',
-                                    child: Text(
-                                      'All Species',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'dog',
-                                    child: Text(
-                                      'Dogs',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'cat',
-                                    child: Text(
-                                      'Cats',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'bird',
-                                    child: Text(
-                                      'Birds',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'rabbit',
-                                    child: Text(
-                                      'Rabbits',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'other',
-                                    child: Text(
-                                      'Other',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedSpecies = value ?? 'all';
-                                  });
-                                  context.read<PatientCubit>().setFilterSpecies(
-                                    _selectedSpecies == 'all'
-                                        ? null
-                                        : _selectedSpecies,
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Status Filter
-                            Expanded(
-                              child: FilterDropdown(
-                                value: _selectedStatus,
-                                labelText: 'Status',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'all',
-                                    child: Text(
-                                      'All Status',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Active',
-                                    child: Text(
-                                      'Active',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Inactive',
-                                    child: Text(
-                                      'Inactive',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedStatus = value ?? 'all';
-                                  });
-                                  context.read<PatientCubit>().setFilterStatus(
-                                    _selectedStatus == 'all'
-                                        ? null
-                                        : _selectedStatus,
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Patients List
+                  // Scrollable content: Search & Filters + Patients List
                   Expanded(
-                    child: filteredPatients.isEmpty
-                        ? _buildEmptyState()
-                        : Container(
-                            margin: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(12),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Search and Filters
+                          Container(
+                            color: AppColors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            child: ListView.builder(
-                              // padding: const EdgeInsets.all(16),
-                              itemCount: filteredPatients.length,
-                              itemBuilder: (context, index) {
-                                final patient = filteredPatients[index];
-                                return Column(
+                            child: Column(
+                              children: [
+                                // Search Field
+                                TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'Search patients, owners, or breeds...',
+                                    prefixIcon: const Icon(
+                                      Icons.search,
+                                      size: 20,
+                                    ),
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    context.read<PatientCubit>().setSearchTerm(
+                                      value,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                // Filters Row
+                                Row(
                                   children: [
-                                    _buildPatientCard(patient),
-                                    if (index < filteredPatients.length - 1)
-                                      const Divider(
-                                        color: AppColors.border,
-                                        height: 1,
+                                    // Species Filter
+                                    Expanded(
+                                      child: FilterDropdown(
+                                        value: _selectedSpecies,
+                                        labelText: 'Species',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
+                                            ),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'all',
+                                            child: Text(
+                                              'All Species',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'dog',
+                                            child: Text(
+                                              'Dogs',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'cat',
+                                            child: Text(
+                                              'Cats',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'bird',
+                                            child: Text(
+                                              'Birds',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'rabbit',
+                                            child: Text(
+                                              'Rabbits',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'other',
+                                            child: Text(
+                                              'Other',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedSpecies = value ?? 'all';
+                                          });
+                                          context
+                                              .read<PatientCubit>()
+                                              .setFilterSpecies(
+                                                _selectedSpecies == 'all'
+                                                    ? null
+                                                    : _selectedSpecies,
+                                              );
+                                        },
                                       ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Status Filter
+                                    Expanded(
+                                      child: FilterDropdown(
+                                        value: _selectedStatus,
+                                        labelText: 'Status',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
+                                            ),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'all',
+                                            child: Text(
+                                              'All Status',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Active',
+                                            child: Text(
+                                              'Active',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Inactive',
+                                            child: Text(
+                                              'Inactive',
+                                              style: TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedStatus = value ?? 'all';
+                                          });
+                                          context
+                                              .read<PatientCubit>()
+                                              .setFilterStatus(
+                                                _selectedStatus == 'all'
+                                                    ? null
+                                                    : _selectedStatus,
+                                              );
+                                        },
+                                      ),
+                                    ),
                                   ],
-                                );
-                              },
+                                ),
+                              ],
                             ),
                           ),
+                          // Patients List
+                          if (filteredPatients.isEmpty)
+                            _buildEmptyState()
+                          else
+                            Container(
+                              margin: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filteredPatients.length,
+                                itemBuilder: (context, index) {
+                                  final patient = filteredPatients[index];
+                                  return Column(
+                                    children: [
+                                      _buildPatientCard(patient),
+                                      if (index < filteredPatients.length - 1)
+                                        const Divider(
+                                          color: AppColors.border,
+                                          height: 1,
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

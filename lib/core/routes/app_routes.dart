@@ -184,8 +184,10 @@ class AppRouter {
     Object? arguments,
     bool Function(Route<dynamic>)? predicate,
   }) {
-    return Navigator.pushNamedAndRemoveUntil<T>(
+    return Navigator.of(
       context,
+      rootNavigator: true,
+    ).pushNamedAndRemoveUntil<T>(
       routeName,
       predicate ?? (route) => false,
       arguments: arguments,

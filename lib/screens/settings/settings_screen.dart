@@ -1,5 +1,6 @@
 import 'package:aura/screens/dashboard/widgets/app_bar_icon_button.dart';
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
+import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/screen_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,19 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           backgroundColor: AppColors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
-          actions: [
-            AppBarIconButton(
-              backgroundColor: AppColors.error,
-              icon: Icons.logout,
-              onPressed: () async {
-                await context.read<AuthCubit>().logout();
-                if (context.mounted) {
-                  AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.landing);
-                }
-              },
-            ),
-            const SizedBox(width: 16),
-          ],
+          actions: [const LogoutButton(), const SizedBox(width: 16)],
         ),
         body: BlocListener<SettingsCubit, SettingsState>(
           listener: (context, state) {
@@ -109,85 +98,81 @@ class _SettingsScreenState extends State<SettingsScreen>
                   title: 'Settings',
                   subtitle: 'Manage your account, clinic, and preference',
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
+                const SizedBox(height: 16),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
 
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primary.withAlpha(200),
-                        width: 1.5,
-                      ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primary.withAlpha(200),
+                      width: 1.5,
                     ),
-                    child: TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.start,
-                      labelColor: AppColors.primary,
-                      unselectedLabelColor: AppColors.textSecondary,
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.gray200, width: 1),
-                        color: AppColors.white,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 2,
-                        vertical: 2,
-                      ),
-                      tabs: [
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.person_outline, size: 20),
-                              const SizedBox(width: 6),
-                              const Text('Profile'),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.business_outlined, size: 20),
-                              const SizedBox(width: 6),
-                              const Text('Practice'),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.credit_card_outlined, size: 20),
-                              const SizedBox(width: 6),
-                              const Text('Billing'),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.notifications_outlined, size: 20),
-                              const SizedBox(width: 6),
-                              const Text('Notifications'),
-                            ],
-                          ),
-                        ),
-                      ],
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.textSecondary,
+                    dividerColor: Colors.transparent,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.gray200, width: 1),
+                      color: AppColors.white,
                     ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
+                    tabs: [
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_outline, size: 20),
+                            const SizedBox(width: 6),
+                            const Text('Profile'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.business_outlined, size: 20),
+                            const SizedBox(width: 6),
+                            const Text('Practice'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.credit_card_outlined, size: 20),
+                            const SizedBox(width: 6),
+                            const Text('Billing'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.notifications_outlined, size: 20),
+                            const SizedBox(width: 6),
+                            const Text('Notifications'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(

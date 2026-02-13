@@ -62,7 +62,6 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                   title: 'Notifications',
                   subtitle: 'All caught up • ${state.totalCount} Total',
                 ),
-                const SizedBox(height: 16),
                 if (state.unreadCount > 0)
                   Align(
                     alignment: Alignment.centerRight,
