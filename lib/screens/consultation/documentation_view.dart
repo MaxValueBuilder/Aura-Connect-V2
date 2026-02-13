@@ -23,6 +23,12 @@ class DocumentationView extends StatefulWidget {
   /// Use false when viewing from history (completed consultation screen).
   final bool showStepBar;
 
+  /// Called when user taps "Tasks & lab" to navigate to TasksAndLabsView.
+  final VoidCallback? onNavigateToTasksLabs;
+
+  /// Called when user taps "Initial Recording" to navigate to InitialRecordingView.
+  final VoidCallback? onNavigateToInitialRecording;
+
   const DocumentationView({
     super.key,
     required this.documentation,
@@ -31,6 +37,8 @@ class DocumentationView extends StatefulWidget {
     this.onSave,
     this.onSaveHandout,
     this.showStepBar = true,
+    this.onNavigateToTasksLabs,
+    this.onNavigateToInitialRecording,
   });
 
   @override
@@ -454,23 +462,33 @@ class _DocumentationViewState extends State<DocumentationView>
                                   children: [
                                     Expanded(
                                       child: PrimaryIconButton(
-                                        onPressed: () {},
+                                        onPressed:
+                                            widget.onNavigateToTasksLabs ??
+                                            () {},
                                         icon: Icons.edit,
                                         text: 'Tasks & lab ',
                                         fontSize: 14,
                                         verticalPadding: 14,
-                                        enabled: true,
+                                        enabled:
+                                            widget.onNavigateToTasksLabs !=
+                                            null,
                                       ),
                                     ),
                                     SizedBox(width: 16),
                                     Expanded(
                                       child: PrimaryIconButton(
-                                        onPressed: () {},
+                                        onPressed:
+                                            widget
+                                                .onNavigateToInitialRecording ??
+                                            () {},
                                         icon: Icons.chat_bubble_outline,
                                         text: 'Initial Recording',
                                         fontSize: 14,
                                         verticalPadding: 14,
-                                        enabled: true,
+                                        enabled:
+                                            widget
+                                                .onNavigateToInitialRecording !=
+                                            null,
                                       ),
                                     ),
                                   ],

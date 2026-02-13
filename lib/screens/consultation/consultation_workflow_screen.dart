@@ -808,6 +808,8 @@ class _ConsultationWorkflowScreenState
         documentation: _documentation,
         patientName: _patientName,
         onBack: () => Navigator.of(context).pop(),
+        onNavigateToTasksLabs: _handleNavigateToTasksLabs,
+        onNavigateToInitialRecording: _handleNavigateToInitialRecording,
         onSave: (soapData) async {
           if (_currentConsultationId != null) {
             try {
