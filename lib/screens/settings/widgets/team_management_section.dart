@@ -1,3 +1,5 @@
+import 'package:aura/screens/consultation/widgets/label_chip.dart';
+import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,73 +13,252 @@ class TeamManagementSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Team Members',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(2.0),
+                    child: Icon(Icons.people_outline, size: 24),
                   ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _showInviteDialog(context);
-                  },
-                  icon: const Icon(Icons.person_add_outlined, size: 18),
-                  label: const Text('Invite User'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (state.isLoading && state.clinicUsers.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (state.clinicUsers.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
+                  const SizedBox(width: 4),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.people_outline,
-                        size: 64,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(height: 16),
                       Text(
-                        'No team members yet',
+                        'Team Management',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'Fraunces',
+                        ),
+                      ),
+                      Text(
+                        'Invite and manage team for your clinic',
+                        style: TextStyle(
+                          fontSize: 14,
                           color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildClinicSummaryCard(state),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryLight),
                 ),
-              )
-            else
-              ...state.clinicUsers.map((user) => _buildUserCard(context, user)),
-          ],
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: Icon(Icons.people_outline, size: 24),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Team Members',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 100,
+                          child: PrimaryIconButton(
+                            onPressed: () {
+                              _showInviteDialog(context);
+                            },
+                            icon: const Icon(
+                              Icons.person_add_outlined,
+                              size: 14,
+                            ),
+                            text: 'Invite',
+                            fontSize: 14,
+                            verticalPadding: 4,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (state.isLoading && state.clinicUsers.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (state.clinicUsers.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 64,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No team members yet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ...state.clinicUsers.map(
+                        (user) => _buildUserCard(context, user),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildClinicSummaryCard(SettingsState state) {
+    final clinic = state.clinic;
+    if (clinic == null) return const SizedBox.shrink();
+
+    final clinicName = clinic['name'] as String? ?? '';
+    final email = clinic['email'] as String? ?? '';
+    final phone = clinic['phone'] as String? ?? '';
+    final subscriptionTier =
+        clinic['subscriptionTier']?.toString() ?? 'Unlimited';
+    final maxUsers = clinic['maxUsers'];
+    final usersCount = state.clinicUsers.length;
+    final maxUsersDisplay = maxUsers == null || maxUsers == -1
+        ? '∞'
+        : maxUsers.toString();
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primaryLight),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.business_outlined,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            clinicName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 4,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.email_outlined,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                email,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                phone,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              LabelChip(
+                label: subscriptionTier,
+                textColor: AppColors.textPrimary,
+                backgroundColor: AppColors.primaryLight.withAlpha(25),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$usersCount/$maxUsersDisplay users',
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -85,94 +266,84 @@ class TeamManagementSection extends StatelessWidget {
     final role = user['role'] as String? ?? 'veterinarian';
     final isActive = user['isActive'] as bool? ?? true;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          child: Text(
-            (user['firstName'] as String? ?? 'U')[0].toUpperCase(),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.primary.withOpacity(0.1),
+            child: Text(
+              (user['firstName'] as String? ?? 'U')[0].toUpperCase(),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        title: Text(
-          '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}',
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(user['email'] as String? ?? ''),
-            const SizedBox(height: 4),
-            Row(
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getRoleColor(role).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    role.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: _getRoleColor(role),
-                    ),
-                  ),
+                Text(
+                  '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? AppColors.success.withOpacity(0.1)
-                        : AppColors.error.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    isActive ? 'ACTIVE' : 'INACTIVE',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isActive ? AppColors.success : AppColors.error,
-                    ),
-                  ),
+                SizedBox(height: 4),
+                Text(
+                  user['email'] as String? ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ],
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppColors.error),
-          onPressed: () {
-            _showRemoveUserDialog(context, user);
-          },
-        ),
+          ),
+          SizedBox(width: 8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.black,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  role.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                isActive ? Icons.check_circle : null,
+                color: isActive ? AppColors.success : AppColors.error,
+                size: 14,
+              ),
+            ],
+          ),
+
+          IconButton(
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppColors.error,
+              size: 18,
+            ),
+            onPressed: () {
+              _showRemoveUserDialog(context, user);
+            },
+          ),
+        ],
       ),
     );
-  }
-
-  Color _getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return AppColors.error;
-      case 'veterinarian':
-        return AppColors.primary;
-      case 'assistant':
-        return AppColors.warning;
-      default:
-        return AppColors.textSecondary;
-    }
   }
 
   void _showInviteDialog(BuildContext context) {
@@ -289,7 +460,11 @@ class TeamManagementSection extends StatelessWidget {
                               Navigator.pop(dialogContext);
 
                               // Invite user in background
-                              final clinicId = context.read<SettingsCubit>().state.clinic?['id']?.toString();
+                              final clinicId = context
+                                  .read<SettingsCubit>()
+                                  .state
+                                  .clinic?['id']
+                                  ?.toString();
                               if (clinicId == null) return;
                               await context.read<SettingsCubit>().inviteUser(
                                 email: emailController.text.trim(),
@@ -329,7 +504,11 @@ class TeamManagementSection extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final clinicId = context.read<SettingsCubit>().state.clinic?['id']?.toString();
+              final clinicId = context
+                  .read<SettingsCubit>()
+                  .state
+                  .clinic?['id']
+                  ?.toString();
               if (clinicId == null) return;
               final success = await context.read<SettingsCubit>().removeUser(
                 user['id'] as String,
