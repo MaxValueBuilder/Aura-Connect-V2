@@ -1,5 +1,4 @@
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
-import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -43,14 +42,14 @@ class _PatientsScreenState extends State<PatientsScreen> {
     super.dispose();
   }
 
-  void _handleAddPatient() {
-    AppRouter.pushNamed(context, AppRoutes.addPatient).then((success) {
-      // Refresh patient list if patient was added successfully
-      if (success == true && mounted) {
-        context.read<PatientCubit>().loadPatients(refresh: true);
-      }
-    });
-  }
+  // void _handleAddPatient() {
+  //   AppRouter.pushNamed(context, AppRoutes.addPatient).then((success) {
+  //     // Refresh patient list if patient was added successfully
+  //     if (success == true && mounted) {
+  //       context.read<PatientCubit>().loadPatients(refresh: true);
+  //     }
+  //   });
+  // }
 
   void _handleEditPatient(PatientModel patient) {
     setState(() {

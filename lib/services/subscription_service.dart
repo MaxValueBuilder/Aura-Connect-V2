@@ -2,64 +2,60 @@ import 'package:dio/dio.dart';
 import '../core/error/exceptions.dart';
 import '../models/subscription_model.dart';
 
-/// Service for subscription and billing API calls
+/// Service for subscription and billing API calls.
+/// Matches web: getBillingInfo(clinicId), upgradeSubscription(tier, billingCycle, clinicId).
 class SubscriptionService {
   final Dio _dio;
 
   SubscriptionService(this._dio);
 
-  /// Get current subscription data
-  Future<SubscriptionDataModel> getSubscription() async {
+  /// Get billing info – GET /api/clinic/getbillinginfo/:clinicId
+  /// Returns { subscription, trialStatus, limits, currentUsage, usagePercentage }
+  Future<SubscriptionDataModel> getBillingInfo(String clinicId) async {
     try {
-      final response = await _dio.get('/subscriptions');
+      final response = await _dio.get('/clinic/getbillinginfo/$clinicId');
+      final data = response.data as Map<String, dynamic>;
 
-      // Handle the response structure from backend
-      // Backend returns: { subscription, trialStatus, limits, currentUsage, usagePercentage }
-      final data = response.data;
-
-      // Backend returns partial subscription object, so we need to fill in missing fields
       final subscriptionData =
           data['subscription'] as Map<String, dynamic>? ?? {};
+      final trialStatusData = data['trialStatus'] as Map<String, dynamic>? ?? {};
+      final limits = data['limits'] as Map<String, dynamic>? ?? {};
+      final currentUsageRaw = data['currentUsage'] as Map<String, dynamic>? ?? {};
+      final usagePercentage =
+          data['usagePercentage'] as Map<String, dynamic>? ?? {};
 
-      // Ensure all required fields have defaults
+      // Map server subscription (tier, status, billingCycle, amount, trialEndDate, expiredOn)
+      // to full SubscriptionModel with defaults for missing fields
       final fullSubscriptionData = {
         'id': subscriptionData['id'] ?? '',
-        'clinicId': subscriptionData['clinicId'] ?? '',
+        'clinicId': clinicId,
         'tier': subscriptionData['tier'] ?? 'unlimited',
         'status': subscriptionData['status'] ?? 'trial',
         'billingCycle': subscriptionData['billingCycle'] ?? 'monthly',
-        'amount': subscriptionData['amount'] ?? '0.00',
-        'currency': subscriptionData['currency'] ?? 'USD',
-        'startDate': subscriptionData['startDate'],
-        'endDate': subscriptionData['endDate'],
+        'amount': subscriptionData['amount']?.toString() ?? '0.00',
+        'currency': 'USD',
         'trialEndDate': subscriptionData['trialEndDate'],
-        'stripeSubscriptionId': subscriptionData['stripeSubscriptionId'],
-        'stripeCustomerId': subscriptionData['stripeCustomerId'],
-        'features': subscriptionData['features'],
-        'limits': subscriptionData['limits'],
-        'isActive': subscriptionData['isActive'] ?? true,
-        'createdAt': subscriptionData['createdAt'],
-        'updatedAt': subscriptionData['updatedAt'],
+        'endDate': subscriptionData['expiredOn'],
+        'isActive': true,
       };
 
-      // Transform the response to match SubscriptionDataModel structure
       final transformedData = {
         'subscription': fullSubscriptionData,
-        'trialStatus':
-            data['trialStatus'] ??
-            {
-              'hasSubscription': true,
-              'isExpired': false,
-              'daysRemaining': 0,
-              'status': subscriptionData['status'] ?? 'trial',
-              'trialEndDate': subscriptionData['trialEndDate'],
-              'tier': subscriptionData['tier'] ?? 'unlimited',
-            },
-        'limits': data['limits'] ?? {},
-        'currentUsage':
-            data['currentUsage'] ??
-            {'users': 0, 'patients': 0, 'consultations': 0},
-        'usagePercentage': data['usagePercentage'] ?? {},
+        'trialStatus': {
+          'hasSubscription': trialStatusData['hasSubscription'] ?? true,
+          'isExpired': trialStatusData['isExpired'] ?? false,
+          'daysRemaining': trialStatusData['daysRemaining'] ?? 0,
+          'status': trialStatusData['status'] ?? 'trial',
+          'trialEndDate': trialStatusData['trialEndDate'],
+          'tier': trialStatusData['tier'] ?? 'unlimited',
+        },
+        'limits': limits,
+        'currentUsage': {
+          'users': currentUsageRaw['users'] ?? 0,
+          'patients': currentUsageRaw['patients'] ?? 0,
+          'consultations': currentUsageRaw['consultations'] ?? 0,
+        },
+        'usagePercentage': usagePercentage,
       };
 
       return SubscriptionDataModel.fromJson(transformedData);
@@ -68,62 +64,29 @@ class SubscriptionService {
     }
   }
 
-  /// Cancel subscription
-  Future<void> cancelSubscription() async {
-    try {
-      await _dio.post('/subscriptions/cancel');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Reactivate subscription
-  Future<void> reactivateSubscription() async {
-    try {
-      await _dio.post('/subscriptions/reactivate');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Create checkout session for subscription upgrade
-  /// Returns payment intent details for mobile PaymentSheet
-  Future<Map<String, dynamic>> createCheckoutSession({
+  /// Upgrade subscription – POST /api/clinic/upgrade-subscription
+  /// Body: { tier, billingCycle, clinicId }
+  /// Returns { success, sessionId, url } – open url for Stripe Checkout (matches web)
+  Future<Map<String, dynamic>> upgradeSubscription({
     required String tier,
     required String billingCycle,
+    required String clinicId,
   }) async {
     try {
       final response = await _dio.post(
-        '/payments/create-checkout-session',
+        '/clinic/upgrade-subscription',
         data: {
           'tier': tier,
           'billingCycle': billingCycle,
-          'platform': 'mobile', // Indicate this is for mobile
+          'clinicId': clinicId,
         },
       );
-      return response.data;
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Create payment intent for subscription (mobile-specific)
-  Future<Map<String, dynamic>> createPaymentIntent({
-    required String tier,
-    required String billingCycle,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/payments/create-payment-intent',
-        data: {'tier': tier, 'billingCycle': billingCycle},
-      );
-      return response.data;
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Handle Dio errors
   Exception _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;

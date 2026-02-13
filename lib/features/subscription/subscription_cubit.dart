@@ -7,11 +7,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
   SubscriptionCubit(this._subscriptionService) : super(const SubscriptionState());
 
-  /// Load subscription data
-  Future<void> loadSubscription() async {
+  /// Load billing info – requires clinicId (matches web getBillingInfo)
+  Future<void> loadBillingInfo(String clinicId) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
-      final subscriptionData = await _subscriptionService.getSubscription();
+      final subscriptionData =
+          await _subscriptionService.getBillingInfo(clinicId);
       emit(state.copyWith(
         subscriptionData: subscriptionData,
         isLoading: false,
@@ -19,105 +20,36 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
     }
   }
 
-  /// Cancel subscription
-  Future<bool> cancelSubscription() async {
-    emit(state.copyWith(isCancelling: true, errorMessage: null));
-    try {
-      await _subscriptionService.cancelSubscription();
-      // Reload subscription data
-      await loadSubscription();
-      emit(state.copyWith(
-        isCancelling: false,
-        successMessage: 'Subscription cancelled successfully',
-      ));
-      return true;
-    } catch (e) {
-      emit(state.copyWith(
-        isCancelling: false,
-        errorMessage: e.toString(),
-      ));
-      return false;
-    }
-  }
-
-  /// Reactivate subscription
-  Future<bool> reactivateSubscription() async {
-    emit(state.copyWith(isReactivating: true, errorMessage: null));
-    try {
-      await _subscriptionService.reactivateSubscription();
-      // Reload subscription data
-      await loadSubscription();
-      emit(state.copyWith(
-        isReactivating: false,
-        successMessage: 'Subscription reactivated successfully',
-      ));
-      return true;
-    } catch (e) {
-      emit(state.copyWith(
-        isReactivating: false,
-        errorMessage: e.toString(),
-      ));
-      return false;
-    }
-  }
-
-  /// Create checkout session for upgrade (legacy - returns URL)
-  Future<Map<String, dynamic>?> createCheckoutSession({
+  /// Upgrade subscription – returns Stripe Checkout URL for redirect (matches web)
+  /// Caller should launch the URL (e.g. via url_launcher)
+  Future<Map<String, dynamic>?> upgradeSubscription({
     required String tier,
     required String billingCycle,
+    required String clinicId,
   }) async {
     emit(state.copyWith(isProcessingCheckout: true, errorMessage: null));
     try {
-      final result = await _subscriptionService.createCheckoutSession(
+      final result = await _subscriptionService.upgradeSubscription(
         tier: tier,
         billingCycle: billingCycle,
+        clinicId: clinicId,
       );
       emit(state.copyWith(isProcessingCheckout: false));
       return result;
     } catch (e) {
       emit(state.copyWith(
         isProcessingCheckout: false,
-        errorMessage: e.toString(),
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
       return null;
     }
   }
 
-  /// Create payment intent for mobile PaymentSheet
-  Future<Map<String, dynamic>?> createPaymentIntent({
-    required String tier,
-    required String billingCycle,
-  }) async {
-    emit(state.copyWith(isProcessingCheckout: true, errorMessage: null));
-    try {
-      final result = await _subscriptionService.createPaymentIntent(
-        tier: tier,
-        billingCycle: billingCycle,
-      );
-      emit(state.copyWith(isProcessingCheckout: false));
-      return result;
-    } catch (e) {
-      emit(state.copyWith(
-        isProcessingCheckout: false,
-        errorMessage: e.toString(),
-      ));
-      return null;
-    }
-  }
-
-  /// Clear error message
-  void clearError() {
-    emit(state.copyWith(errorMessage: null));
-  }
-
-  /// Clear success message
-  void clearSuccess() {
-    emit(state.copyWith(successMessage: null));
-  }
+  void clearError() => emit(state.copyWith(errorMessage: null));
+  void clearSuccess() => emit(state.copyWith(successMessage: null));
 }
-

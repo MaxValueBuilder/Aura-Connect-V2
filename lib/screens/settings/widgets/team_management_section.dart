@@ -275,7 +275,7 @@ class TeamManagementSection extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withAlpha(25),
             child: Text(
               (user['firstName'] as String? ?? 'U')[0].toUpperCase(),
               style: TextStyle(
@@ -413,7 +413,7 @@ class TeamManagementSection extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             DropdownButtonFormField<String>(
-                              value: selectedRole,
+                              initialValue: selectedRole,
                               decoration: const InputDecoration(
                                 labelText: 'Role',
                                 prefixIcon: Icon(Icons.badge_outlined),

@@ -1,7 +1,6 @@
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/app_bar_logo_title.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
@@ -789,7 +788,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   //     );
   //   }
   // }
-
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();

@@ -1,5 +1,4 @@
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
-import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/primary_icon_button.dart';
 import 'package:aura/screens/widgets/screen_header.dart';

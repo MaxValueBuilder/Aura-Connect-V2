@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../features/auth/auth_cubit.dart';
 import '../../../../features/subscription/subscription_cubit.dart';
 import '../../../../features/subscription/subscription_state.dart';
 
@@ -16,10 +17,14 @@ class _BillingTabState extends State<BillingTab> {
   @override
   void initState() {
     super.initState();
-    // Load subscription data when tab is opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SubscriptionCubit>().loadSubscription();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBilling());
+  }
+
+  void _loadBilling() {
+    final clinicId = context.read<AuthCubit>().state.user?.clinicId;
+    if (clinicId != null && clinicId.isNotEmpty) {
+      context.read<SubscriptionCubit>().loadBillingInfo(clinicId);
+    }
   }
 
   String _formatDate(DateTime? date) {
@@ -65,182 +70,51 @@ class _BillingTabState extends State<BillingTab> {
     String tier,
     String billingCycle,
   ) async {
-    final cubit = context.read<SubscriptionCubit>();
-
-    try {
-      // Try to get payment intent for native PaymentSheet
-      final result = await cubit.createPaymentIntent(
-        tier: tier,
-        billingCycle: billingCycle,
-      );
-
-      if (result != null && result['clientSecret'] != null) {
-        // Use PaymentSheet for native Stripe integration
-        await _presentPaymentSheet(
-          clientSecret: result['clientSecret'],
-          cubit: cubit,
-        );
-      } else if (result != null && result['paymentIntent'] != null) {
-        // Alternative: payment intent is nested
-        final paymentIntent = result['paymentIntent'];
-        if (paymentIntent['clientSecret'] != null) {
-          await _presentPaymentSheet(
-            clientSecret: paymentIntent['clientSecret'],
-            cubit: cubit,
-          );
-        }
-      } else {
-        // Fallback: if backend doesn't support payment intent yet, show error
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                cubit.state.errorMessage ??
-                    'Payment intent not available. Please update backend to support mobile payments.',
-              ),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error processing payment: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _presentPaymentSheet({
-    required String clientSecret,
-    required SubscriptionCubit cubit,
-  }) async {
-    try {
-      // Initialize PaymentSheet with SetupIntent (for subscriptions)
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          setupIntentClientSecret:
-              clientSecret, // Use setupIntentClientSecret for subscriptions
-          merchantDisplayName: 'Aura Connect',
-          style: ThemeMode.system,
-        ),
-      );
-
-      // Present PaymentSheet
-      await Stripe.instance.presentPaymentSheet();
-
-      // Payment method collected successfully - now create subscription
-      // The subscription will be created via webhook or we can call an endpoint here
-      // For now, reload subscription data (webhook should handle subscription creation)
-      await cubit.loadSubscription();
-
+    final clinicId = context.read<AuthCubit>().state.user?.clinicId;
+    if (clinicId == null || clinicId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Payment method saved! Subscription will be activated shortly.',
+              'Clinic ID not found. Please ensure you are in a clinic.',
             ),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } on StripeException catch (e) {
-      if (e.error.code == FailureCode.Canceled) {
-        // User canceled the payment
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment canceled'),
-              backgroundColor: AppColors.textSecondary,
-            ),
-          );
-        }
-      } else {
-        // Payment failed
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Payment failed: ${e.error.message ?? 'Unknown error'}',
-              ),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
             backgroundColor: AppColors.error,
           ),
         );
       }
+      return;
     }
-  }
 
-  Future<void> _handleCancelSubscription() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Subscription'),
-        content: const Text(
-          'Are you sure you want to cancel your subscription? You\'ll continue to have access until the end of your current billing period.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep Subscription'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: AppColors.white,
-            ),
-            child: const Text('Cancel Subscription'),
-          ),
-        ],
-      ),
+    final cubit = context.read<SubscriptionCubit>();
+    final result = await cubit.upgradeSubscription(
+      tier: tier,
+      billingCycle: billingCycle,
+      clinicId: clinicId,
     );
 
-    if (confirmed == true) {
-      final success = await context
-          .read<SubscriptionCubit>()
-          .cancelSubscription();
-      if (mounted) {
+    if (!mounted) return;
+
+    if (result != null && result['success'] == true && result['url'] != null) {
+      final uri = Uri.tryParse(result['url'] as String);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              success
-                  ? 'Subscription cancelled successfully'
-                  : 'Failed to cancel subscription',
+              cubit.state.errorMessage ?? 'Could not open checkout URL.',
             ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
+            backgroundColor: AppColors.error,
           ),
         );
       }
-    }
-  }
-
-  Future<void> _handleReactivateSubscription() async {
-    final success = await context
-        .read<SubscriptionCubit>()
-        .reactivateSubscription();
-    if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success
-                ? 'Subscription reactivated successfully'
-                : 'Failed to reactivate subscription',
+            cubit.state.errorMessage ?? 'Failed to start checkout.',
           ),
-          backgroundColor: success ? AppColors.success : AppColors.error,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -248,6 +122,8 @@ class _BillingTabState extends State<BillingTab> {
 
   @override
   Widget build(BuildContext context) {
+    final clinicId = context.read<AuthCubit>().state.user?.clinicId;
+
     return BlocListener<SubscriptionCubit, SubscriptionState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
@@ -271,6 +147,42 @@ class _BillingTabState extends State<BillingTab> {
       },
       child: BlocBuilder<SubscriptionCubit, SubscriptionState>(
         builder: (context, state) {
+          if (clinicId == null || clinicId.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.business_outlined,
+                      size: 64,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Clinic Found',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please set up or join a clinic to manage billing.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (state.isLoading && state.subscriptionData == null) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -304,7 +216,16 @@ class _BillingTabState extends State<BillingTab> {
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: () {
-                        context.read<SubscriptionCubit>().loadSubscription();
+                        final cid = context
+                            .read<AuthCubit>()
+                            .state
+                            .user
+                            ?.clinicId;
+                        if (cid != null) {
+                          context.read<SubscriptionCubit>().loadBillingInfo(
+                            cid,
+                          );
+                        }
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text('Try Again'),
@@ -402,7 +323,11 @@ class _BillingTabState extends State<BillingTab> {
                   ),
 
                 // Current Subscription Status
-                Card(
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -413,10 +338,7 @@ class _BillingTabState extends State<BillingTab> {
                           children: [
                             Row(
                               children: [
-                                Icon(
-                                  Icons.credit_card,
-                                  color: AppColors.primary,
-                                ),
+                                Icon(Icons.credit_card, color: AppColors.black),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Current Subscription',
@@ -424,11 +346,11 @@ class _BillingTabState extends State<BillingTab> {
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,
+                                    fontFamily: 'Fraunces',
                                   ),
                                 ),
                               ],
                             ),
-                            _buildStatusBadge(subscription.status),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -456,6 +378,7 @@ class _BillingTabState extends State<BillingTab> {
                                 ),
                               ],
                             ),
+                            _buildStatusBadge(subscription.status),
                           ],
                         ),
                         if (trialStatus.hasSubscription &&
@@ -521,19 +444,30 @@ class _BillingTabState extends State<BillingTab> {
                 const SizedBox(height: 24),
 
                 // Usage Statistics
-                Card(
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Usage Statistics',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.credit_card, color: AppColors.black),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Usage Statistics',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Fraunces',
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -545,7 +479,7 @@ class _BillingTabState extends State<BillingTab> {
                                 AppColors.primary,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: _buildUsageCard(
                                 'Patients',
@@ -553,7 +487,7 @@ class _BillingTabState extends State<BillingTab> {
                                 AppColors.success,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: _buildUsageCard(
                                 'Consultations',
@@ -570,48 +504,30 @@ class _BillingTabState extends State<BillingTab> {
 
                 const SizedBox(height: 24),
 
-                // Subscription Actions
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Subscription Actions',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                // Upgrade (when trial or expired) – matches web flow
+                if (trialStatus.isExpired || subscription.status == 'trial')
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.credit_card, color: AppColors.black),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Subscription Actions',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Fraunces',
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (subscription.status == 'active')
-                          _buildActionCard(
-                            title: 'Cancel Subscription',
-                            description:
-                                'Cancel your subscription. You\'ll continue to have access until the end of your current billing period.',
-                            buttonText: 'Cancel Subscription',
-                            buttonColor: AppColors.error,
-                            onPressed: state.isCancelling
-                                ? null
-                                : _handleCancelSubscription,
-                            isLoading: state.isCancelling,
-                          ),
-                        if (subscription.status == 'cancelled')
-                          _buildActionCard(
-                            title: 'Reactivate Subscription',
-                            description:
-                                'Reactivate your subscription to restore full access to all features.',
-                            buttonText: 'Reactivate Subscription',
-                            buttonColor: AppColors.primary,
-                            onPressed: state.isReactivating
-                                ? null
-                                : _handleReactivateSubscription,
-                            isLoading: state.isReactivating,
-                          ),
-                        if (trialStatus.isExpired ||
-                            subscription.status == 'trial')
+                          const SizedBox(height: 16),
                           _buildActionCard(
                             title: 'Upgrade to Full Plan',
                             description:
@@ -626,27 +542,37 @@ class _BillingTabState extends State<BillingTab> {
                                   ),
                             isLoading: state.isProcessingCheckout,
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
                 const SizedBox(height: 24),
 
                 // Billing Information
-                Card(
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Billing Information',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.credit_card, color: AppColors.black),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Billing Information',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -680,8 +606,11 @@ class _BillingTabState extends State<BillingTab> {
                     subscription.status == 'expired')
                   Padding(
                     padding: const EdgeInsets.only(top: 24),
-                    child: Card(
-                      color: AppColors.primary.withAlpha(2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -689,7 +618,10 @@ class _BillingTabState extends State<BillingTab> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.flash_on, color: AppColors.primary),
+                                Icon(
+                                  Icons.flash_on_outlined,
+                                  color: AppColors.black,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Upgrade to Full Plan',
@@ -705,11 +637,11 @@ class _BillingTabState extends State<BillingTab> {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: AppColors.white,
+                                color: AppColors.primaryLight.withAlpha(25),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: AppColors.primary,
-                                  width: 2,
+                                  width: 1,
                                 ),
                               ),
                               child: Column(
@@ -721,6 +653,7 @@ class _BillingTabState extends State<BillingTab> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.textPrimary,
+                                      fontFamily: 'Fraunces',
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -732,7 +665,7 @@ class _BillingTabState extends State<BillingTab> {
                                         style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
+                                          color: AppColors.black,
                                         ),
                                       ),
                                       Padding(
@@ -814,9 +747,9 @@ class _BillingTabState extends State<BillingTab> {
 
   Widget _buildUsageCard(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primaryLight),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -852,7 +785,7 @@ class _BillingTabState extends State<BillingTab> {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primaryLight),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
