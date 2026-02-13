@@ -663,7 +663,7 @@ class _BillingTabState extends State<BillingTab> {
                                       Text(
                                         '\$99.99',
                                         style: TextStyle(
-                                          fontSize: 32,
+                                          fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.black,
                                         ),

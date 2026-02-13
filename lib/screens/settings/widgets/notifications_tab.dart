@@ -51,9 +51,15 @@ class _NotificationsTabState extends State<NotificationsTab> {
     if (userId == null) return;
 
     // Update local state immediately for responsive UI
-    final newConsultation = key == 'emailConsultationCompletion' ? value : _emailConsultationReminders;
-    final newSystemAlerts = key == 'emailSystemAlerts' ? value : _emailSystemAlerts;
-    final newBillingUpdates = key == 'emailBillingUpdates' ? value : _emailBillingUpdates;
+    final newConsultation = key == 'emailConsultationCompletion'
+        ? value
+        : _emailConsultationReminders;
+    final newSystemAlerts = key == 'emailSystemAlerts'
+        ? value
+        : _emailSystemAlerts;
+    final newBillingUpdates = key == 'emailBillingUpdates'
+        ? value
+        : _emailBillingUpdates;
     final newInApp = key == 'inAppNotifications' ? value : _inAppNotifications;
 
     setState(() {
@@ -77,7 +83,8 @@ class _NotificationsTabState extends State<NotificationsTab> {
       final prefs = cubit.state.notificationPreferences;
       if (prefs != null) {
         setState(() {
-          _emailConsultationReminders = prefs['emailConsultationCompletion'] ?? true;
+          _emailConsultationReminders =
+              prefs['emailConsultationCompletion'] ?? true;
           _emailSystemAlerts = prefs['emailSystemAlerts'] ?? true;
           _emailBillingUpdates = prefs['emailBillingUpdates'] ?? true;
           _inAppNotifications = prefs['inAppNotifications'] ?? true;
@@ -105,143 +112,176 @@ class _NotificationsTabState extends State<NotificationsTab> {
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Notification Preferences',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 16.0,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        size: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Notification Preferences',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            fontFamily: 'Fraunces',
+                          ),
+                        ),
+                        Text(
+                          'Pick notification style for key events.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Choose how you want to be notified about important events',
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 32),
-              // Email Notifications Section
-              Row(
-                children: [
-                  Icon(
-                    Icons.email_outlined,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Email Notifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildNotificationSwitch(
-                title: 'Consultation Completion',
-                subtitle:
-                    'Get notified when each consultation is completed and documentation is ready',
-                value: _emailConsultationReminders,
-                onChanged: (value) {
-                  _handleNotificationChange(
-                    'emailConsultationCompletion',
-                    value,
-                    context.read<SettingsCubit>(),
-                    state.profile?.id,
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-              _buildNotificationSwitch(
-                title: 'System Alerts',
-                subtitle: 'Important system notifications and updates',
-                value: _emailSystemAlerts,
-                onChanged: (value) {
-                  _handleNotificationChange(
-                    'emailSystemAlerts',
-                    value,
-                    context.read<SettingsCubit>(),
-                    state.profile?.id,
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildNotificationSwitch(
-                title: 'Billing Updates',
-                subtitle:
-                    'Receive notifications about subscription and billing changes',
-                value: _emailBillingUpdates,
-                onChanged: (value) {
-                  _handleNotificationChange(
-                    'emailBillingUpdates',
-                    value,
-                    context.read<SettingsCubit>(),
-                    state.profile?.id,
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              const Divider(),
-              const SizedBox(height: 32),
-              // In-App Notifications Section
-              Row(
-                children: [
-                  Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'In-App Notifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                const SizedBox(height: 32),
+                // Email Notifications Section
+                Row(
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      size: 20,
+                      color: AppColors.primary,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildNotificationSwitch(
-                title: 'General In-App Notifications',
-                subtitle: 'Show general notifications within the application',
-                value: _inAppNotifications,
-                onChanged: (value) {
-                  _handleNotificationChange(
-                    'inAppNotifications',
-                    value,
-                    context.read<SettingsCubit>(),
-                    state.profile?.id,
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Changes are saved automatically',
-                    style: TextStyle(
-                      fontSize: 12,
+                    const SizedBox(width: 8),
+                    Text(
+                      'Email Notifications',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildNotificationSwitch(
+                  title: 'Consultation Completion',
+                  subtitle:
+                      'Get notified when each consultation is completed and documentation is ready',
+                  value: _emailConsultationReminders,
+                  onChanged: (value) {
+                    _handleNotificationChange(
+                      'emailConsultationCompletion',
+                      value,
+                      context.read<SettingsCubit>(),
+                      state.profile?.id,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                _buildNotificationSwitch(
+                  title: 'System Alerts',
+                  subtitle: 'Important system notifications and updates',
+                  value: _emailSystemAlerts,
+                  onChanged: (value) {
+                    _handleNotificationChange(
+                      'emailSystemAlerts',
+                      value,
+                      context.read<SettingsCubit>(),
+                      state.profile?.id,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildNotificationSwitch(
+                  title: 'Billing Updates',
+                  subtitle:
+                      'Receive notifications about subscription and billing changes',
+                  value: _emailBillingUpdates,
+                  onChanged: (value) {
+                    _handleNotificationChange(
+                      'emailBillingUpdates',
+                      value,
+                      context.read<SettingsCubit>(),
+                      state.profile?.id,
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+
+                // In-App Notifications Section
+                Row(
+                  children: [
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'In-App Notifications',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildNotificationSwitch(
+                  title: 'General In-App Notifications',
+                  subtitle: 'Show general notifications within the application',
+                  value: _inAppNotifications,
+                  onChanged: (value) {
+                    _handleNotificationChange(
+                      'inAppNotifications',
+                      value,
+                      context.read<SettingsCubit>(),
+                      state.profile?.id,
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
                       color: AppColors.textSecondary,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 8),
+                    Text(
+                      'Changes are saved automatically',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -259,6 +299,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(8),
+        color: AppColors.gray100,
       ),
       child: Row(
         children: [
@@ -285,10 +326,13 @@ class _NotificationsTabState extends State<NotificationsTab> {
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: AppColors.primary,
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: AppColors.primary,
+            ),
           ),
         ],
       ),

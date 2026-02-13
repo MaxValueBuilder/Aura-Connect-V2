@@ -133,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicator: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.gray100, width: 2),
+                        border: Border.all(color: AppColors.gray200, width: 1),
                         color: AppColors.white,
                       ),
                       padding: const EdgeInsets.symmetric(
