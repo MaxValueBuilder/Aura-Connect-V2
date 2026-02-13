@@ -3,7 +3,9 @@ import 'package:aura/screens/widgets/logout_button.dart';
 import 'package:aura/screens/widgets/screen_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/di/injection.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../features/notification/notification_cubit.dart';
 import '../../../features/auth/auth_cubit.dart';
 import '../../../features/settings/settings_cubit.dart';
 import '../../../features/settings/settings_state.dart';
@@ -88,6 +90,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
               );
               context.read<SettingsCubit>().clearSuccess();
+              // Refresh notification badge after profile/practice update
+              getIt<NotificationCubit>().refreshUnreadCount();
             }
           },
           child: SafeArea(

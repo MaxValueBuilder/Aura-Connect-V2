@@ -4,7 +4,9 @@ import 'package:aura/screens/consultation/final_recording_view.dart';
 import 'package:aura/screens/consultation/tasks_and_labs_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/di/injection.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../features/notification/notification_cubit.dart';
 import '../../../core/constants/consultation_status.dart';
 import '../../../core/utils/consultation_status_utils.dart';
 import '../../../services/recording_service.dart';
@@ -440,6 +442,8 @@ class _ConsultationWorkflowScreenState
           _currentStatus = ConsultationStatus.complete;
           _isLoading = false;
         });
+        // Refresh notification badge immediately after completing consultation
+        getIt<NotificationCubit>().refreshUnreadCount();
       } else {
         throw Exception('Failed to generate documentation');
       }
@@ -835,6 +839,7 @@ class _ConsultationWorkflowScreenState
                   billing: _documentation?.billing,
                 );
               });
+              getIt<NotificationCubit>().refreshUnreadCount();
             } catch (e) {
               log('Error saving SOAP note: $e');
               rethrow;
@@ -866,6 +871,7 @@ class _ConsultationWorkflowScreenState
                   billing: _documentation?.billing,
                 );
               });
+              getIt<NotificationCubit>().refreshUnreadCount();
             } catch (e) {
               log('Error saving client handout: $e');
               rethrow;

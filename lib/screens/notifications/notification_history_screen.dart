@@ -33,10 +33,6 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         title: AppBarLogoTitle(),
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
       ),
       body: BlocConsumer<NotificationCubit, NotificationState>(
         listener: (context, state) {
@@ -62,11 +58,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                   title: 'Notifications',
                   subtitle: 'All caught up • ${state.totalCount} Total',
                 ),
+
                 if (state.unreadCount > 0)
                   Align(
                     alignment: Alignment.centerRight,
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.fromLTRB(0, 16, 16, 0),
                       child: SizedBox(
                         width: 160,
                         child: PrimaryIconButton(

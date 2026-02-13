@@ -118,7 +118,7 @@ class AppRouter {
         final typedArgs = args is ConsultationRecordingArguments ? args : null;
         return MaterialPageRoute(
           builder: (_) => ConsultationWorkflowScreen(
-            // consultationId: typedArgs?.consultationId,
+            consultationId: typedArgs?.consultationId,
             initialStatus:
                 typedArgs?.initialStatus ?? ConsultationStatus.initialConsult,
             initialPatientName: typedArgs?.initialPatientName ?? 'New Patient',

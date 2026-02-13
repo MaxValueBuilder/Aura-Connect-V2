@@ -172,7 +172,9 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: null, // Disabled during tasks
+          onPressed: () {
+            Navigator.of(context).pop();
+          }, // Disabled during tasks
         ),
         title: AppBarLogoTitle(),
         actions: [
