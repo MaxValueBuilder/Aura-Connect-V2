@@ -16,8 +16,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
-import '../constants/app_constants.dart';
-
 final getIt = GetIt.instance;
 
 Future<void> setupDependencies() async {
@@ -83,10 +81,7 @@ Future<void> setupDependencies() async {
 
   // Cubits
   getIt.registerFactory<AuthCubit>(
-    () => AuthCubit(
-      getIt<FlutterSecureStorage>(),
-      getIt<AuthService>(),
-    ),
+    () => AuthCubit(getIt<FlutterSecureStorage>(), getIt<AuthService>()),
   );
 
   // getIt.registerFactory<PatientCubit>(
@@ -98,9 +93,7 @@ Future<void> setupDependencies() async {
   );
 
   // Navigation
-  getIt.registerLazySingleton<NavigationCubit>(
-    () => NavigationCubit(),
-  );
+  getIt.registerLazySingleton<NavigationCubit>(() => NavigationCubit());
 
   // Settings
   getIt.registerLazySingleton<SettingsCubit>(
