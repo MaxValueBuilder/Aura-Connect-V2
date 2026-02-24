@@ -37,9 +37,6 @@ class AuthService {
   }) async {
     try {
       final hashedPassword = hashPassword(password);
-      final fullUrl =
-          _dio.options.baseUrl.replaceFirst(RegExp(r'/$'), '') + '/auth/signup';
-      log('Signup request -> $fullUrl');
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/signup',
         data: {
@@ -48,9 +45,6 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
         },
-      );
-      log(
-        'Signup response: status=${response.statusCode}, data=${response.data}',
       );
       final data = response.data;
       if (data == null) {
