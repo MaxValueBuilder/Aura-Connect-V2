@@ -4,11 +4,7 @@ class AppConstants {
   static const String appName = 'Aura Connect';
   static const String appVersion = '1.0.0';
 
-  // API Configuration
-  static const String apiBaseUrl =
-      'https://aura-connect-veterinary-saas-production-d1aa.up.railway.app/api';
-
-  // 'http://10.0.2.2:3001/api';
+  // API Configuration (base URL is read from .env BACKEND_URL for security)
   static const Duration apiTimeout = Duration(seconds: 30);
   static const Duration cacheTimeout = Duration(minutes: 2);
 

@@ -1,17 +1,28 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
 import '../error/exceptions.dart';
 
-/// Dio client for HTTP requests
+/// Dio client for HTTP requests.
+/// Base URL is read from .env BACKEND_URL (e.g. https://api.auraconnect.vet or .../api).
 class DioClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage;
 
   DioClient(this._storage) {
+    final baseUrl = dotenv.env['BACKEND_URL'];
+    log("DioClient baseUrl: $baseUrl");
+    if (baseUrl == null || baseUrl.isEmpty) {
+      throw Exception(
+        'BACKEND_URL is not set in assets/.env. Add BACKEND_URL=<your-api-base-url>',
+      );
+    }
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConstants.apiBaseUrl,
+        baseUrl: baseUrl,
         connectTimeout: AppConstants.apiTimeout,
         receiveTimeout: AppConstants.apiTimeout,
         headers: {
@@ -26,6 +37,25 @@ class DioClient {
         onRequest: _onRequest,
         onError: _onError,
         onResponse: _onResponse,
+      ),
+    );
+
+    // Debug: log request URL and response/error (helps diagnose "no response" issues)
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (opt, h) {
+          final uri = opt.uri;
+          log('Dio request: ${opt.method} $uri');
+          h.next(opt);
+        },
+        onResponse: (r, h) {
+          log('Dio response: ${r.statusCode} ${r.requestOptions.uri}');
+          h.next(r);
+        },
+        onError: (e, h) {
+          log('Dio error: ${e.type} ${e.message} uri=${e.requestOptions.uri} statusCode=${e.response?.statusCode}');
+          h.next(e);
+        },
       ),
     );
   }
@@ -83,15 +113,14 @@ class DioClient {
   /// Refresh JWT: POST /auth/refresh with current Bearer token; response is { token }
   Future<bool> _refreshToken() async {
     try {
-      final currentToken =
-          await _storage.read(key: AppConstants.accessTokenKey);
+      final currentToken = await _storage.read(
+        key: AppConstants.accessTokenKey,
+      );
       if (currentToken == null) return false;
 
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/refresh',
-        options: Options(
-          headers: {'Authorization': 'Bearer $currentToken'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $currentToken'}),
       );
 
       if (response.statusCode == 200) {

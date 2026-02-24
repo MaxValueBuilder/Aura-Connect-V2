@@ -1,3 +1,5 @@
+import 'dart:developer' show log;
+
 import 'package:dio/dio.dart';
 
 import '../core/utils/crypto_utils.dart';
@@ -18,10 +20,7 @@ class AuthService {
       final hashedPassword = hashPassword(password);
       final response = await _dio.post(
         '/auth/login',
-        data: {
-          'email': email,
-          'password': hashedPassword,
-        },
+        data: {'email': email, 'password': hashedPassword},
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
@@ -38,7 +37,10 @@ class AuthService {
   }) async {
     try {
       final hashedPassword = hashPassword(password);
-      final response = await _dio.post(
+      final fullUrl =
+          _dio.options.baseUrl.replaceFirst(RegExp(r'/$'), '') + '/auth/signup';
+      log('Signup request -> $fullUrl');
+      final response = await _dio.post<Map<String, dynamic>>(
         '/auth/signup',
         data: {
           'email': email,
@@ -47,8 +49,22 @@ class AuthService {
           'lastName': lastName,
         },
       );
-      return response.data as Map<String, dynamic>;
+      log(
+        'Signup response: status=${response.statusCode}, data=${response.data}',
+      );
+      final data = response.data;
+      if (data == null) {
+        return <String, dynamic>{
+          'success': true,
+          'message':
+              'Account created. Please check your email to confirm, then sign in.',
+        };
+      }
+      return data;
     } on DioException catch (e) {
+      log(
+        'Signup DioException: type=${e.type}, message=${e.message}, response=${e.response?.data}, statusCode=${e.response?.statusCode}',
+      );
       throw _handleError(e);
     }
   }
@@ -86,14 +102,18 @@ class AuthService {
           : 'An error occurred';
 
       if (statusCode == 401) {
-        return AuthException(message: message.toString(), statusCode: statusCode);
+        return AuthException(
+          message: message.toString(),
+          statusCode: statusCode,
+        );
       }
 
       return ServerException(
-          message: message.toString(), statusCode: statusCode);
+        message: message.toString(),
+        statusCode: statusCode,
+      );
     }
 
-    return NetworkException(
-        message: error.message ?? 'Network error occurred');
+    return NetworkException(message: error.message ?? 'Network error occurred');
   }
 }

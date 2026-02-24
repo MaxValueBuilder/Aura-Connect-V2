@@ -55,18 +55,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       },
       child: BlocListener<AuthCubit, AuthState>(
-        listenWhen: (previous, current) => current.hasError,
+        listenWhen: (previous, current) => current.isSignupSuccess,
         listener: (context, state) {
-          if (state.hasError) {
+          if (state.isSignupSuccess && state.signupSuccessMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage.replaceAll('Exception: ', '')),
-                backgroundColor: AppColors.error,
+                content: Text(state.signupSuccessMessage!),
+                backgroundColor: AppColors.success,
               ),
             );
+            context.read<AuthCubit>().clearSignupSuccess();
+            Navigator.of(context).pop();
           }
         },
-        child: Scaffold(
+        child: BlocListener<AuthCubit, AuthState>(
+          listenWhen: (previous, current) => current.hasError,
+          listener: (context, state) {
+            if (state.hasError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage.replaceAll('Exception: ', '')),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          child: Scaffold(
           backgroundColor: AppColors.secondary,
           body: Stack(
             children: [
@@ -285,6 +299,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

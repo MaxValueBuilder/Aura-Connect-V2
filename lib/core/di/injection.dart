@@ -59,9 +59,9 @@ Future<void> setupDependencies() async {
     () => NotificationService(getIt<Dio>()),
   );
 
-  // API Service
+  // API Service (Dio base URL is set from .env BACKEND_URL in DioClient)
   // getIt.registerLazySingleton<ApiService>(
-  //   () => ApiService(getIt<Dio>(), baseUrl: AppConstants.apiBaseUrl),
+  //   () => ApiService(getIt<Dio>()),
   // );
 
   // getIt.registerLazySingleton<RecordingService>(() => RecordingService());

@@ -111,7 +111,9 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Sign up with email, password, first name, last name; then log in
+  /// Sign up with email, password, first name, last name.
+  /// Backend requires email confirmation: on success we emit [AuthStatus.signupSuccess]
+  /// with the server message; user must confirm email then sign in from login screen.
   Future<void> signup({
     required String email,
     required String password,
@@ -121,50 +123,64 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
 
-      await authService.signup(
+      final data = await authService.signup(
         email: email,
         password: password,
         firstName: firstName,
         lastName: lastName,
       );
 
-      // Backend does not return token on signup; log in to get token
-      final data = await authService.login(email: email, password: password);
-      final token = data['token'] as String?;
-      final userMap = data['user'] as Map<String, dynamic>?;
+      final success = data['success'] == true;
+      final message = data['message']?.toString() ?? '';
 
-      if (token == null) {
+      if (success && message.isNotEmpty) {
+        // Email confirmation required: show success and let user go to login
         emit(
           state.copyWith(
-            status: AuthStatus.error,
-            errorMessage: 'Account created. Please log in.',
+            status: AuthStatus.signupSuccess,
+            signupSuccessMessage: message,
           ),
         );
         return;
       }
 
-      await _storeAuth(token: token, userMap: userMap);
-      final userEmail = userMap?['email']?.toString() ?? email;
-      UserModel? user;
-      if (userMap != null) {
-        user = UserModel.fromJson(userMap);
+      // If backend ever returns token on signup (e.g. no email confirmation), handle it
+      final token = data['token'] as String?;
+      final userMap = data['user'] as Map<String, dynamic>?;
+      if (token != null && userMap != null) {
+        await _storeAuth(token: token, userMap: userMap);
+        final userEmail = userMap['email']?.toString() ?? email;
+        final user = UserModel.fromJson(userMap);
+        final hasClinic = _hasClinicFromUserMap(userMap);
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            accessToken: token,
+            userEmail: userEmail,
+            user: user,
+            hasClinic: hasClinic,
+          ),
+        );
+        return;
       }
-
-      // Same as web: use user.clinicId from login response
-      final hasClinic = _hasClinicFromUserMap(userMap);
 
       emit(
         state.copyWith(
-          status: AuthStatus.authenticated,
-          accessToken: token,
-          userEmail: userEmail,
-          user: user,
-          hasClinic: hasClinic,
+          status: AuthStatus.signupSuccess,
+          signupSuccessMessage:
+              'Account created. Please check your email to confirm, then sign in.',
         ),
       );
     } catch (e) {
       final message = e.toString().replaceFirst('Exception: ', '');
       emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+    }
+  }
+
+  /// Clear signup-success state after showing the message and navigating to login.
+  void clearSignupSuccess() {
+    if (state.status == AuthStatus.signupSuccess) {
+      emit(const AuthState(status: AuthStatus.unauthenticated));
     }
   }
 
