@@ -169,11 +169,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         SizedBox(height: screenSize.height * 0.04),
                         BlocBuilder<AuthCubit, AuthState>(
-                          buildWhen: (p, c) => p.status != c.status,
+                          buildWhen: (p, c) =>
+                              p.status != c.status || p.loadingSource != c.loadingSource,
                           builder: (context, state) {
                             return CustomAuthButton(
                               label: 'Sign Up',
-                              onPressed: state.status == AuthStatus.loading
+                              onPressed: state.isLoading
                                   ? null
                                   : () {
                                       final email = _emailController.text
@@ -222,7 +223,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         lastName: lastName,
                                       );
                                     },
-                              isLoading: state.status == AuthStatus.loading,
+                              isLoading: state.isLoadingEmail,
                             );
                           },
                         ),
@@ -257,14 +258,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 24),
                         BlocBuilder<AuthCubit, AuthState>(
-                          buildWhen: (p, c) => p.status != c.status,
+                          buildWhen: (p, c) =>
+                              p.status != c.status || p.loadingSource != c.loadingSource,
                           builder: (context, state) {
                             return GoogleSignInButton(
-                              onPressed: state.status == AuthStatus.loading
+                              onPressed: state.isLoading
                                   ? null
-                                  : () => context
-                                        .read<AuthCubit>()
-                                        .loginWithGoogle(),
+                                  : () => context.read<AuthCubit>().loginWithGoogle(),
+                              isLoading: state.isLoadingGoogle,
                             );
                           },
                         ),

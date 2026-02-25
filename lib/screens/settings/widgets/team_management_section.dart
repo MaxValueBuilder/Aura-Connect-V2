@@ -346,11 +346,19 @@ class TeamManagementSection extends StatelessWidget {
     );
   }
 
+  /// Role options: value matches server/web (veterinarian, assistant, admin); label is display-only.
+  static const List<MapEntry<String, String>> _inviteRoleOptions = [
+    MapEntry('veterinarian', 'Veterinarian'),
+    MapEntry('assistant', 'Veterinary Assistant'),
+    MapEntry('admin', 'Admin'),
+  ];
+
   void _showInviteDialog(BuildContext context) {
     final emailController = TextEditingController();
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
-    String selectedRole = 'Veterinarian';
+    // Default role value must match server (same as web InviteUserModal).
+    String selectedRole = _inviteRoleOptions.first.key;
 
     showDialog(
       context: context,
@@ -413,29 +421,23 @@ class TeamManagementSection extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             DropdownButtonFormField<String>(
-                              initialValue: selectedRole,
+                              value: selectedRole,
                               decoration: const InputDecoration(
                                 labelText: 'Role',
                                 prefixIcon: Icon(Icons.badge_outlined),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Veterinarian',
-                                  child: Text('Veterinarian'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Veterinary Assistant',
-                                  child: Text('Veterinary Assistant'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Admin',
-                                  child: Text('Admin'),
-                                ),
-                              ],
+                              items: _inviteRoleOptions
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e.key,
+                                      child: Text(e.value),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (value) {
-                                setState(() {
-                                  selectedRole = value!;
-                                });
+                                if (value != null) {
+                                  setState(() => selectedRole = value);
+                                }
                               },
                             ),
                           ],
@@ -459,7 +461,7 @@ class TeamManagementSection extends StatelessWidget {
                               // Close dialog immediately
                               Navigator.pop(dialogContext);
 
-                              // Invite user in background
+                              // Invite user in background (role = server value: veterinarian | assistant | admin)
                               final clinicId = context
                                   .read<SettingsCubit>()
                                   .state

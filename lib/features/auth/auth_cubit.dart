@@ -72,7 +72,7 @@ class AuthCubit extends Cubit<AuthState> {
   /// Login with email and password
   Future<void> login({required String email, required String password}) async {
     try {
-      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: '', loadingSource: 'email'));
 
       final data = await authService.login(email: email, password: password);
       final token = data['token'] as String?;
@@ -83,12 +83,14 @@ class AuthCubit extends Cubit<AuthState> {
           state.copyWith(
             status: AuthStatus.error,
             errorMessage: 'Invalid login response',
+            clearLoadingSource: true,
           ),
         );
         return;
       }
 
-      await _storeAuth(token: token, userMap: userMap);
+      final refreshToken = data['refresh_token'] as String?;
+      await _storeAuth(token: token, userMap: userMap, refreshToken: refreshToken);
       final userEmail = userMap?['email']?.toString() ?? email;
       UserModel? user;
       if (userMap != null) {
@@ -105,11 +107,12 @@ class AuthCubit extends Cubit<AuthState> {
           userEmail: userEmail,
           user: user,
           hasClinic: hasClinic,
+          clearLoadingSource: true,
         ),
       );
     } catch (e) {
       final message = e.toString().replaceFirst('Exception: ', '');
-      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message, clearLoadingSource: true));
     }
   }
 
@@ -123,7 +126,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String lastName,
   }) async {
     try {
-      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: '', loadingSource: 'email'));
 
       final data = await authService.signup(
         email: email,
@@ -141,6 +144,7 @@ class AuthCubit extends Cubit<AuthState> {
           state.copyWith(
             status: AuthStatus.signupSuccess,
             signupSuccessMessage: message,
+            clearLoadingSource: true,
           ),
         );
         return;
@@ -161,6 +165,7 @@ class AuthCubit extends Cubit<AuthState> {
             userEmail: userEmail,
             user: user,
             hasClinic: hasClinic,
+            clearLoadingSource: true,
           ),
         );
         return;
@@ -171,18 +176,19 @@ class AuthCubit extends Cubit<AuthState> {
           status: AuthStatus.signupSuccess,
           signupSuccessMessage:
               'Account created. Please check your email to confirm, then sign in.',
+          clearLoadingSource: true,
         ),
       );
     } catch (e) {
       final message = e.toString().replaceFirst('Exception: ', '');
-      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message, clearLoadingSource: true));
     }
   }
 
   /// Sign in with Google (gets ID token from plugin, sends to backend POST /auth/google).
   Future<void> loginWithGoogle() async {
     try {
-      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: '', loadingSource: 'google'));
 
       final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
       final googleSignIn = GoogleSignIn.instance;
@@ -201,6 +207,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(state.copyWith(
           status: AuthStatus.error,
           errorMessage: 'Could not get Google ID token. Try again or use email sign in.',
+          clearLoadingSource: true,
         ));
         return;
       }
@@ -213,11 +220,13 @@ class AuthCubit extends Cubit<AuthState> {
         emit(state.copyWith(
           status: AuthStatus.error,
           errorMessage: 'Invalid login response from server',
+          clearLoadingSource: true,
         ));
         return;
       }
 
-      await _storeAuth(token: token, userMap: userMap);
+      final refreshToken = data['refresh_token'] as String?;
+      await _storeAuth(token: token, userMap: userMap, refreshToken: refreshToken);
       final userEmail = userMap?['email']?.toString() ?? account.email;
       UserModel? user;
       if (userMap != null) {
@@ -232,20 +241,22 @@ class AuthCubit extends Cubit<AuthState> {
           userEmail: userEmail,
           user: user,
           hasClinic: hasClinic,
+          clearLoadingSource: true,
         ),
       );
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
-        emit(state.copyWith(status: AuthStatus.unauthenticated));
+        emit(state.copyWith(status: AuthStatus.unauthenticated, clearLoadingSource: true));
       } else {
         emit(state.copyWith(
           status: AuthStatus.error,
           errorMessage: e.description ?? 'Google sign-in failed',
+          clearLoadingSource: true,
         ));
       }
     } catch (e) {
       final message = e.toString().replaceFirst('Exception: ', '');
-      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message, clearLoadingSource: true));
     }
   }
   void clearSignupSuccess() {
@@ -344,8 +355,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _storeAuth({
     required String token,
     Map<String, dynamic>? userMap,
+    String? refreshToken,
   }) async {
     await secureStorage.write(key: AppConstants.accessTokenKey, value: token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await secureStorage.write(key: AppConstants.refreshTokenKey, value: refreshToken);
+    }
     if (userMap != null) {
       await secureStorage.write(
         key: AppConstants.userDataKey,

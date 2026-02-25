@@ -20,6 +20,9 @@ class AuthState extends Equatable {
   /// When status is signupSuccess, message to show (e.g. "Check your email to confirm").
   final String? signupSuccessMessage;
 
+  /// When status is loading: 'email' for login/signup form, 'google' for Google sign-in.
+  final String? loadingSource;
+
   const AuthState({
     this.status = AuthStatus.initial,
     this.accessToken,
@@ -28,6 +31,7 @@ class AuthState extends Equatable {
     this.errorMessage = '',
     this.hasClinic = false,
     this.signupSuccessMessage,
+    this.loadingSource,
   });
 
   AuthState copyWith({
@@ -38,6 +42,8 @@ class AuthState extends Equatable {
     String? errorMessage,
     bool? hasClinic,
     String? signupSuccessMessage,
+    String? loadingSource,
+    bool clearLoadingSource = false,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -47,11 +53,14 @@ class AuthState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       hasClinic: hasClinic ?? this.hasClinic,
       signupSuccessMessage: signupSuccessMessage ?? this.signupSuccessMessage,
+      loadingSource: clearLoadingSource ? null : (loadingSource ?? this.loadingSource),
     );
   }
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isLoading => status == AuthStatus.loading;
+  bool get isLoadingGoogle => status == AuthStatus.loading && loadingSource == 'google';
+  bool get isLoadingEmail => status == AuthStatus.loading && loadingSource != 'google';
   bool get hasError => status == AuthStatus.error;
   bool get isSignupSuccess => status == AuthStatus.signupSuccess;
 
@@ -64,5 +73,6 @@ class AuthState extends Equatable {
     errorMessage,
     hasClinic,
     signupSuccessMessage,
+    loadingSource,
   ];
 }

@@ -18,15 +18,8 @@ class DocumentationView extends StatefulWidget {
   final VoidCallback onBack;
   final Function(SOAPNoteModel)? onSave;
   final Function(ClientHandoutModel)? onSaveHandout;
-
-  /// When true, shows the workflow step bar (Final Consult, Step 4/4, Tasks & lab / Initial Recording buttons).
-  /// Use false when viewing from history (completed consultation screen).
   final bool showStepBar;
-
-  /// Called when user taps "Tasks & lab" to navigate to TasksAndLabsView.
   final VoidCallback? onNavigateToTasksLabs;
-
-  /// Called when user taps "Initial Recording" to navigate to InitialRecordingView.
   final VoidCallback? onNavigateToInitialRecording;
 
   const DocumentationView({
@@ -552,7 +545,7 @@ class _DocumentationViewState extends State<DocumentationView>
                           ),
                           tabs: const [
                             Tab(text: 'SOAP Note'),
-                            Tab(text: 'Client Handout'),
+                            Tab(text: 'Handout'),
                             Tab(text: 'Billing'),
                           ],
                         ),

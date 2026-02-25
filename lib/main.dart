@@ -1,4 +1,5 @@
 import 'package:aura/core/di/injection.dart';
+import 'package:aura/core/network/dio_client.dart';
 import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
 import 'package:aura/features/consultation/consultation_cubit.dart';
@@ -37,6 +38,9 @@ void main() async {
   });
 }
 
+/// Global key for the root Navigator so we can navigate from BlocListener (whose context is above MaterialApp).
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 class AuraApp extends StatelessWidget {
   const AuraApp({super.key});
 
@@ -45,7 +49,12 @@ class AuraApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthCubit>(
-          create: (context) => getIt<AuthCubit>()..initialize(),
+          create: (context) {
+            final auth = getIt<AuthCubit>();
+            auth.initialize();
+            getIt<DioClient>().onSessionExpired = () => auth.logout();
+            return auth;
+          },
         ),
         BlocProvider<ConsultationCubit>(
           create: (context) => getIt<ConsultationCubit>(),
@@ -60,12 +69,24 @@ class AuraApp extends StatelessWidget {
           value: getIt<NotificationCubit>(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Aura Connect',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.login,
-        onGenerateRoute: AppRouter.generateRoute,
+      child: BlocListener<AuthCubit, AuthState>(
+        listenWhen: (previous, current) =>
+            previous.status == AuthStatus.authenticated &&
+            current.status == AuthStatus.unauthenticated,
+        listener: (_, __) {
+          rootNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.login,
+            (route) => false,
+          );
+        },
+        child: MaterialApp(
+          navigatorKey: rootNavigatorKey,
+          title: 'Aura Connect',
+          theme: AppTheme.lightTheme,
+          debugShowCheckedModeBanner: false,
+          initialRoute: AppRoutes.login,
+          onGenerateRoute: AppRouter.generateRoute,
+        ),
       ),
     );
   }

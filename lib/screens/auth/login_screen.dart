@@ -282,22 +282,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Login button
+                      // Login button (loading only when email login is in progress)
                       BlocBuilder<AuthCubit, AuthState>(
-                        buildWhen: (p, c) => p.status != c.status,
+                        buildWhen: (p, c) =>
+                            p.status != c.status ||
+                            p.loadingSource != c.loadingSource,
                         builder: (context, state) {
                           return CustomAuthButton(
                             label: 'Login',
-                            onPressed: state.status == AuthStatus.loading
+                            onPressed: state.isLoading
                                 ? null
                                 : () {
-                                    final email =
-                                        _emailController.text.trim();
-                                    final password =
-                                        _passwordController.text;
+                                    final email = _emailController.text.trim();
+                                    final password = _passwordController.text;
                                     if (email.isEmpty || password.isEmpty) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             'Please enter email and password',
@@ -308,11 +309,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       return;
                                     }
                                     context.read<AuthCubit>().login(
-                                          email: email,
-                                          password: password,
-                                        );
+                                      email: email,
+                                      password: password,
+                                    );
                                   },
-                            isLoading: state.status == AuthStatus.loading,
+                            isLoading: state.isLoadingEmail,
                           );
                         },
                       ),
@@ -349,13 +350,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
+                      // Google button (loading only when Google sign-in is in progress)
                       BlocBuilder<AuthCubit, AuthState>(
-                        buildWhen: (p, c) => p.status != c.status,
+                        buildWhen: (p, c) =>
+                            p.status != c.status ||
+                            p.loadingSource != c.loadingSource,
                         builder: (context, state) {
                           return GoogleSignInButton(
-                            onPressed: state.status == AuthStatus.loading
+                            onPressed: state.isLoading
                                 ? null
-                                : () => context.read<AuthCubit>().loginWithGoogle(),
+                                : () => context
+                                      .read<AuthCubit>()
+                                      .loginWithGoogle(),
+                            isLoading: state.isLoadingGoogle,
                           );
                         },
                       ),

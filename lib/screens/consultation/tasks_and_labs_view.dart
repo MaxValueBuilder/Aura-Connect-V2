@@ -261,7 +261,7 @@ class _TasksAndLabsViewState extends State<TasksAndLabsView> {
                                 icon: Icons.chat_bubble_outline,
                                 text: 'Go to final consult',
                                 fontSize: 14,
-                                verticalPadding: 12,
+                                verticalPadding: 14,
                                 enabled: true,
                               ),
                             ),

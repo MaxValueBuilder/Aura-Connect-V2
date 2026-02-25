@@ -12,6 +12,9 @@ class DioClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage;
 
+  /// Called when token refresh fails (expired/invalid). Set after AuthCubit is created to logout and clear state.
+  void Function()? onSessionExpired;
+
   DioClient(this._storage) {
     final baseUrl = dotenv.env['BACKEND_URL'];
     log("DioClient baseUrl: $baseUrl");
@@ -90,14 +93,11 @@ class DioClient {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.response?.statusCode == 401) {
-      // Token expired, try to refresh
       final refreshed = await _refreshToken();
       if (refreshed) {
-        // Retry the request
         final options = err.requestOptions;
         final token = await _storage.read(key: AppConstants.accessTokenKey);
         options.headers['Authorization'] = 'Bearer $token';
-
         try {
           final response = await _dio.fetch(options);
           return handler.resolve(response);
@@ -105,31 +105,39 @@ class DioClient {
           return handler.reject(err);
         }
       }
+      _clearSessionAndNotify();
     }
 
     handler.next(err);
   }
 
-  /// Refresh JWT: POST /auth/refresh with current Bearer token; response is { token }
+  void _clearSessionAndNotify() {
+    _storage.delete(key: AppConstants.accessTokenKey);
+    _storage.delete(key: AppConstants.refreshTokenKey);
+    _storage.delete(key: AppConstants.userDataKey);
+    _storage.delete(key: 'user_email');
+    onSessionExpired?.call();
+  }
+
+  /// Refresh JWT: POST /auth/refresh with body { refresh_token } (server expects refresh_token in body).
   Future<bool> _refreshToken() async {
     try {
-      final currentToken = await _storage.read(
-        key: AppConstants.accessTokenKey,
-      );
-      if (currentToken == null) return false;
+      final refreshToken = await _storage.read(key: AppConstants.refreshTokenKey);
+      if (refreshToken == null || refreshToken.isEmpty) return false;
 
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/refresh',
-        options: Options(headers: {'Authorization': 'Bearer $currentToken'}),
+        data: {'refresh_token': refreshToken},
       );
 
       if (response.statusCode == 200) {
-        final newToken = response.data?['token'];
+        final newToken = response.data?['token'] as String?;
+        final newRefresh = response.data?['refresh_token'] as String?;
         if (newToken != null) {
-          await _storage.write(
-            key: AppConstants.accessTokenKey,
-            value: newToken,
-          );
+          await _storage.write(key: AppConstants.accessTokenKey, value: newToken);
+          if (newRefresh != null) {
+            await _storage.write(key: AppConstants.refreshTokenKey, value: newRefresh);
+          }
           return true;
         }
       }

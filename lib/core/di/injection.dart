@@ -79,8 +79,8 @@ Future<void> setupDependencies() async {
   //   () => AIRepositoryImpl(getIt<ApiService>()),
   // );
 
-  // Cubits
-  getIt.registerFactory<AuthCubit>(
+  // Cubits – AuthCubit as singleton so DioClient can call logout() on session expiry
+  getIt.registerLazySingleton<AuthCubit>(
     () => AuthCubit(getIt<FlutterSecureStorage>(), getIt<AuthService>()),
   );
 
