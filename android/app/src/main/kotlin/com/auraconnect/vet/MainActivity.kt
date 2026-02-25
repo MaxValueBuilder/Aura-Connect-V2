@@ -1,4 +1,4 @@
-package com.example.aura
+package com.auraconnect.vet
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterFragmentActivity

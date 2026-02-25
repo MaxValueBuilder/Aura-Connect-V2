@@ -349,14 +349,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      GoogleSignInButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Google sign-in coming soon',
-                              ),
-                            ),
+                      BlocBuilder<AuthCubit, AuthState>(
+                        buildWhen: (p, c) => p.status != c.status,
+                        builder: (context, state) {
+                          return GoogleSignInButton(
+                            onPressed: state.status == AuthStatus.loading
+                                ? null
+                                : () => context.read<AuthCubit>().loginWithGoogle(),
                           );
                         },
                       ),

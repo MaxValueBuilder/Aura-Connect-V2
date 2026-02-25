@@ -28,6 +28,29 @@ class AuthService {
     }
   }
 
+  /// Login with Google ID token (from Google Sign-In plugin). Backend exchanges it for app session.
+  Future<Map<String, dynamic>> loginWithGoogle({
+    required String idToken,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/google',
+        data: {'id_token': idToken},
+      );
+      log('Login with Google response: ${response.data}');
+      final data = response.data;
+      if (data == null) {
+        throw const ServerException(
+          message: 'Invalid response from server',
+          statusCode: 500,
+        );
+      }
+      return data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Sign up with email, password, first name, last name
   Future<Map<String, dynamic>> signup({
     required String email,

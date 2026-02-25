@@ -74,232 +74,239 @@ class _SignUpScreenState extends State<SignUpScreen> {
             if (state.hasError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.errorMessage.replaceAll('Exception: ', '')),
+                  content: Text(
+                    state.errorMessage.replaceAll('Exception: ', ''),
+                  ),
                   backgroundColor: AppColors.error,
                 ),
               );
             }
           },
           child: Scaffold(
-          backgroundColor: AppColors.secondary,
-          body: Stack(
-            children: [
-              const PawPrintBackground(),
-              SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 24),
-                      const LogoBadge(),
-                      const SizedBox(height: 32),
-                      Text(
-                        'Sign Up to your Account',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontFamily: 'Fraunces',
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Sign up to get started with Aura Connect',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.white.withValues(alpha: 0.9),
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      _buildLabel('First Name*'),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _firstNameController,
-                        hint: 'Enter your first name',
-                        icon: Icons.person_outline,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabel('Last Name*'),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _lastNameController,
-                        hint: 'Enter your last name',
-                        icon: Icons.person_outline,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabel('Email*'),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _emailController,
-                        hint: 'Enter your email address',
-                        icon: Icons.mail_outline,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabel('Password*'),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _passwordController,
-                        hint: 'Create a password',
-                        icon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        onToggleObscure: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabel('Confirm Password*'),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _confirmPasswordController,
-                        hint: 'Confirm your password',
-                        icon: Icons.lock_outline,
-                        obscureText: _obscureConfirmPassword,
-                        onToggleObscure: () => setState(
-                          () => _obscureConfirmPassword =
-                              !_obscureConfirmPassword,
-                        ),
-                      ),
-                      SizedBox(height: screenSize.height * 0.04),
-                      BlocBuilder<AuthCubit, AuthState>(
-                        buildWhen: (p, c) => p.status != c.status,
-                        builder: (context, state) {
-                          return CustomAuthButton(
-                            label: 'Sign Up',
-                            onPressed: state.status == AuthStatus.loading
-                                ? null
-                                : () {
-                                    final email =
-                                        _emailController.text.trim();
-                                    final password =
-                                        _passwordController.text;
-                                    final confirmPassword =
-                                        _confirmPasswordController.text;
-                                    final firstName =
-                                        _firstNameController.text.trim();
-                                    final lastName =
-                                        _lastNameController.text.trim();
-                                    if (firstName.isEmpty ||
-                                        lastName.isEmpty ||
-                                        email.isEmpty ||
-                                        password.isEmpty) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Please fill in all fields',
-                                          ),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    if (password != confirmPassword) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Passwords do not match',
-                                          ),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    context.read<AuthCubit>().signup(
-                                          email: email,
-                                          password: password,
-                                          firstName: firstName,
-                                          lastName: lastName,
-                                        );
-                                  },
-                            isLoading: state.status == AuthStatus.loading,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: AppColors.white.withValues(alpha: 0.3),
-                              thickness: 1,
-                            ),
+            backgroundColor: AppColors.secondary,
+            body: Stack(
+              children: [
+                const PawPrintBackground(),
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 24),
+                        const LogoBadge(),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Sign Up to your Account',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontFamily: 'Fraunces',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w600,
+                            fontStyle: FontStyle.italic,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'OR',
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sign up to get started with Aura Connect',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildLabel('First Name*'),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _firstNameController,
+                          hint: 'Enter your first name',
+                          icon: Icons.person_outline,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabel('Last Name*'),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _lastNameController,
+                          hint: 'Enter your last name',
+                          icon: Icons.person_outline,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabel('Email*'),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _emailController,
+                          hint: 'Enter your email address',
+                          icon: Icons.mail_outline,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabel('Password*'),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _passwordController,
+                          hint: 'Create a password',
+                          icon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          onToggleObscure: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabel('Confirm Password*'),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          hint: 'Confirm your password',
+                          icon: Icons.lock_outline,
+                          obscureText: _obscureConfirmPassword,
+                          onToggleObscure: () => setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          ),
+                        ),
+                        SizedBox(height: screenSize.height * 0.04),
+                        BlocBuilder<AuthCubit, AuthState>(
+                          buildWhen: (p, c) => p.status != c.status,
+                          builder: (context, state) {
+                            return CustomAuthButton(
+                              label: 'Sign Up',
+                              onPressed: state.status == AuthStatus.loading
+                                  ? null
+                                  : () {
+                                      final email = _emailController.text
+                                          .trim();
+                                      final password = _passwordController.text;
+                                      final confirmPassword =
+                                          _confirmPasswordController.text;
+                                      final firstName = _firstNameController
+                                          .text
+                                          .trim();
+                                      final lastName = _lastNameController.text
+                                          .trim();
+                                      if (firstName.isEmpty ||
+                                          lastName.isEmpty ||
+                                          email.isEmpty ||
+                                          password.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Please fill in all fields',
+                                            ),
+                                            backgroundColor: AppColors.error,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      if (password != confirmPassword) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Passwords do not match',
+                                            ),
+                                            backgroundColor: AppColors.error,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      context.read<AuthCubit>().signup(
+                                        email: email,
+                                        password: password,
+                                        firstName: firstName,
+                                        lastName: lastName,
+                                      );
+                                    },
+                              isLoading: state.status == AuthStatus.loading,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: AppColors.white.withValues(alpha: 0.3),
+                                thickness: 1,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Text(
+                                'OR',
+                                style: TextStyle(
+                                  color: AppColors.white.withValues(alpha: 0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: AppColors.white.withValues(alpha: 0.3),
+                                thickness: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        BlocBuilder<AuthCubit, AuthState>(
+                          buildWhen: (p, c) => p.status != c.status,
+                          builder: (context, state) {
+                            return GoogleSignInButton(
+                              onPressed: state.status == AuthStatus.loading
+                                  ? null
+                                  : () => context
+                                        .read<AuthCubit>()
+                                        .loginWithGoogle(),
+                            );
+                          },
+                        ),
+                        SizedBox(height: screenSize.height * 0.08),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
                               style: TextStyle(
                                 color: AppColors.white.withValues(alpha: 0.9),
                                 fontSize: 14,
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: AppColors.white.withValues(alpha: 0.3),
-                              thickness: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      GoogleSignInButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Google sign-in coming soon',
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Log In',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: screenSize.height * 0.08),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Already have an account? ',
-                            style: TextStyle(
-                              color: AppColors.white.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Log In',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 

@@ -5,7 +5,9 @@ import 'package:aura/models/user_model.dart';
 import 'package:aura/services/auth_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/constants/app_constants.dart';
 
@@ -177,7 +179,75 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Clear signup-success state after showing the message and navigating to login.
+  /// Sign in with Google (gets ID token from plugin, sends to backend POST /auth/google).
+  Future<void> loginWithGoogle() async {
+    try {
+      emit(state.copyWith(status: AuthStatus.loading, errorMessage: ''));
+
+      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+      final googleSignIn = GoogleSignIn.instance;
+      await googleSignIn.initialize(
+        serverClientId: serverClientId?.isNotEmpty == true ? serverClientId : null,
+      );
+
+      final account = await googleSignIn.authenticate(
+        scopeHint: const <String>['email', 'profile'],
+      );
+
+      log('Google account: ${account.authentication.idToken}');
+
+      final idToken = account.authentication.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'Could not get Google ID token. Try again or use email sign in.',
+        ));
+        return;
+      }
+
+      final data = await authService.loginWithGoogle(idToken: idToken);
+      final token = data['token'] as String?;
+      final userMap = data['user'] as Map<String, dynamic>?;
+
+      if (token == null) {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'Invalid login response from server',
+        ));
+        return;
+      }
+
+      await _storeAuth(token: token, userMap: userMap);
+      final userEmail = userMap?['email']?.toString() ?? account.email;
+      UserModel? user;
+      if (userMap != null) {
+        user = UserModel.fromJson(userMap);
+      }
+      final hasClinic = _hasClinicFromUserMap(userMap);
+
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          accessToken: token,
+          userEmail: userEmail,
+          user: user,
+          hasClinic: hasClinic,
+        ),
+      );
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        emit(state.copyWith(status: AuthStatus.unauthenticated));
+      } else {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: e.description ?? 'Google sign-in failed',
+        ));
+      }
+    } catch (e) {
+      final message = e.toString().replaceFirst('Exception: ', '');
+      emit(state.copyWith(status: AuthStatus.error, errorMessage: message));
+    }
+  }
   void clearSignupSuccess() {
     if (state.status == AuthStatus.signupSuccess) {
       emit(const AuthState(status: AuthStatus.unauthenticated));
