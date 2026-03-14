@@ -34,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ConsultationCubit>().loadConsultations(refresh: true);
       context.read<PatientCubit>().loadPatients(refresh: true);
-      context.read<NotificationCubit>().refreshUnreadCount();
+      context.read<NotificationCubit>().refreshUnreadNotifications();
     });
   }
 

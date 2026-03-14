@@ -173,14 +173,20 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  /// Refresh unread count (fetches notifications and derives count, matches web)
-  Future<void> refreshUnreadCount() async {
+  /// Refresh unread count and notification list (keeps badge and list in sync)
+  Future<void> refreshUnreadNotifications() async {
     try {
       final result = await _notificationService.getNotifications(
         limit: 100,
         offset: 0,
       );
-      emit(state.copyWith(unreadCount: result['unreadCount'] as int));
+      emit(
+        state.copyWith(
+          notifications: result['notifications'] as List<NotificationModel>,
+          totalCount: result['totalCount'] as int,
+          unreadCount: result['unreadCount'] as int,
+        ),
+      );
     } catch (e) {
       // Silently fail - don't show error for unread count refresh
     }

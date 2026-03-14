@@ -133,7 +133,7 @@ class _BillingTabState extends State<BillingTab> {
           (prev.subscriptionData == null || prev.isLoading),
       listener: (context, state) {
         // Refresh notification badge when billing data loads (e.g. after returning from Stripe)
-        getIt<NotificationCubit>().refreshUnreadCount();
+        getIt<NotificationCubit>().refreshUnreadNotifications();
       },
       child: BlocListener<SubscriptionCubit, SubscriptionState>(
         listener: (context, state) {

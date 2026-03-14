@@ -412,6 +412,7 @@ class _DocumentationViewState extends State<DocumentationView>
           children: [
             Expanded(
               child: NestedScrollView(
+                physics: const ClampingScrollPhysics(),
                 headerSliverBuilder: (context, innerBoxIsScrolled) => [
                   if (widget.showStepBar)
                     SliverToBoxAdapter(

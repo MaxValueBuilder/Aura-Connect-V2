@@ -443,7 +443,7 @@ class _ConsultationWorkflowScreenState
           _isLoading = false;
         });
         // Refresh notification badge immediately after completing consultation
-        getIt<NotificationCubit>().refreshUnreadCount();
+        getIt<NotificationCubit>().refreshUnreadNotifications();
       } else {
         throw Exception('Failed to generate documentation');
       }
@@ -839,7 +839,7 @@ class _ConsultationWorkflowScreenState
                   billing: _documentation?.billing,
                 );
               });
-              getIt<NotificationCubit>().refreshUnreadCount();
+              getIt<NotificationCubit>().refreshUnreadNotifications();
             } catch (e) {
               log('Error saving SOAP note: $e');
               rethrow;
@@ -871,7 +871,7 @@ class _ConsultationWorkflowScreenState
                   billing: _documentation?.billing,
                 );
               });
-              getIt<NotificationCubit>().refreshUnreadCount();
+              getIt<NotificationCubit>().refreshUnreadNotifications();
             } catch (e) {
               log('Error saving client handout: $e');
               rethrow;

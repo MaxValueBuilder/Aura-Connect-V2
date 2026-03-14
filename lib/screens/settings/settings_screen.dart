@@ -91,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               );
               context.read<SettingsCubit>().clearSuccess();
               // Refresh notification badge after profile/practice update
-              getIt<NotificationCubit>().refreshUnreadCount();
+              getIt<NotificationCubit>().refreshUnreadNotifications();
             }
           },
           child: SafeArea(

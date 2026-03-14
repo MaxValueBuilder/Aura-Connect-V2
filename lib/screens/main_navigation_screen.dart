@@ -90,7 +90,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _tabController.addListener(_onTabIndexChanged);
     // Load unread count so badge shows immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      getIt<NotificationCubit>().refreshUnreadCount();
+      getIt<NotificationCubit>().refreshUnreadNotifications();
     });
   }
 
@@ -135,6 +135,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     _tabController.index = index;
                   });
                   _navigationCubit.changeTab(index);
+                  if (index == _notificationsTabIndex) {
+                    getIt<NotificationCubit>().loadNotifications(refresh: true);
+                  }
                 },
               );
             },
