@@ -52,14 +52,15 @@ class _PatientsScreenState extends State<PatientsScreen> {
   // }
 
   void _handleEditPatient(PatientModel patient) {
+    final rootContext = context;
     setState(() {
       _selectedPatient = patient;
     });
-    // Show dialog
     showDialog(
-      context: context,
+      context: rootContext,
       barrierDismissible: true,
-      builder: (context) => _buildPatientDetailDialog(),
+      builder: (dialogContext) =>
+          _buildPatientDetailDialog(rootContext: rootContext),
     ).then((_) {
       setState(() {
         _selectedPatient = null;
@@ -702,309 +703,322 @@ class _PatientsScreenState extends State<PatientsScreen> {
     );
   }
 
-  // Patient Detail Dialog
-  Widget _buildPatientDetailDialog() {
+  // Patient Detail Dialog (editable like web PatientsContent)
+  Widget _buildPatientDetailDialog({required BuildContext rootContext}) {
     if (_selectedPatient == null) return const SizedBox.shrink();
 
     final patient = _selectedPatient!;
 
-    return Dialog(
-      backgroundColor: AppColors.background,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Patient Details',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      fontFamily: "Fraunces",
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.of(context, rootNavigator: true).pop();
-                    },
-                  ),
-                ],
-              ),
+    final nameController = TextEditingController(text: patient.name);
+    final breedController = TextEditingController(text: patient.breed ?? '');
+    final speciesController = TextEditingController(text: patient.species);
+    final ageController = TextEditingController(
+      text: patient.age != null ? patient.age.toString() : '',
+    );
+    final weightController = TextEditingController(
+      text: patient.weight != null ? patient.weight.toString() : '',
+    );
+    final ownerNameController = TextEditingController(text: patient.ownerName);
+
+    bool isActive = patient.isActive;
+    bool isSaving = false;
+    String? saveError;
+
+    Future<void> handleSave(StateSetter setState) async {
+      if (isSaving) return;
+      setState(() {
+        isSaving = true;
+        saveError = null;
+      });
+
+      try {
+        final updated = await rootContext.read<PatientCubit>().updatePatient(
+          patient.id,
+          name: nameController.text.trim().isEmpty
+              ? null
+              : nameController.text.trim(),
+          breed: breedController.text.trim().isEmpty
+              ? null
+              : breedController.text.trim(),
+          species: speciesController.text.trim().isEmpty
+              ? null
+              : speciesController.text.trim(),
+          age: ageController.text.trim().isEmpty
+              ? null
+              : int.tryParse(ageController.text.trim()),
+          weight: weightController.text.trim().isEmpty
+              ? null
+              : double.tryParse(weightController.text.trim()),
+          ownerName: ownerNameController.text.trim().isEmpty
+              ? null
+              : ownerNameController.text.trim(),
+          isActive: isActive,
+        );
+
+        if (updated != null) {
+          Navigator.of(rootContext, rootNavigator: true).pop();
+          final messenger = ScaffoldMessenger.of(rootContext);
+          messenger.clearSnackBars();
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Patient updated successfully'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
             ),
-            // Content
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Patient Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          );
+        } else {
+          final message = rootContext.read<PatientCubit>().state.errorMessage;
+          setState(() {
+            saveError = message.isNotEmpty
+                ? message
+                : 'Failed to update patient';
+          });
+        }
+      } catch (e) {
+        setState(() {
+          saveError = e.toString().replaceFirst('Exception: ', '');
+        });
+      } finally {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Dialog(
+          backgroundColor: AppColors.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header (title + subtitle, like web)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Edit Patient',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Fraunces',
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Update patient information and click Save.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context, rootNavigator: true).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: AppColors.divider, height: 1),
+                // Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 24,
+                      horizontal: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Error banner (top of form, like web)
+                        if (saveError != null && saveError!.isNotEmpty) ...[
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.error.withOpacity(0.4),
+                              ),
+                            ),
+                            child: Text(
+                              saveError!,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                        // Patient Name (first field, no avatar, no prefix icon)
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Patient Name',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Breed
+                        TextField(
+                          controller: breedController,
+                          decoration: const InputDecoration(labelText: 'Breed'),
+                        ),
+                        const SizedBox(height: 12),
+                        // Species
+                        TextField(
+                          controller: speciesController,
+                          decoration: const InputDecoration(
+                            labelText: 'Species',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Status dropdown
+                        DropdownButtonFormField<bool>(
+                          value: isActive,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: true,
+                              child: Text('Active'),
+                            ),
+                            DropdownMenuItem(
+                              value: false,
+                              child: Text('Inactive'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() {
+                              isActive = v;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        // Age & Weight in a row
                         Row(
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: PatientUtils.getSpeciesBackgroundColor(
-                                  patient.species,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  PatientUtils.getSpeciesIconPath(
-                                    patient.species,
-                                  ),
-                                  width: 20,
-                                  height: 20,
+                            Expanded(
+                              child: TextField(
+                                controller: ageController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Age',
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              patient.name,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                            Expanded(
+                              child: TextField(
+                                controller: weightController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Weight',
+                                ),
                               ),
                             ),
                           ],
                         ),
-
-                        LabelChip(
-                          label: _getStatusLabel(patient.isActive),
-                          textColor: _getStatusColor(patient.isActive),
-                          backgroundColor: _getStatusColor(
-                            patient.isActive,
-                          ).withAlpha(25),
-                          padding: 6,
+                        const SizedBox(height: 12),
+                        // Owner
+                        TextField(
+                          controller: ownerNameController,
+                          decoration: const InputDecoration(labelText: 'Owner'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${patient.breed ?? 'Unknown'} • ${patient.age != null ? '${patient.age} years' : 'Age unknown'}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Patient Information
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+                Divider(color: AppColors.divider, height: 1),
+                // Actions
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (saveError != null && saveError!.isNotEmpty) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            saveError!,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          const Text(
-                            'Patient Information',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                              fontFamily: "Fraunces",
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).pop(),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          _buildDetailRow(
-                            Icons.favorite,
-                            'Species',
-                            patient.species,
-                          ),
-                          _buildDetailRow(
-                            Icons.pets,
-                            'Breed',
-                            patient.breed ?? 'Unknown',
-                          ),
-                          _buildDetailRow(
-                            Icons.calendar_today,
-                            'Age',
-                            patient.age != null
-                                ? '${patient.age} years'
-                                : 'Unknown',
-                          ),
-                          _buildDetailRow(
-                            Icons.person_outline,
-                            'Gender',
-                            patient.gender,
-                          ),
-                          _buildDetailRow(
-                            Icons.monitor_weight,
-                            'Weight',
-                            patient.weight != null
-                                ? '${patient.weight} kg'
-                                : 'Unknown',
-                          ),
-                          if (patient.color != null)
-                            _buildDetailRow(
-                              Icons.palette,
-                              'Color',
-                              patient.color!,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () => handleSave(setState),
+                              child: Text(
+                                isSaving ? 'Saving...' : 'Save',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.white,
+                                ),
+                              ),
                             ),
-                          if (patient.microchipNumber != null)
-                            _buildDetailRow(
-                              Icons.credit_card,
-                              'Microchip',
-                              patient.microchipNumber!,
-                            ),
+                          ),
                         ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Owner Information',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDetailRow(
-                            Icons.person,
-                            'Name',
-                            patient.ownerName,
-                          ),
-                          if (patient.ownerPhone != null)
-                            _buildDetailRow(
-                              Icons.phone,
-                              'Phone',
-                              patient.ownerPhone!,
-                            ),
-                          if (patient.ownerEmail != null)
-                            _buildDetailRow(
-                              Icons.email,
-                              'Email',
-                              patient.ownerEmail!,
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    // Medical History
-                    if (patient.medicalHistory != null &&
-                        patient.medicalHistory!.isNotEmpty) ...[
-                      const SizedBox(height: 32),
-                      const Text(
-                        'Medical Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.gray50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          patient.medicalHistory!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            // Actions
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          Navigator.of(context, rootNavigator: true).pop(),
-                      child: const Text(
-                        'Close',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _handleStartConsultation(patient),
-                      child: const Text(
-                        'Start',
-                        style: TextStyle(fontSize: 14, color: AppColors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
-                children: [
-                  TextSpan(
-                    text: '$label: ',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  TextSpan(
-                    text: value,
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // No extra helpers needed for edit dialog – it uses plain TextFields
 }
