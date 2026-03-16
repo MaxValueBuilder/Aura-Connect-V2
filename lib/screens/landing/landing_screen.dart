@@ -117,7 +117,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     actions: [
                       CustomLandingPageButton(
                         onPressed: () =>
-                            AppRouter.pushNamed(context, AppRoutes.login),
+                            AppRouter.pushNamed(context, AppRoutes.signup),
                         label: 'Try Free',
                         textSize: 14,
                         icon: Icons.arrow_forward,
