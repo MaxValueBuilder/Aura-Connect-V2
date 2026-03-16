@@ -281,7 +281,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => 
+                                AppRouter.pushNamed(context, AppRoutes.login),
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
