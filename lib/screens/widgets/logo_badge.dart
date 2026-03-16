@@ -29,10 +29,6 @@ class LogoBadge extends StatelessWidget {
               height: 28,
               child: SvgPicture.asset(
                 'assets/icons/logo.svg',
-                colorFilter: const ColorFilter.mode(
-                  AppColors.primary,
-                  BlendMode.srcIn,
-                ),
               ),
             ),
             const SizedBox(width: 10),

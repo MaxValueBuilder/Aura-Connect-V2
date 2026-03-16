@@ -58,11 +58,7 @@ class LandingSidebar extends StatelessWidget {
                   SvgPicture.asset(
                     'assets/icons/logo.svg',
                     width: 32,
-                    height: 32,
-                    colorFilter: const ColorFilter.mode(
-                      AppColors.white,
-                      BlendMode.srcIn,
-                    ),
+                    height: 32,                
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 12),

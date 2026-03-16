@@ -15,10 +15,6 @@ class AppBarLogoTitle extends StatelessWidget {
           width: 32,
           height: 32,
           'assets/icons/logo.svg',
-          colorFilter: const ColorFilter.mode(
-            AppColors.primary,
-            BlendMode.srcIn,
-          ),
           fit: BoxFit.contain,
         ),
         const SizedBox(width: 12),

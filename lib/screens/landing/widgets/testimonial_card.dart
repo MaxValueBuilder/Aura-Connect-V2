@@ -57,8 +57,8 @@ class TestimonialCard extends StatelessWidget {
                     ? Image.asset(
                         imagePath!,
                         width: double.infinity,
-                        height: 160,
-                        fit: BoxFit.fill,
+                        height: 180,
+                        fit: BoxFit.fitWidth,
                         errorBuilder: (_, __, ___) => _buildPlaceholderAvatar(),
                       )
                     : _buildPlaceholderAvatar(),
