@@ -2,7 +2,6 @@ import 'dart:developer' show log;
 
 import 'package:dio/dio.dart';
 
-import '../core/utils/crypto_utils.dart';
 import '../core/error/exceptions.dart';
 
 /// Service for authentication and clinic setup API calls
@@ -11,16 +10,17 @@ class AuthService {
 
   AuthService(this._dio);
 
-  /// Login with email and password (password is hashed client-side before send)
+  /// Login with email and password. Sends plain password over HTTPS so backend
+  /// can use Supabase signInWithPassword (same as web). Credentials registered
+  /// on web work on mobile and vice versa.
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     try {
-      final hashedPassword = hashPassword(password);
       final response = await _dio.post(
         '/auth/login',
-        data: {'email': email, 'password': hashedPassword},
+        data: {'email': email, 'password': password},
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
@@ -51,7 +51,9 @@ class AuthService {
     }
   }
 
-  /// Sign up with email, password, first name, last name
+  /// Sign up with email, password, first name, last name. Sends plain password
+  /// over HTTPS so backend can create user in Supabase (same as web). Account
+  /// can then be used on both web and mobile.
   Future<Map<String, dynamic>> signup({
     required String email,
     required String password,
@@ -59,12 +61,11 @@ class AuthService {
     required String lastName,
   }) async {
     try {
-      final hashedPassword = hashPassword(password);
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/signup',
         data: {
           'email': email,
-          'password': hashedPassword,
+          'password': password,
           'firstName': firstName,
           'lastName': lastName,
         },
