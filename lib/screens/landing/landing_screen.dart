@@ -3,6 +3,7 @@ import 'package:aura/core/routes/app_routes.dart';
 import 'package:aura/features/auth/auth_cubit.dart';
 import 'package:aura/screens/widgets/app_bar_logo_title.dart';
 import 'package:aura/screens/widgets/custom_landing_page_button.dart';
+import 'package:aura/screens/widgets/landing_sidebar.dart';
 import 'package:aura/screens/landing/widgets/testimonial_card.dart';
 import 'package:aura/screens/landing/widgets/feature_card.dart';
 import 'package:aura/screens/landing/widgets/stat_overview_card.dart';
@@ -13,8 +14,41 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
+
+  @override
+  State<LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+  final GlobalKey _featuresSectionKey = GlobalKey();
+  final GlobalKey _pricingSectionKey = GlobalKey();
+  final GlobalKey _reviewsSectionKey = GlobalKey();
+
+  void _scrollToSection(LandingSection section) {
+    GlobalKey key;
+    switch (section) {
+      case LandingSection.features:
+        key = _featuresSectionKey;
+        break;
+      case LandingSection.pricing:
+        key = _pricingSectionKey;
+        break;
+      case LandingSection.reviews:
+        key = _reviewsSectionKey;
+        break;
+    }
+    final sectionContext = key.currentContext;
+    if (sectionContext != null) {
+      Scrollable.ensureVisible(
+        sectionContext,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +102,15 @@ class LandingScreen extends StatelessWidget {
             return Stack(
               children: [
                 Scaffold(
+                  drawer: Drawer(
+                    child: LandingSidebar(
+                      onClose: () => Navigator.of(context).pop(),
+                      onNavigateToSection: (section) {
+                        Navigator.of(context).pop();
+                        _scrollToSection(section);
+                      },
+                    ),
+                  ),
                   appBar: AppBar(
                     automaticallyImplyLeading: false,
                     title: AppBarLogoTitle(),
@@ -81,12 +124,13 @@ class LandingScreen extends StatelessWidget {
                         paddingSize: 10,
                       ),
                       SizedBox(width: 4),
-                      IconButton(
-                        icon: Icon(Icons.menu, color: AppColors.primary),
-                        onPressed: () {
-                          // Add your menu open logic here (e.g., open a Drawer, show a menu, etc.)
-                          Scaffold.of(context).openEndDrawer();
-                        },
+                      Builder(
+                        builder: (context) => IconButton(
+                          icon: Icon(Icons.menu, color: AppColors.primary),
+                          onPressed: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                        ),
                       ),
                       SizedBox(width: 8),
                     ],
@@ -329,62 +373,65 @@ class LandingScreen extends StatelessWidget {
                           SizedBox(height: 48),
 
                           // Features Grid
-                          Container(
-                            color: AppColors.secondary,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
-                                vertical: 96.0,
-                              ),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 44,
-                                    ),
-                                    child: RichText(
-                                      textAlign: TextAlign.center,
-                                      text: TextSpan(
-                                        style: const TextStyle(
-                                          fontSize: 36,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Fraunces',
+                          KeyedSubtree(
+                            key: _featuresSectionKey,
+                            child: Container(
+                              color: AppColors.secondary,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24.0,
+                                  vertical: 96.0,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 44,
+                                      ),
+                                      child: RichText(
+                                        textAlign: TextAlign.center,
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Fraunces',
+                                          ),
+                                          children: const [
+                                            TextSpan(
+                                              text: 'Everything\nYou Need to\n',
+                                              style: TextStyle(
+                                                color: AppColors.white,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: 'Streamline\nYour Practice',
+                                              style: TextStyle(
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        children: const [
-                                          TextSpan(
-                                            text: 'Everything\nYou Need to\n',
-                                            style: TextStyle(
-                                              color: AppColors.white,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: 'Streamline\nYour Practice',
-                                            style: TextStyle(
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Our Al co-pilot handles the paperwork while you focus on what matters most - your patients.',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: AppColors.textSecondary,
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Our Al co-pilot handles the paperwork while you focus on what matters most - your patients.',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 32),
-                                  ...[
-                                    for (final item
-                                        in AppConstants.featureCards) ...[
-                                      FeatureCard.fromItem(item),
-                                      const SizedBox(height: 16),
-                                    ],
-                                  ]..removeLast(),
-                                ],
+                                    const SizedBox(height: 32),
+                                    ...[
+                                      for (final item
+                                          in AppConstants.featureCards) ...[
+                                        FeatureCard.fromItem(item),
+                                        const SizedBox(height: 16),
+                                      ],
+                                    ]..removeLast(),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -462,218 +509,229 @@ class LandingScreen extends StatelessWidget {
                             ),
                           ),
 
-                          // Testimonials Section
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                              vertical: 96,
-                            ),
-                            child: Column(
-                              children: [
-                                RichText(
-                                  textAlign: TextAlign.center,
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors
-                                          .black, // Default color, will be overridden in children
-                                    ),
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Loved by ',
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          fontFamily: 'Fraunces',
-                                        ),
+                          // Testimonials Section (Reviews)
+                          KeyedSubtree(
+                            key: _reviewsSectionKey,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                                vertical: 96,
+                              ),
+                              child: Column(
+                                children: [
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors
+                                            .black, // Default color, will be overridden in children
                                       ),
-                                      TextSpan(
-                                        text: 'Veterinary',
-                                        style: const TextStyle(
-                                          color: AppColors.primary,
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Fraunces',
-                                        ),
-                                      ),
-                                      const TextSpan(
-                                        text: ' Professionals',
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          fontFamily: 'Fraunces',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'See what our customers have to say about how Aura Connect has transformed their practice.',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 40),
-                                ...AppConstants.testimonials
-                                    .expand<Widget>(
-                                      (item) => [
-                                        TestimonialCard.fromItem(item),
-                                        const SizedBox(height: 24),
-                                      ],
-                                    )
-                                    .toList()
-                                  ..removeLast(),
-                              ],
-                            ),
-                          ),
-
-                          // Pricing Section
-                          Container(
-                            width: double.infinity,
-                            color: AppColors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                              vertical: 96.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                RichText(
-                                  textAlign: TextAlign.center,
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontFamily: 'Fraunces',
-                                    ),
-                                    children: [
-                                      const TextSpan(text: 'Simple, '),
-                                      TextSpan(
-                                        text: 'Transparent',
-                                        style: const TextStyle(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      const TextSpan(text: ' pricing'),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'One plan that grows with your practice.',
-                                  style: TextStyle(fontSize: 18),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 24),
-                                Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Column(
                                       children: [
-                                        const Text(
-                                          'Professional Plan',
+                                        const TextSpan(
+                                          text: 'Loved by ',
                                           style: TextStyle(
-                                            fontSize: 30,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                            fontFamily: 'Fraunces',
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: 'Veterinary',
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 32,
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Fraunces',
                                           ),
                                         ),
-                                        const SizedBox(height: 16),
-
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Text(
-                                              '\$',
-                                              style: TextStyle(
-                                                fontSize: 60,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Fraunces',
-                                                color: AppColors.primary,
-                                              ),
-                                            ),
-                                            const Text(
-                                              '99',
-                                              style: TextStyle(
-                                                fontSize: 48,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Fraunces',
-                                                color: AppColors.primary,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8.0,
-                                              ),
-                                              child: Text(
-                                                '/month',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Text(
-                                          'Perfect for veterinary practices of all sizes',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        ...AppConstants.pricingPlanFeatures.map(
-                                          (feature) => Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8.0,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.check,
-                                                  color: AppColors.primary,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Text(
-                                                  feature,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 16),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: CustomLandingPageButton(
-                                            paddingSize: 16,
-                                            onPressed: () =>
-                                                AppRouter.pushNamed(
-                                                  context,
-                                                  AppRoutes.signup,
-                                                ),
-                                            label: 'Start Free Trial',
+                                        const TextSpan(
+                                          text: ' Professionals',
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                            fontFamily: 'Fraunces',
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'See what our customers have to say about how Aura Connect has transformed their practice.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 40),
+                                  ...AppConstants.testimonials
+                                      .expand<Widget>(
+                                        (item) => [
+                                          TestimonialCard.fromItem(item),
+                                          const SizedBox(height: 24),
+                                        ],
+                                      )
+                                      .toList()
+                                    ..removeLast(),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Pricing Section
+                          KeyedSubtree(
+                            key: _pricingSectionKey,
+                            child: Container(
+                              width: double.infinity,
+                              color: AppColors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                                vertical: 96.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        fontFamily: 'Fraunces',
+                                      ),
+                                      children: [
+                                        const TextSpan(text: 'Simple, '),
+                                        TextSpan(
+                                          text: 'Transparent',
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        const TextSpan(text: ' pricing'),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'One plan that grows with your practice.',
+                                    style: TextStyle(fontSize: 18),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Card(
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      side: const BorderSide(
+                                        color: AppColors.primary,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24.0),
+                                      child: Column(
+                                        children: [
+                                          const Text(
+                                            'Professional Plan',
+                                            style: TextStyle(
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Fraunces',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                '\$',
+                                                style: TextStyle(
+                                                  fontSize: 60,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Fraunces',
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                              const Text(
+                                                '99',
+                                                style: TextStyle(
+                                                  fontSize: 48,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Fraunces',
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 8.0,
+                                                ),
+                                                child: Text(
+                                                  '/month',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            'Perfect for veterinary practices of all sizes',
+                                            style: TextStyle(fontSize: 16),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          ...AppConstants.pricingPlanFeatures
+                                              .map(
+                                                (feature) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 8.0,
+                                                      ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.check,
+                                                        color:
+                                                            AppColors.primary,
+                                                        size: 20,
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Text(
+                                                        feature,
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          SizedBox(height: 16),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: CustomLandingPageButton(
+                                              paddingSize: 16,
+                                              onPressed: () =>
+                                                  AppRouter.pushNamed(
+                                                    context,
+                                                    AppRoutes.signup,
+                                                  ),
+                                              label: 'Start Free Trial',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
 
