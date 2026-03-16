@@ -84,7 +84,11 @@ class AuraApp extends StatelessWidget {
           title: 'Aura Connect',
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
-          initialRoute: AppRoutes.login,
+          // Start at splash, which reads AuthCubit state and decides whether
+          // to send the user to dashboard, clinic setup, landing, or login.
+          // This prevents already-authenticated users from briefly seeing
+          // the login screen on app launch.
+          initialRoute: AppRoutes.splash,
           onGenerateRoute: AppRouter.generateRoute,
         ),
       ),
