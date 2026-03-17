@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import '../../../core/di/injection.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../core/utils/patient_utils.dart';
+import '../../../features/notification/notification_cubit.dart';
 import '../../../features/patient/patient_cubit.dart';
 import '../../../features/patient/patient_state.dart';
 import '../../../models/patient_model.dart';
@@ -750,6 +752,13 @@ class _PatientsScreenState extends State<PatientsScreen> {
               behavior: SnackBarBehavior.floating,
             ),
           );
+
+          // Backend creates an in-app notification on patient UPDATE.
+          // Refresh so badge/history update immediately on mobile.
+          getIt<NotificationCubit>().refreshUnreadNotifications();
+          Future.delayed(const Duration(milliseconds: 600), () {
+            getIt<NotificationCubit>().refreshUnreadNotifications();
+          });
         } else {
           final message = rootContext.read<PatientCubit>().state.errorMessage;
           setState(() {
