@@ -21,6 +21,7 @@ class FinalRecordingView extends StatelessWidget {
   final VoidCallback onStopRecording;
   final VoidCallback onPauseRecording;
   final VoidCallback onResumeRecording;
+  final VoidCallback onRestartRecording;
   final VoidCallback onManualSubmit;
   final VoidCallback onBack;
 
@@ -44,6 +45,7 @@ class FinalRecordingView extends StatelessWidget {
     required this.onStopRecording,
     required this.onPauseRecording,
     required this.onResumeRecording,
+    required this.onRestartRecording,
     required this.onManualSubmit,
     required this.onBack,
     this.onNavigateToTasksLabs,
@@ -363,44 +365,84 @@ class FinalRecordingView extends StatelessWidget {
                                       elevation: 1,
                                     )
                                   : disabledStyle;
-                              return Row(
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: leftEnabled
-                                          ? (idle
-                                                ? onStartRecording
-                                                : (isPaused
-                                                      ? onResumeRecording
-                                                      : onPauseRecording))
-                                          : null,
-                                      icon: Icon(leftIcon, size: 22),
-                                      label: Text(
-                                        leftLabel,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: leftEnabled
+                                              ? (idle
+                                                    ? onStartRecording
+                                                    : (isPaused
+                                                          ? onResumeRecording
+                                                          : onPauseRecording))
+                                              : null,
+                                          icon: Icon(leftIcon, size: 22),
+                                          label: Text(
+                                            leftLabel,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: leftStyle,
                                         ),
                                       ),
-                                      style: leftStyle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: rightEnabled
-                                          ? onStopRecording
-                                          : null,
-                                      icon: Icon(rightIcon, size: 22),
-                                      label: Text(
-                                        rightLabel,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: rightEnabled
+                                              ? onStopRecording
+                                              : null,
+                                          icon: Icon(rightIcon, size: 22),
+                                          label: Text(
+                                            rightLabel,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: rightStyle,
                                         ),
                                       ),
-                                      style: rightStyle,
-                                    ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: recordingDuration > 0
+                                              ? onRestartRecording
+                                              : null,
+                                          icon: const Icon(
+                                            Icons.refresh,
+                                            size: 22,
+                                          ),
+                                          label: const Text(
+                                            'Restart',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.white,
+                                            foregroundColor:
+                                                AppColors.textPrimary,
+                                            disabledBackgroundColor:
+                                                AppColors.gray100,
+                                            disabledForegroundColor:
+                                                AppColors.gray500,
+                                            padding: padding,
+                                            minimumSize: const Size(0, 48),
+                                            shape: shape,
+                                            side: const BorderSide(
+                                              color: AppColors.border,
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               );

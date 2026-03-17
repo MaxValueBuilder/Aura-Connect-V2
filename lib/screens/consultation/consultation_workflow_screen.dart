@@ -673,6 +673,20 @@ class _ConsultationWorkflowScreenState
     Navigator.of(context).pop();
   }
 
+  Future<void> _handleRestartRecording() async {
+    try {
+      await _recordingService.cancelRecording();
+    } catch (_) {
+      // Ignore cancel errors
+    }
+    if (!mounted) return;
+    setState(() {
+      _recordingDuration = 0;
+      _isPaused = false;
+      _transcript = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _currentStatus == ConsultationStatus.patientExtraction) {
@@ -701,6 +715,7 @@ class _ConsultationWorkflowScreenState
             onStopRecording: _handleStopRecording,
             onPauseRecording: _handlePauseRecording,
             onResumeRecording: _handleResumeRecording,
+            onRestartRecording: _handleRestartRecording,
             onManualSubmit: _handleManualSubmit,
             onBack: _handleBack,
           );
@@ -718,10 +733,12 @@ class _ConsultationWorkflowScreenState
             stepInfo: stepInfo,
             totalSteps: _getTotalSteps(),
             manualTranscriptController: _manualTranscriptController,
+            finalTranscriptPreview: _documentation?.soapNote?.assessment,
             onStartRecording: _handleStartRecording,
             onStopRecording: _handleStopRecording,
             onPauseRecording: _handlePauseRecording,
             onResumeRecording: _handleResumeRecording,
+            onRestartRecording: _handleRestartRecording,
             onManualSubmit: _handleManualSubmit,
             onBack: _handleBack,
             onNavigateToTasksLabs: _handleNavigateToTasksLabs,

@@ -19,6 +19,7 @@ class InitialRecordingView extends StatelessWidget {
   final VoidCallback onStopRecording;
   final VoidCallback onPauseRecording;
   final VoidCallback onResumeRecording;
+  final VoidCallback onRestartRecording;
   final VoidCallback onManualSubmit;
   final VoidCallback onBack;
 
@@ -36,6 +37,7 @@ class InitialRecordingView extends StatelessWidget {
     required this.onStopRecording,
     required this.onPauseRecording,
     required this.onResumeRecording,
+    required this.onRestartRecording,
     required this.onManualSubmit,
     required this.onBack,
   });
@@ -136,7 +138,10 @@ class InitialRecordingView extends StatelessWidget {
                     // Recording card (white)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -227,7 +232,7 @@ class InitialRecordingView extends StatelessWidget {
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: AppColors.textPrimary,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
+                                        horizontal: 8,
                                         vertical: 14,
                                       ),
                                       side: const BorderSide(
@@ -239,7 +244,7 @@ class InitialRecordingView extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: onStopRecording,
@@ -249,8 +254,33 @@ class InitialRecordingView extends StatelessWidget {
                                       backgroundColor: AppColors.error,
                                       foregroundColor: AppColors.white,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
+                                        horizontal: 8,
                                         vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: recordingDuration > 0
+                                        ? onRestartRecording
+                                        : null,
+                                    icon: const Icon(Icons.refresh, size: 20),
+                                    label: const Text('Restart'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.textPrimary,
+                                      disabledForegroundColor:
+                                          AppColors.gray500,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 14,
+                                      ),
+                                      side: const BorderSide(
+                                        color: AppColors.border,
                                       ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
