@@ -284,36 +284,24 @@ class ConsultationService {
   }
 
   /// Transcribe audio file (Speech endpoint)
-  /// Sends raw audio file like web version - backend expects raw binary data
   Future<Map<String, dynamic>> transcribeAudio(String audioFilePath) async {
     try {
       log('Transcribe audio file path-------: $audioFilePath');
 
-      // Read the audio file as bytes (raw binary data)
       final file = File(audioFilePath);
-      final audioBytes = await file.readAsBytes();
-      log('Audio file size: ${audioBytes.length} bytes');
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final fileLength = await file.length();
+      log('Audio file size: $fileLength bytes');
 
-      // Determine content type based on file extension
-      String contentType = 'audio/m4a'; // Default for .m4a files
-      if (audioFilePath.endsWith('.m4a')) {
-        contentType = 'audio/m4a';
-      } else if (audioFilePath.endsWith('.aac')) {
-        contentType = 'audio/aac';
-      } else if (audioFilePath.endsWith('.webm')) {
-        contentType = 'audio/webm';
-      } else if (audioFilePath.endsWith('.mp3')) {
-        contentType = 'audio/mpeg';
-      }
+      // Server expects multipart/form-data with `audio` field (multer upload.single('audio'))
+      final formData = FormData.fromMap({
+        'audio': await MultipartFile.fromFile(
+          audioFilePath,
+          filename: fileName,
+        ),
+      });
 
-      log('Sending audio with Content-Type: $contentType');
-
-      // Send raw audio bytes directly (like web version)
-      final response = await _dio.post(
-        '/speech/transcribe',
-        data: audioBytes,
-        options: Options(headers: {'Content-Type': contentType}),
-      );
+      final response = await _dio.post('/speech/transcribe', data: formData);
       log('Transcribe audio response: $response');
       return response.data;
     } on DioException catch (e) {
