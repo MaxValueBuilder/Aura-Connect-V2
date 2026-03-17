@@ -12,6 +12,7 @@ import '../../../core/utils/consultation_status_utils.dart';
 import '../../../services/recording_service.dart';
 import '../../../features/consultation/consultation_cubit.dart';
 import '../../../features/consultation/consultation_state.dart';
+import '../../../features/patient/patient_cubit.dart';
 import '../../../models/consultation_model.dart';
 import 'initial_recording_view.dart';
 import 'patient_extraction_progress_view.dart';
@@ -521,6 +522,12 @@ class _ConsultationWorkflowScreenState
               },
             },
           );
+
+          // Backend creates a temporary patient when consultation is created.
+          // Refresh patient list so Patients screen & dashboard stats update immediately.
+          if (mounted) {
+            await context.read<PatientCubit>().loadPatients(refresh: true);
+          }
         }
       } else {
         // Update existing consultation

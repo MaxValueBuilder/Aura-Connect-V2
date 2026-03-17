@@ -1,3 +1,4 @@
+import 'package:aura/features/patient/patient_state.dart';
 import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -202,53 +203,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatsSection(ConsultationState state, BuildContext context) {
     final stats = state.stats ?? {};
-    final patientCount = context.read<PatientCubit>().state.patients.length;
-    return Column(
-      children: [
-        Row(
+    return BlocBuilder<PatientCubit, PatientState>(
+      builder: (context, patientState) {
+        final patientCount = patientState.patients.length;
+        return Column(
           children: [
-            Expanded(
-              child: DashboardStatCard(
-                title: 'Total Consultation',
-                value: '${stats['totalConsultations'] ?? 0}',
-                icon: Icons.event_note,
-                color: AppColors.info,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: DashboardStatCard(
+                    title: 'Total Consultation',
+                    value: '${stats['totalConsultations'] ?? 0}',
+                    icon: Icons.event_note,
+                    color: AppColors.info,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DashboardStatCard(
+                    title: 'Active Consultation',
+                    value: '${stats['activeConsultations'] ?? 0}',
+                    icon: Icons.timeline,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: DashboardStatCard(
-                title: 'Active Consultation',
-                value: '${stats['activeConsultations'] ?? 0}',
-                icon: Icons.timeline,
-                color: AppColors.success,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DashboardStatCard(
+                    title: 'Total Patients',
+                    value: '$patientCount',
+                    icon: Icons.people,
+                    color: const Color(0xFF7C3AED),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DashboardStatCard(
+                    title: 'Completed Today',
+                    value: '${stats['completedToday'] ?? 0}',
+                    icon: Icons.check_circle,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: DashboardStatCard(
-                title: 'Total Patients',
-                value: '$patientCount',
-                icon: Icons.people,
-                color: const Color(0xFF7C3AED),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: DashboardStatCard(
-                title: 'Completed Today',
-                value: '${stats['completedToday'] ?? 0}',
-                icon: Icons.check_circle,
-                color: AppColors.warning,
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -295,7 +300,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 8),
-
             // Search and Filter (matched heights)
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
