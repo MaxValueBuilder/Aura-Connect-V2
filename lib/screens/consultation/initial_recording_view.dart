@@ -12,6 +12,7 @@ class InitialRecordingView extends StatelessWidget {
   final int recordingDuration;
   final bool isRecording;
   final bool isPaused;
+  final bool isTranscribing;
   final Map<String, dynamic> stepInfo;
   final int totalSteps;
   final TextEditingController? manualTranscriptController;
@@ -30,6 +31,7 @@ class InitialRecordingView extends StatelessWidget {
     required this.recordingDuration,
     required this.isRecording,
     required this.isPaused,
+    required this.isTranscribing,
     required this.stepInfo,
     required this.totalSteps,
     this.manualTranscriptController,
@@ -221,9 +223,11 @@ class InitialRecordingView extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: isPaused
-                                        ? onResumeRecording
-                                        : onPauseRecording,
+                                    onPressed: isTranscribing
+                                        ? null
+                                        : (isPaused
+                                              ? onResumeRecording
+                                              : onPauseRecording),
                                     icon: Icon(
                                       isPaused ? Icons.play_arrow : Icons.pause,
                                       size: 20,
@@ -247,7 +251,9 @@ class InitialRecordingView extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: onStopRecording,
+                                    onPressed: isTranscribing
+                                        ? null
+                                        : onStopRecording,
                                     icon: const Icon(Icons.stop, size: 20),
                                     label: const Text('Stop'),
                                     style: ElevatedButton.styleFrom(
@@ -266,7 +272,8 @@ class InitialRecordingView extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: recordingDuration > 0
+                                    onPressed:
+                                        !isTranscribing && recordingDuration > 0
                                         ? onRestartRecording
                                         : null,
                                     icon: const Icon(Icons.refresh, size: 20),
@@ -291,11 +298,11 @@ class InitialRecordingView extends StatelessWidget {
                               ],
                             ),
                           ],
-                          // Manual transcript (when not recording and duration 0)
-                          if (!isRecording && recordingDuration == 0) ...[
+                          // Transcript editor (after transcription OR manual entry)
+                          if (!isRecording) ...[
                             const SizedBox(height: 24),
                             const Text(
-                              'or enter transcript manually:',
+                              'Edit transcript:',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -303,12 +310,37 @@ class InitialRecordingView extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
+                            if (isTranscribing) ...[
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Transcribing...',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                            ],
                             TextField(
                               controller: manualTranscriptController,
                               maxLines: 6,
+                              enabled: !isTranscribing,
                               decoration: InputDecoration(
                                 hintText:
-                                    'Enter your consultation transcript here.....',
+                                    'Review and edit your transcript here...',
                                 hintStyle: const TextStyle(
                                   color: AppColors.gray500,
                                 ),
@@ -353,7 +385,7 @@ class InitialRecordingView extends StatelessWidget {
                                         text: 'Submit Transcript',
                                         fontSize: 16,
                                         verticalPadding: 14,
-                                        enabled: hasText,
+                                        enabled: hasText && !isTranscribing,
                                       );
                                     },
                                   )

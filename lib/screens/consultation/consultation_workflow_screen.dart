@@ -54,6 +54,7 @@ class _ConsultationWorkflowScreenState
   bool _isEmergency = false;
   String _notes = '';
   bool _isLoading = false;
+  bool _isTranscribing = false;
   bool _isPaused = false;
   bool _labUploadCompleted = false;
   bool _labUploadSuccessCalled = false;
@@ -261,7 +262,10 @@ class _ConsultationWorkflowScreenState
 
   Future<void> _handleStopRecording() async {
     try {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+        _isTranscribing = true;
+      });
 
       // Stop recording and get audio file path
       final audioFilePath = await _recordingService.stopRecording();
@@ -278,17 +282,15 @@ class _ConsultationWorkflowScreenState
 
       setState(() {
         _transcript = transcript;
+        _manualTranscriptController.text = transcript;
         _isLoading = false;
+        _isTranscribing = false;
       });
-
-      // Process based on current status
-      if (_currentStatus == ConsultationStatus.initialConsult) {
-        await _processInitialConsultation(transcript);
-      } else if (_currentStatus == ConsultationStatus.finalConsult) {
-        await _processFinalConsultation(transcript);
-      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isTranscribing = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -684,6 +686,8 @@ class _ConsultationWorkflowScreenState
       _recordingDuration = 0;
       _isPaused = false;
       _transcript = null;
+      _manualTranscriptController.clear();
+      _isTranscribing = false;
     });
   }
 
@@ -708,6 +712,7 @@ class _ConsultationWorkflowScreenState
             recordingDuration: _recordingDuration,
             isRecording: _recordingService.isRecording,
             isPaused: _isPaused,
+            isTranscribing: _isTranscribing,
             stepInfo: stepInfo,
             totalSteps: _getTotalSteps(),
             manualTranscriptController: _manualTranscriptController,
@@ -730,6 +735,7 @@ class _ConsultationWorkflowScreenState
             recordingDuration: _recordingDuration,
             isRecording: _recordingService.isRecording,
             isPaused: _isPaused,
+            isTranscribing: _isTranscribing,
             stepInfo: stepInfo,
             totalSteps: _getTotalSteps(),
             manualTranscriptController: _manualTranscriptController,

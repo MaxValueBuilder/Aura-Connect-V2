@@ -11,6 +11,7 @@ class FinalRecordingView extends StatelessWidget {
   final int recordingDuration;
   final bool isRecording;
   final bool isPaused;
+  final bool isTranscribing;
   final Map<String, dynamic> stepInfo;
   final int totalSteps;
   final TextEditingController? manualTranscriptController;
@@ -37,6 +38,7 @@ class FinalRecordingView extends StatelessWidget {
     required this.recordingDuration,
     required this.isRecording,
     required this.isPaused,
+    required this.isTranscribing,
     required this.stepInfo,
     required this.totalSteps,
     this.manualTranscriptController,
@@ -304,8 +306,9 @@ class FinalRecordingView extends StatelessWidget {
                                   !isRecording && recordingDuration == 0;
                               final stopped =
                                   !isRecording && recordingDuration > 0;
-                              final leftEnabled = !stopped;
-                              final rightEnabled = isRecording;
+                              final leftEnabled = !stopped && !isTranscribing;
+                              final rightEnabled =
+                                  isRecording && !isTranscribing;
                               final leftLabel = idle
                                   ? 'Start'
                                   : (isPaused ? 'Resume' : 'Pause');
@@ -411,7 +414,9 @@ class FinalRecordingView extends StatelessWidget {
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           onPressed: recordingDuration > 0
-                                              ? onRestartRecording
+                                              ? (isTranscribing
+                                                    ? null
+                                                    : onRestartRecording)
                                               : null,
                                           icon: const Icon(
                                             Icons.refresh,
@@ -491,7 +496,7 @@ class FinalRecordingView extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'or enter transcript manually:',
+                      'Edit transcript:',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -502,6 +507,7 @@ class FinalRecordingView extends StatelessWidget {
                     TextField(
                       controller: manualTranscriptController,
                       maxLines: 5,
+                      enabled: !isTranscribing,
                       decoration: InputDecoration(
                         hintText:
                             'Enter your consultation transcript here......',
@@ -533,6 +539,30 @@ class FinalRecordingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    if (isTranscribing) ...[
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Transcribing...',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     // Back to Lab and Tasks | Complete Consultation
                     Row(
                       children: [
@@ -571,7 +601,9 @@ class FinalRecordingView extends StatelessWidget {
                                         .isNotEmpty;
                                     return ElevatedButton(
                                       onPressed: hasText
-                                          ? onManualSubmit
+                                          ? (isTranscribing
+                                                ? null
+                                                : onManualSubmit)
                                           : null,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.primary,
@@ -592,7 +624,7 @@ class FinalRecordingView extends StatelessWidget {
                                         ),
                                       ),
                                       child: const Text(
-                                        'Complete',
+                                        'Submit Transcript',
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
@@ -616,7 +648,7 @@ class FinalRecordingView extends StatelessWidget {
                                     ),
                                   ),
                                   child: const Text(
-                                    'Complete Consultation',
+                                    'Submit Transcript',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
