@@ -4,9 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/routes/app_routes.dart';
 import '../../core/utils/patient_utils.dart';
-import '../../../core/constants/consultation_status.dart';
 import '../../../features/patient/patient_cubit.dart';
 import '../../../features/patient/patient_state.dart';
 import '../../../models/patient_model.dart';
@@ -112,20 +110,6 @@ class _PatientsScreenState extends State<PatientsScreen> {
         );
       }
     }
-  }
-
-  void _handleStartConsultation(PatientModel patient) {
-    Navigator.of(context, rootNavigator: true).pop(); // Close dialog
-    // Navigate to consultation recording screen with patient info
-    AppRouter.pushNamed(
-      context,
-      AppRoutes.consultationRecording,
-      arguments: ConsultationRecordingArguments(
-        consultationId: null, // New consultation
-        initialStatus: ConsultationStatus.initialConsult,
-        initialPatientName: patient.name,
-      ),
-    );
   }
 
   Color _getStatusColor(bool isActive) {
