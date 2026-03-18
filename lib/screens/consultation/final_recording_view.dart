@@ -234,7 +234,10 @@ class FinalRecordingView extends StatelessWidget {
                     // Controls card: Start / Stop recording
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -261,44 +264,18 @@ class FinalRecordingView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (recordingDuration > 0 || isRecording) ...[
-                            const SizedBox(height: 16),
-                            Center(
-                              child: Text(
-                                _formatTime(recordingDuration),
-                                style: const TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  fontFeatures: [FontFeature.tabularFigures()],
-                                  color: AppColors.textPrimary,
-                                ),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: Text(
+                              _formatTime(recordingDuration),
+                              style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            if (isRecording) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.success,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'AI is listening and transcribing...',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
+                          ),
                           const SizedBox(height: 20),
                           Builder(
                             builder: (context) {
@@ -320,7 +297,7 @@ class FinalRecordingView extends StatelessWidget {
                               final rightIcon = Icons.stop;
                               const padding = EdgeInsets.symmetric(
                                 vertical: 16,
-                                horizontal: 12,
+                                horizontal: 4,
                               );
                               const shape = RoundedRectangleBorder(
                                 borderRadius: BorderRadius.all(
@@ -449,6 +426,51 @@ class FinalRecordingView extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 24),
+                                  const Text(
+                                    'Edit transcript:',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: manualTranscriptController,
+                                    maxLines: 5,
+                                    enabled: !isRecording && !isTranscribing,
+                                    decoration: InputDecoration(
+                                      hintText: isTranscribing
+                                          ? 'Transcribing...'
+                                          : 'Enter your transcript here.',
+                                      hintStyle: const TextStyle(
+                                        color: AppColors.gray500,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: AppColors.primaryLight
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: AppColors.primaryLight
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: AppColors.primary,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.all(16),
+                                    ),
+                                  ),
                                 ],
                               );
                             },
@@ -457,113 +479,6 @@ class FinalRecordingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Final Transcript (read-only / preview)
-                    const Text(
-                      'Final Transcript:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.gray50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primaryLight.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Text(
-                        finalTranscriptPreview?.isNotEmpty == true
-                            ? finalTranscriptPreview!
-                            : 'You have to generate report',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: finalTranscriptPreview?.isNotEmpty == true
-                              ? AppColors.textPrimary
-                              : AppColors.gray500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Edit transcript:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: manualTranscriptController,
-                      maxLines: 5,
-                      enabled: !isTranscribing,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Enter your consultation transcript here......',
-                        hintStyle: const TextStyle(color: AppColors.gray500),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColors.primaryLight.withValues(
-                              alpha: 0.5,
-                            ),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColors.primaryLight.withValues(
-                              alpha: 0.5,
-                            ),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.all(16),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    if (isTranscribing) ...[
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Transcribing...',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    // Back to Lab and Tasks | Complete Consultation
                     Row(
                       children: [
                         Expanded(
@@ -601,7 +516,7 @@ class FinalRecordingView extends StatelessWidget {
                                         .isNotEmpty;
                                     return ElevatedButton(
                                       onPressed: hasText
-                                          ? (isTranscribing
+                                          ? (isRecording || isTranscribing
                                                 ? null
                                                 : onManualSubmit)
                                           : null,

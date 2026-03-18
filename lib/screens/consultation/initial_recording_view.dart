@@ -184,220 +184,195 @@ class InitialRecordingView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (isRecording) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.success,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'AI is listening and transcribing...',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                           const SizedBox(height: 24),
-                          // Start Recording / Pause-Resume / Stop
-                          if (!isRecording && recordingDuration == 0)
-                            PrimaryIconButton(
-                              onPressed: onStartRecording,
-                              icon: Icons.mic,
-                              text: 'Start Recording',
-                              fontSize: 16,
-                              verticalPadding: 14,
-                            )
-                          else if (isRecording) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: isTranscribing
-                                        ? null
-                                        : (isPaused
-                                              ? onResumeRecording
-                                              : onPauseRecording),
-                                    icon: Icon(
-                                      isPaused ? Icons.play_arrow : Icons.pause,
-                                      size: 20,
-                                    ),
-                                    label: Text(isPaused ? 'Resume' : 'Pause'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.textPrimary,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 14,
-                                      ),
-                                      side: const BorderSide(
-                                        color: AppColors.border,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: isTranscribing
-                                        ? null
-                                        : onStopRecording,
-                                    icon: const Icon(Icons.stop, size: 20),
-                                    label: const Text('Stop'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.error,
-                                      foregroundColor: AppColors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed:
-                                        !isTranscribing && recordingDuration > 0
-                                        ? onRestartRecording
-                                        : null,
-                                    icon: const Icon(Icons.refresh, size: 20),
-                                    label: const Text('Restart'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.textPrimary,
-                                      disabledForegroundColor:
-                                          AppColors.gray500,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 14,
-                                      ),
-                                      side: const BorderSide(
-                                        color: AppColors.border,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          // Transcript editor (after transcription OR manual entry)
-                          if (!isRecording) ...[
-                            const SizedBox(height: 24),
-                            const Text(
-                              'Edit transcript:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (isTranscribing) ...[
-                              Row(
+                          // Controls (always visible): Start/Pause/Resume, Stop, Restart
+                          Builder(
+                            builder: (context) {
+                              final idle =
+                                  !isRecording && recordingDuration == 0;
+                              final stopped =
+                                  !isRecording && recordingDuration > 0;
+
+                              final leftEnabled = !isTranscribing && !stopped;
+                              final rightEnabled =
+                                  !isTranscribing && isRecording;
+                              final restartEnabled =
+                                  !isTranscribing && recordingDuration > 0;
+
+                              final leftLabel = idle
+                                  ? 'Start'
+                                  : (isPaused ? 'Resume' : 'Pause');
+                              final leftIcon = idle
+                                  ? Icons.mic
+                                  : (isPaused ? Icons.play_arrow : Icons.pause);
+
+                              return Row(
                                 children: [
-                                  SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.primary,
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: leftEnabled
+                                          ? (idle
+                                                ? onStartRecording
+                                                : (isPaused
+                                                      ? onResumeRecording
+                                                      : onPauseRecording))
+                                          : null,
+                                      icon: Icon(leftIcon, size: 20),
+                                      label: Text(leftLabel),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.textPrimary,
+                                        disabledForegroundColor:
+                                            AppColors.gray500,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 14,
+                                        ),
+                                        side: const BorderSide(
+                                          color: AppColors.border,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    'Transcribing...',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textSecondary,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: rightEnabled
+                                          ? onStopRecording
+                                          : null,
+                                      icon: const Icon(Icons.stop, size: 20),
+                                      label: const Text('Stop'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.error,
+                                        foregroundColor: AppColors.white,
+                                        disabledBackgroundColor:
+                                            AppColors.gray200,
+                                        disabledForegroundColor:
+                                            AppColors.gray500,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: restartEnabled
+                                          ? onRestartRecording
+                                          : null,
+                                      icon: const Icon(Icons.refresh, size: 20),
+                                      label: const Text('Restart'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.textPrimary,
+                                        disabledForegroundColor:
+                                            AppColors.gray500,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 14,
+                                        ),
+                                        side: const BorderSide(
+                                          color: AppColors.border,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                            TextField(
-                              controller: manualTranscriptController,
-                              maxLines: 6,
-                              enabled: !isTranscribing,
-                              decoration: InputDecoration(
-                                hintText:
-                                    'Review and edit your transcript here...',
-                                hintStyle: const TextStyle(
-                                  color: AppColors.gray500,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: AppColors.primaryLight.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: AppColors.primaryLight.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.all(16),
-                              ),
+                              );
+                            },
+                          ),
+                          // Transcript editor (always visible)
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Edit transcript:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 12),
-                            manualTranscriptController != null
-                                ? ValueListenableBuilder<TextEditingValue>(
-                                    valueListenable:
-                                        manualTranscriptController!,
-                                    builder: (context, value, child) {
-                                      final hasText = value.text
-                                          .trim()
-                                          .isNotEmpty;
-                                      return PrimaryIconButton(
-                                        onPressed: onManualSubmit,
-                                        icon: Icons.description,
-                                        text: 'Submit Transcript',
-                                        fontSize: 16,
-                                        verticalPadding: 14,
-                                        enabled: hasText && !isTranscribing,
-                                      );
-                                    },
-                                  )
-                                : PrimaryIconButton(
-                                    onPressed: onManualSubmit,
-                                    icon: Icons.description,
-                                    text: 'Submit Transcript',
-                                    fontSize: 16,
-                                    verticalPadding: 14,
-                                    enabled: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: manualTranscriptController,
+                            maxLines: 6,
+                            enabled: !isRecording && !isTranscribing,
+                            decoration: InputDecoration(
+                              hintText: isTranscribing
+                                  ? 'Transcribing...'
+                                  : 'Review and edit your transcript here...',
+                              hintStyle: const TextStyle(
+                                color: AppColors.gray500,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.primaryLight.withValues(
+                                    alpha: 0.5,
                                   ),
-                          ],
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.primaryLight.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.all(16),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          manualTranscriptController != null
+                              ? ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: manualTranscriptController!,
+                                  builder: (context, value, child) {
+                                    final hasText = value.text
+                                        .trim()
+                                        .isNotEmpty;
+                                    return PrimaryIconButton(
+                                      onPressed: onManualSubmit,
+                                      icon: Icons.description,
+                                      text: 'Submit Transcript',
+                                      fontSize: 16,
+                                      verticalPadding: 14,
+                                      enabled:
+                                          hasText &&
+                                          !isRecording &&
+                                          !isTranscribing,
+                                    );
+                                  },
+                                )
+                              : PrimaryIconButton(
+                                  onPressed: onManualSubmit,
+                                  icon: Icons.description,
+                                  text: 'Submit Transcript',
+                                  fontSize: 16,
+                                  verticalPadding: 14,
+                                  enabled: false,
+                                ),
                         ],
                       ),
                     ),
