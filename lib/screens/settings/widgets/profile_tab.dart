@@ -208,7 +208,6 @@ class _ProfileTabState extends State<ProfileTab> {
 
                     const SizedBox(height: 32),
                     SizedBox(
-                      width: 200,
                       child: PrimaryIconButton(
                         onPressed: state.isSaving
                             ? () {}

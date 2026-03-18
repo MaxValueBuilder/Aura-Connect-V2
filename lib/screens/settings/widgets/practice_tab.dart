@@ -212,7 +212,6 @@ class _PracticeTabState extends State<PracticeTab> {
                       Align(
                         alignment: Alignment.center,
                         child: SizedBox(
-                          width: 200,
                           child: PrimaryIconButton(
                             onPressed: state.isSaving
                                 ? () {}
