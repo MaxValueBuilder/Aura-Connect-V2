@@ -3,7 +3,6 @@ import 'package:aura/screens/consultation/widgets/label_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/app_bar_logo_title.dart';
-import '../widgets/logout_button.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../features/consultation/consultation_cubit.dart';
