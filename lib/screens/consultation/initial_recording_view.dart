@@ -63,7 +63,6 @@ class InitialRecordingView extends StatelessWidget {
           onPressed: isRecording ? null : onBack,
         ),
         title: AppBarLogoTitle(),
-        actions: [const LogoutButton(), const SizedBox(width: 16)],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

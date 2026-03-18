@@ -405,7 +405,6 @@ class _DocumentationViewState extends State<DocumentationView>
           },
         ),
         title: AppBarLogoTitle(),
-        actions: [const LogoutButton(), const SizedBox(width: 16)],
       ),
       body: SafeArea(
         child: Column(

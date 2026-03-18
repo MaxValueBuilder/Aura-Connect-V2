@@ -66,8 +66,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.add,
             onPressed: () => _handleStartConsultation(context),
           ),
-          const SizedBox(width: 8),
-          const LogoutButton(),
           const SizedBox(width: 16),
         ],
       ),
