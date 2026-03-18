@@ -5,7 +5,7 @@ import 'package:aura/screens/clinic_setup/clinic_setup_screen.dart';
 import 'package:aura/screens/consultation/consultation_workflow_screen.dart';
 import 'package:aura/screens/history/completed_consultation_screen.dart';
 import 'package:aura/screens/history/history_screen.dart';
-import 'package:aura/screens/landing/landing_screen.dart';
+import 'package:aura/screens/onboarding/onboarding_screen.dart';
 import 'package:aura/screens/main_navigation_screen.dart';
 import 'package:aura/screens/notifications/notification_history_screen.dart';
 import 'package:aura/screens/splash_screen.dart';
@@ -77,7 +77,7 @@ class AppRouter {
 
       case AppRoutes.landing:
         return MaterialPageRoute(
-          builder: (_) => const LandingScreen(),
+          builder: (_) => const OnboardingScreen(),
           settings: settings,
         );
 
@@ -157,7 +157,7 @@ class AppRouter {
       default:
         // Unknown route - redirect to landing
         return MaterialPageRoute(
-          builder: (_) => const LandingScreen(),
+          builder: (_) => const OnboardingScreen(),
           settings: settings,
         );
     }

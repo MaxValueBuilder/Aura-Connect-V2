@@ -3,14 +3,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 
-class LandingScreen extends StatefulWidget {
-  const LandingScreen({super.key});
+class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
 
   @override
-  State<LandingScreen> createState() => _LandingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> {
   late final PageController _pageController;
   int _pageIndex = 0;
 
