@@ -70,7 +70,7 @@ class _ProfileTabState extends State<ProfileTab> {
           previous.isAuthenticated && !current.isAuthenticated,
       listener: (context, state) {
         // Navigate to landing screen after logout
-        AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.landing);
+        AppRouter.pushNamedAndRemoveUntil(context, AppRoutes.onboarding);
       },
       child: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {

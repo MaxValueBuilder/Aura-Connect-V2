@@ -143,7 +143,7 @@ class _ClinicSetupScreenState extends State<ClinicSetupScreen> {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
-              AppRouter.pushReplacementNamed(context, AppRoutes.landing);
+              AppRouter.pushReplacementNamed(context, AppRoutes.onboarding);
             }
           },
         ),

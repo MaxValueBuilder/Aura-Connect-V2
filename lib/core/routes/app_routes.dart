@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 /// Route names constants
 class AppRoutes {
   static const String splash = '/';
-  static const String landing = '/landing';
+  static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String dashboard = '/dashboard';
@@ -75,7 +75,7 @@ class AppRouter {
           settings: settings,
         );
 
-      case AppRoutes.landing:
+      case AppRoutes.onboarding:
         return MaterialPageRoute(
           builder: (_) => const OnboardingScreen(),
           settings: settings,
