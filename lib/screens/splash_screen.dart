@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } else {
       // Not authenticated - go to landing screen
-      AppRouter.pushReplacementNamed(context, AppRoutes.landing);
+      AppRouter.pushReplacementNamed(context, AppRoutes.onboarding);
     }
   }
 
