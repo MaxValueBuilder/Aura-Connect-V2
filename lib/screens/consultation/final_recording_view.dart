@@ -254,7 +254,7 @@ class FinalRecordingView extends StatelessWidget {
                               const Text(
                                 'Final Consultation Recording',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                   fontFamily: 'Fraunces',
@@ -368,7 +368,7 @@ class FinalRecordingView extends StatelessWidget {
                                           style: leftStyle,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 4),
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           onPressed: rightEnabled
@@ -385,7 +385,7 @@ class FinalRecordingView extends StatelessWidget {
                                           style: rightStyle,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 4),
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           onPressed: recordingDuration > 0

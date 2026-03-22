@@ -161,7 +161,7 @@ class InitialRecordingView extends StatelessWidget {
                                 'Initial Consultation Recording',
 
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                   fontFamily: 'Fraunces',
@@ -222,7 +222,7 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
+                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         side: const BorderSide(
@@ -236,7 +236,7 @@ class InitialRecordingView extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       onPressed: rightEnabled
@@ -252,7 +252,7 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
+                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -263,7 +263,7 @@ class InitialRecordingView extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       onPressed: restartEnabled
@@ -276,7 +276,7 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
+                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         side: const BorderSide(

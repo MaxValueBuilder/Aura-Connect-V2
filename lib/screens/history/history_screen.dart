@@ -411,7 +411,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       ],
                                     ),
                                     Text(
-                                      '${filteredConsultations.length} Consultations',
+                                      '${filteredConsultations.length}',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: AppColors.textSecondary,
