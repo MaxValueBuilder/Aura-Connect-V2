@@ -112,7 +112,7 @@ class InitialRecordingView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          consultationStatus.apiValue,
+                          "INITIAL CONSULT",
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
