@@ -28,6 +28,10 @@
 		<true/>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Aura Connect needs the microphone to record consultation audio for transcription.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Aura Connect needs camera access to capture photos and videos for veterinary consultations.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Aura Connect needs photo library access so you can select and upload media for veterinary consultations.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
