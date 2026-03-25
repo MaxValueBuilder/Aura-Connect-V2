@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io' show Platform;
 
 import 'package:aura/models/user_model.dart';
 import 'package:aura/services/auth_service.dart';
@@ -224,7 +225,12 @@ class AuthCubit extends Cubit<AuthState> {
         ),
       );
 
-      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+      // `GOOGLE_WEB_CLIENT_ID` is typically used for Android.
+      // iOS needs a different Google client id, so we keep a dedicated env key.
+      final androidWebClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+      final iosWebClientId = dotenv.env['GOOGLE_IOS_WEB_CLIENT_ID']?.trim();
+      final serverClientId =
+          Platform.isIOS ? iosWebClientId : androidWebClientId;
       final googleSignIn = GoogleSignIn.instance;
       await googleSignIn.initialize(
         serverClientId: serverClientId?.isNotEmpty == true

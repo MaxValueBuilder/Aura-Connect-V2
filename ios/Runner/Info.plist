@@ -53,6 +53,18 @@
 				</array>
 			</dict>
 		</dict>
+		<!-- Required for `google_sign_in` on iOS (client ID + URL scheme). -->
+		<key>GIDClientID</key>
+		<string>com.googleusercontent.apps.46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg</string>
+				</array>
+			</dict>
+		</array>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>
