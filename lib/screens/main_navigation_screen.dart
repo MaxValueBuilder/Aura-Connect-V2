@@ -110,6 +110,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Use the device's bottom inset (gesture/home indicator area) instead of a
+    // fixed extra height, so the nav bar stays consistent across devices.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return BlocProvider<NavigationCubit>.value(
       value: _navigationCubit,
       child: BlocListener<NavigationCubit, NavigationState>(
@@ -142,14 +145,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               );
             },
           ),
-          confineToSafeArea: true,
+          // We'll handle safe area ourselves (see `_DarkStyleNavBar`).
+          confineToSafeArea: false,
           backgroundColor: _navBarBackgroundColor,
           handleAndroidBackButtonPress: true,
           stateManagement: true,
           hideNavigationBarWhenKeyboardAppears: true,
           resizeToAvoidBottomInset: true,
           isVisible: true,
-          navBarHeight: kBottomNavigationBarHeight + 32,
+          navBarHeight: kBottomNavigationBarHeight + bottomInset,
           margin: EdgeInsets.zero,
           animationSettings: const NavBarAnimationSettings(
             navBarItemAnimation: ItemAnimationSettings(
@@ -187,112 +191,118 @@ class _DarkStyleNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       color: _navBarBackgroundColor,
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: kBottomNavigationBarHeight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (index) {
-              final item = items[index];
-              final isSelected = selectedIndex == index;
-              final showBadge =
-                  index == _notificationsTabIndex &&
-                  notificationUnreadCount > 0;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onItemSelected(index),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? _navBarActiveItemBackground
-                          : Colors.transparent,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            IconTheme(
-                              data: IconThemeData(
-                                size: 24,
-                                color: isSelected
-                                    ? (item.activeColorSecondary ??
-                                          item.activeColorPrimary)
-                                    : item.inactiveColorPrimary,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: kBottomNavigationBarHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(items.length, (index) {
+                final item = items[index];
+                final isSelected = selectedIndex == index;
+                final showBadge =
+                    index == _notificationsTabIndex &&
+                    notificationUnreadCount > 0;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => onItemSelected(index),
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? _navBarActiveItemBackground
+                            : Colors.transparent,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconTheme(
+                                data: IconThemeData(
+                                  size: 24,
+                                  color: isSelected
+                                      ? (item.activeColorSecondary ??
+                                            item.activeColorPrimary)
+                                      : item.inactiveColorPrimary,
+                                ),
+                                child: item.icon,
                               ),
-                              child: item.icon,
-                            ),
-                            if (showBadge)
-                              Positioned(
-                                right: -8,
-                                top: -6,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                    vertical: 0,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error,
-                                    shape: notificationUnreadCount <= 9
-                                        ? BoxShape.circle
-                                        : BoxShape.rectangle,
-                                    borderRadius: notificationUnreadCount > 9
-                                        ? BorderRadius.circular(12)
-                                        : null,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 20,
-                                    minHeight: 20,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      // '45',
-                                      notificationUnreadCount > 99
-                                          ? '99+'
-                                          : '$notificationUnreadCount',
-                                      style: const TextStyle(
-                                        color: AppColors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                              if (showBadge)
+                                Positioned(
+                                  right: -8,
+                                  top: -6,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 0,
+                                      vertical: 0,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: notificationUnreadCount <= 9
+                                          ? BoxShape.circle
+                                          : BoxShape.rectangle,
+                                      borderRadius: notificationUnreadCount > 9
+                                          ? BorderRadius.circular(12)
+                                          : null,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 20,
+                                      minHeight: 20,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        // '45',
+                                        notificationUnreadCount > 99
+                                            ? '99+'
+                                            : '$notificationUnreadCount',
+                                        style: const TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Material(
-                          type: MaterialType.transparency,
-                          child: FittedBox(
-                            child: Text(
-                              item.title ?? '',
-                              style: TextStyle(
-                                color: isSelected
-                                    ? item.activeColorPrimary
-                                    : item.inactiveColorPrimary,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 11,
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Material(
+                            type: MaterialType.transparency,
+                            child: FittedBox(
+                              child: Text(
+                                item.title ?? '',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? item.activeColorPrimary
+                                      : item.inactiveColorPrimary,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 11,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
-        ),
+          // Exact bottom inset area (gesture/home indicator). Prevents any
+          // "mystery" extra space from stacking multiple safe-area widgets.
+          SizedBox(height: bottomInset),
+        ],
       ),
     );
   }
