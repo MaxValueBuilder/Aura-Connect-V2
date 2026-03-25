@@ -729,7 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SizedBox(height: actionLabel != null && onAction != null ? 24 : 0),
             if (actionLabel != null && onAction != null)
               SizedBox(
-                width: 240,
+                width: double.infinity,
                 child: PrimaryIconButton(
                   onPressed: onAction,
                   icon: actionIcon,

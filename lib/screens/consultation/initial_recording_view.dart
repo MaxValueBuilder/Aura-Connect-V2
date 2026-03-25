@@ -222,7 +222,6 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         side: const BorderSide(
@@ -252,7 +251,6 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -276,7 +274,6 @@ class InitialRecordingView extends StatelessWidget {
                                         disabledForegroundColor:
                                             AppColors.gray500,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
                                           vertical: 14,
                                         ),
                                         side: const BorderSide(

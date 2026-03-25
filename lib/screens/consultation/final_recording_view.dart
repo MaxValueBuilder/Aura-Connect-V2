@@ -295,7 +295,6 @@ class FinalRecordingView extends StatelessWidget {
                               final rightIcon = Icons.stop;
                               const padding = EdgeInsets.symmetric(
                                 vertical: 16,
-                                horizontal: 4,
                               );
                               const shape = RoundedRectangleBorder(
                                 borderRadius: BorderRadius.all(

@@ -53,14 +53,18 @@ class AuthState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       hasClinic: hasClinic ?? this.hasClinic,
       signupSuccessMessage: signupSuccessMessage ?? this.signupSuccessMessage,
-      loadingSource: clearLoadingSource ? null : (loadingSource ?? this.loadingSource),
+      loadingSource: clearLoadingSource
+          ? null
+          : (loadingSource ?? this.loadingSource),
     );
   }
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isLoading => status == AuthStatus.loading;
-  bool get isLoadingGoogle => status == AuthStatus.loading && loadingSource == 'google';
-  bool get isLoadingEmail => status == AuthStatus.loading && loadingSource != 'google';
+  bool get isLoadingGoogle =>
+      status == AuthStatus.loading && loadingSource == 'google';
+  bool get isLoadingEmail =>
+      status == AuthStatus.loading && loadingSource != 'google';
   bool get hasError => status == AuthStatus.error;
   bool get isSignupSuccess => status == AuthStatus.signupSuccess;
 

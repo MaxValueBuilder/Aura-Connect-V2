@@ -8,6 +8,8 @@ import 'package:aura/features/notification/notification_cubit.dart';
 import 'package:aura/features/patient/patient_cubit.dart';
 import 'package:aura/features/settings/settings_cubit.dart';
 import 'package:aura/features/subscription/subscription_cubit.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -30,7 +32,13 @@ void main() async {
   // Setup dependency injection
   await setupDependencies();
 
-  runApp(const AuraApp());
+  runApp(
+    DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (context) => AuraApp(), // Wrap your app
+    ),
+    // const AuraApp()
+  );
 
   // Remove the splash screen after the first frame
   WidgetsBinding.instance.addPostFrameCallback((_) {
