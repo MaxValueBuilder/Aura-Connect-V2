@@ -16,9 +16,8 @@ class RecordingService {
   bool _isPaused = false;
 
   /// Check and request microphone permission
-  Future<bool> requestPermission() async {
-    final status = await Permission.microphone.request();
-    return status.isGranted;
+  Future<PermissionStatus> requestPermission() async {
+    return Permission.microphone.request();
   }
 
   /// Check if microphone permission is granted
@@ -34,9 +33,27 @@ class RecordingService {
     try {
       // Check permission
       if (!await hasPermission()) {
-        final granted = await requestPermission();
-        if (!granted) {
-          throw PermissionException(message: 'Microphone permission denied');
+        final status = await requestPermission();
+        if (!status.isGranted) {
+          // iOS will not show the permission prompt again if user selected "Don’t Allow"
+          // (or the app is restricted). In that case, the correct fix is enabling it in
+          // Settings -> Privacy -> Microphone -> <Your App>.
+          if (status.isPermanentlyDenied) {
+            throw PermissionException(
+              message:
+                  'Microphone permission is permanently denied. Enable it in iOS Settings -> Privacy -> Microphone -> this app, then try again.',
+            );
+          }
+          if (status.isRestricted) {
+            throw PermissionException(
+              message:
+                  'Microphone permission is restricted by iOS settings (cannot be requested from the app).',
+            );
+          }
+          throw PermissionException(
+            message:
+                'Microphone permission denied. If prompted, choose "Allow"; otherwise enable it in iOS Settings -> Privacy -> Microphone -> this app.',
+          );
         }
       }
 
@@ -113,7 +130,9 @@ class RecordingService {
   Future<void> pauseRecording() async {
     try {
       if (!_isRecording || _isPaused) {
-        throw RecordingException(message: 'No active recording or already paused');
+        throw RecordingException(
+          message: 'No active recording or already paused',
+        );
       }
 
       await _recorder.pause();
