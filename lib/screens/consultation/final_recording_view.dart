@@ -360,7 +360,7 @@ class FinalRecordingView extends StatelessWidget {
                                           label: Text(
                                             leftLabel,
                                             style: const TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -377,7 +377,7 @@ class FinalRecordingView extends StatelessWidget {
                                           label: Text(
                                             rightLabel,
                                             style: const TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -399,7 +399,7 @@ class FinalRecordingView extends StatelessWidget {
                                           label: const Text(
                                             'Restart',
                                             style: TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

@@ -216,7 +216,13 @@ class InitialRecordingView extends StatelessWidget {
                                                       : onPauseRecording))
                                           : null,
                                       icon: Icon(leftIcon, size: 20),
-                                      label: Text(leftLabel),
+                                      label: Text(
+                                        leftLabel,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: AppColors.textPrimary,
                                         disabledForegroundColor:
@@ -242,7 +248,13 @@ class InitialRecordingView extends StatelessWidget {
                                           ? onStopRecording
                                           : null,
                                       icon: const Icon(Icons.stop, size: 20),
-                                      label: const Text('Stop'),
+                                      label: const Text(
+                                        'Stop',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.error,
                                         foregroundColor: AppColors.white,
@@ -268,7 +280,13 @@ class InitialRecordingView extends StatelessWidget {
                                           ? onRestartRecording
                                           : null,
                                       icon: const Icon(Icons.refresh, size: 20),
-                                      label: const Text('Restart'),
+                                      label: const Text(
+                                        'Restart',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: AppColors.textPrimary,
                                         disabledForegroundColor:
