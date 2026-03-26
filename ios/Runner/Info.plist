@@ -53,14 +53,17 @@
 				</array>
 			</dict>
 		</dict>
-		<!-- Required for `google_sign_in` on iOS (client ID + URL scheme). -->
+		<!-- Google Sign-In: GIDClientID must be the OAuth client id (...apps.googleusercontent.com). -->
 		<key>GIDClientID</key>
-		<string>com.googleusercontent.apps.46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg</string>
+		<string>46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg.apps.googleusercontent.com</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
 				<key>CFBundleURLSchemes</key>
 				<array>
+					<!-- Required by current Google Sign-In iOS SDK (matches GOOGLE_IOS_WEB_CLIENT_ID). -->
+					<string>46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg.apps.googleusercontent.com</string>
+					<!-- Traditional reversed scheme for OAuth redirect compatibility. -->
 					<string>com.googleusercontent.apps.46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg</string>
 				</array>
 			</dict>
