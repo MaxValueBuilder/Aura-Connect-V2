@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io' show Platform;
+import 'dart:math' as math;
 
 import 'package:aura/models/user_model.dart';
 import 'package:aura/services/auth_service.dart';
@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:crypto/crypto.dart';
 
 import '../../../core/constants/app_constants.dart';
 
@@ -225,17 +226,22 @@ class AuthCubit extends Cubit<AuthState> {
         ),
       );
 
-      // `GOOGLE_WEB_CLIENT_ID` is typically used for Android.
-      // iOS needs a different Google client id, so we keep a dedicated env key.
-      final androidWebClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
-      final iosWebClientId = dotenv.env['GOOGLE_IOS_WEB_CLIENT_ID']?.trim();
-      final serverClientId =
-          Platform.isIOS ? iosWebClientId : androidWebClientId;
+      // IMPORTANT:
+      // The backend usually validates the ID token `aud` against the *Web* client id.
+      // If we pass an iOS client id here, iOS will return an ID token with `aud`
+      // set to that iOS client id, and many backends will reject it as
+      // "Unacceptable audience".
+      //
+      // Use the Web client id for *all* platforms when requesting the server
+      // audience token. iOS native configuration (URL schemes / GIDClientID) is
+      // handled in `ios/Runner/Info.plist`.
+      final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+      final rawNonce = _generateRawNonce();
+      final hashedNonce = _sha256OfString(rawNonce);
       final googleSignIn = GoogleSignIn.instance;
       await googleSignIn.initialize(
-        serverClientId: serverClientId?.isNotEmpty == true
-            ? serverClientId
-            : null,
+        serverClientId: webClientId?.isNotEmpty == true ? webClientId : null,
+        nonce: hashedNonce,
       );
 
       final account = await googleSignIn.authenticate(
@@ -257,7 +263,10 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
 
-      final data = await authService.loginWithGoogle(idToken: idToken);
+      final data = await authService.loginWithGoogle(
+        idToken: idToken,
+        nonce: rawNonce,
+      );
       final token = data['token'] as String?;
       final userMap = data['user'] as Map<String, dynamic>?;
 
@@ -454,5 +463,19 @@ class AuthCubit extends Cubit<AuthState> {
 
   void clearError() {
     emit(state.copyWith(errorMessage: ''));
+  }
+
+  String _generateRawNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = math.Random.secure();
+    return List<String>.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  String _sha256OfString(String input) {
+    return sha256.convert(utf8.encode(input)).toString();
   }
 }

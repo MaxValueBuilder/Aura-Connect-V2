@@ -31,11 +31,17 @@ class AuthService {
   /// Login with Google ID token (from Google Sign-In plugin). Backend exchanges it for app session.
   Future<Map<String, dynamic>> loginWithGoogle({
     required String idToken,
+    String? nonce,
   }) async {
     try {
+      final payload = <String, dynamic>{'id_token': idToken};
+      final normalizedNonce = nonce?.trim();
+      if (normalizedNonce != null && normalizedNonce.isNotEmpty) {
+        payload['nonce'] = normalizedNonce;
+      }
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/google',
-        data: {'id_token': idToken},
+        data: payload,
       );
       log('Login with Google response: ${response.data}');
       final data = response.data;

@@ -60,10 +60,7 @@
 		<array>
 			<dict>
 				<key>CFBundleURLSchemes</key>
-				<array>
-					<!-- Required by current Google Sign-In iOS SDK (matches GOOGLE_IOS_WEB_CLIENT_ID). -->
-					<string>46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg.apps.googleusercontent.com</string>
-					<!-- Traditional reversed scheme for OAuth redirect compatibility. -->
+				<array>				
 					<string>com.googleusercontent.apps.46733574833-s1hft2d80vm3i4c08vnr5v40dsllgkbg</string>
 				</array>
 			</dict>
