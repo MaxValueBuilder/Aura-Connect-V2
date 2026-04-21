@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,15 +28,25 @@ class RecordingService {
 
   String _committedTranscript = '';
   String _partialTranscript = '';
+  int _audioChunkCount = 0;
+
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      log(message, name: 'RecordingService');
+    }
+  }
 
   /// Check and request microphone permission
   Future<PermissionStatus> requestPermission() async {
-    return Permission.microphone.request();
+    final status = await Permission.microphone.request();
+    _debugLog('requestPermission -> $status');
+    return status;
   }
 
   /// Check if microphone permission is granted
   Future<bool> hasPermission() async {
     final status = await Permission.microphone.status;
+    _debugLog('hasPermission status=$status');
     return status.isGranted;
   }
 
@@ -56,21 +67,27 @@ class RecordingService {
     }
 
     final origin = _socketOriginFromBackendUrl(backendUrl);
+    _debugLog('Connecting socket to $origin/api/socket.io');
     final socket = io.io(
       origin,
       io.OptionBuilder()
           .setPath('/api/socket.io')
-          .setTransports(['polling', 'websocket'])
+          // Flutter mobile works reliably with websocket transport.
+          .setTransports(['websocket'])
           .setAuth({'token': token})
+          .setTimeout(20000)
+          .enableForceNew()
           .disableAutoConnect()
           .build(),
     );
 
     final connected = Completer<void>();
     socket.onConnect((_) {
+      _debugLog('Socket connected id=${socket.id}');
       if (!connected.isCompleted) connected.complete();
     });
     socket.onConnectError((error) {
+      _debugLog('Socket connect error: $error');
       if (!connected.isCompleted) {
         connected.completeError(
           RecordingException(message: 'Socket connection failed: $error'),
@@ -78,6 +95,7 @@ class RecordingService {
       }
     });
     socket.onError((error) {
+      _debugLog('Socket error: $error');
       if (!connected.isCompleted) {
         connected.completeError(
           RecordingException(message: 'Socket error: $error'),
@@ -86,6 +104,7 @@ class RecordingService {
     });
 
     socket.connect();
+    _debugLog('socket.connect() called');
     await connected.future.timeout(
       const Duration(seconds: 25),
       onTimeout: () =>
@@ -104,6 +123,9 @@ class RecordingService {
     socket.on('scribe:partial', (payload) {
       final map = payload is Map ? payload : <String, dynamic>{};
       _partialTranscript = (map['text'] ?? '').toString();
+      if (_partialTranscript.isNotEmpty) {
+        _debugLog('scribe:partial len=${_partialTranscript.length}');
+      }
     });
     socket.on('scribe:committed', (payload) {
       final map = payload is Map ? payload : <String, dynamic>{};
@@ -114,20 +136,26 @@ class RecordingService {
             : '$_committedTranscript $piece';
       }
       _partialTranscript = '';
+      _debugLog(
+        'scribe:committed totalCommittedLen=${_committedTranscript.length}',
+      );
     });
 
     socket.once('scribe:ready', (_) {
+      _debugLog('scribe:ready received');
       if (!ready.isCompleted) ready.complete();
     });
     socket.once('scribe:error', (payload) {
       final map = payload is Map ? payload : <String, dynamic>{};
       final message = (map['message'] ?? 'Scribe failed to start').toString();
+      _debugLog('scribe:error while starting: $message');
       if (!ready.isCompleted) {
         ready.completeError(RecordingException(message: message));
       }
     });
 
     socket.emit('scribe:start');
+    _debugLog('scribe:start emitted');
     await ready.future.timeout(
       const Duration(seconds: 25),
       onTimeout: () =>
@@ -140,6 +168,9 @@ class RecordingService {
     Function(int duration)? onDurationUpdate,
   }) async {
     try {
+      _debugLog(
+        'startRecording called isRecording=$_isRecording isPaused=$_isPaused',
+      );
       if (_isRecording) {
         throw RecordingException(message: 'Recording already in progress');
       }
@@ -169,9 +200,11 @@ class RecordingService {
       if (!await _recorder.hasPermission()) {
         throw PermissionException(message: 'Microphone permission not granted');
       }
+      _debugLog('Recorder permission confirmed');
 
       _socket = await _connectSocket();
       await _startScribeSession(_socket!);
+      _audioChunkCount = 0;
 
       final audioStream = await _recorder.startStream(
         const RecordConfig(
@@ -180,9 +213,11 @@ class RecordingService {
           numChannels: 1,
         ),
       );
+      _debugLog('Recorder stream started (pcm16/16k/mono)');
 
       _audioStreamSubscription = audioStream.listen((chunk) {
         if (_isPaused || _socket == null || !_socket!.connected) return;
+        _audioChunkCount++;
         _socket!.emit('scribe:audio', {'audioBase64': base64Encode(chunk)});
       });
 
@@ -194,7 +229,9 @@ class RecordingService {
         _duration++;
         onDurationUpdate?.call(_duration);
       });
+      _debugLog('Recording started successfully');
     } catch (e) {
+      _debugLog('startRecording failed: $e');
       await cancelRecording();
       if (e is PermissionException || e is RecordingException) {
         rethrow;
@@ -217,11 +254,13 @@ class RecordingService {
 
     final stopped = Completer<void>();
     socket.once('scribe:stopped', (_) {
+      _debugLog('scribe:stopped received');
       if (!stopped.isCompleted) stopped.complete();
     });
 
     socket.emit('scribe:commit');
     socket.emit('scribe:stop');
+    _debugLog('scribe:commit and scribe:stop emitted');
 
     try {
       await stopped.future.timeout(const Duration(seconds: 8));
@@ -231,11 +270,15 @@ class RecordingService {
 
     socket.dispose();
     _socket = null;
+    _debugLog('Socket disposed');
   }
 
   /// Stop recording and return final transcript from realtime stream.
   Future<String> stopRecording() async {
     try {
+      _debugLog(
+        'stopRecording called isRecording=$_isRecording chunks=$_audioChunkCount',
+      );
       if (!_isRecording) {
         throw RecordingException(message: 'No active recording');
       }
@@ -249,6 +292,7 @@ class RecordingService {
       _audioStreamSubscription = null;
 
       await _recorder.stop();
+      _debugLog('Recorder stopped');
       await _stopSocketSession();
 
       final transcript = _buildTranscript();
@@ -262,6 +306,7 @@ class RecordingService {
 
       return transcript;
     } catch (e) {
+      _debugLog('stopRecording failed: $e');
       _isRecording = false;
       _isPaused = false;
       if (e is RecordingException) {
@@ -282,6 +327,7 @@ class RecordingService {
     }
     _durationTimer?.cancel();
     _isPaused = true;
+    _debugLog('pauseRecording -> paused');
   }
 
   /// Resume recording stream.
@@ -293,6 +339,7 @@ class RecordingService {
     }
 
     _isPaused = false;
+    _debugLog('resumeRecording -> resumed');
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _duration++;
       onDurationUpdate?.call(_duration);
@@ -301,6 +348,9 @@ class RecordingService {
 
   /// Cancel current recording and cleanup resources.
   Future<void> cancelRecording() async {
+    _debugLog(
+      'cancelRecording called isRecording=$_isRecording isPaused=$_isPaused',
+    );
     _durationTimer?.cancel();
     _durationTimer = null;
 
@@ -310,6 +360,7 @@ class RecordingService {
     try {
       if (_isRecording) {
         await _recorder.stop();
+        _debugLog('Recorder stopped during cancel');
       }
     } catch (_) {
       // Ignore recorder stop errors on cancellation.
@@ -322,6 +373,8 @@ class RecordingService {
     _duration = 0;
     _committedTranscript = '';
     _partialTranscript = '';
+    _audioChunkCount = 0;
+    _debugLog('cancelRecording cleanup complete');
   }
 
   /// Get current recording duration in seconds
@@ -335,6 +388,7 @@ class RecordingService {
 
   /// Dispose resources
   void dispose() {
+    _debugLog('dispose called');
     _durationTimer?.cancel();
     _audioStreamSubscription?.cancel();
     _socket?.dispose();

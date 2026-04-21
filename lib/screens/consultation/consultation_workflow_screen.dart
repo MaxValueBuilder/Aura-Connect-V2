@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:aura/screens/consultation/final_recording_view.dart';
 import 'package:aura/screens/consultation/tasks_and_labs_view.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection.dart';
@@ -60,6 +61,12 @@ class _ConsultationWorkflowScreenState
   bool _labUploadSuccessCalled = false;
   final TextEditingController _manualTranscriptController =
       TextEditingController();
+
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      log(message, name: 'ConsultationWorkflow');
+    }
+  }
 
   @override
   void initState() {
@@ -159,6 +166,9 @@ class _ConsultationWorkflowScreenState
   }
 
   Future<void> _handleStartRecording() async {
+    _debugLog(
+      '_handleStartRecording status=$_currentStatus duration=$_recordingDuration isRecording=${_recordingService.isRecording} isPaused=$_isPaused',
+    );
     try {
       await _recordingService.startRecording(
         onDurationUpdate: (duration) {
@@ -171,7 +181,11 @@ class _ConsultationWorkflowScreenState
       setState(() {
         _isPaused = false;
       });
+      _debugLog(
+        'start recording success isRecording=${_recordingService.isRecording}',
+      );
     } catch (e) {
+      _debugLog('start recording error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -184,12 +198,17 @@ class _ConsultationWorkflowScreenState
   }
 
   Future<void> _handlePauseRecording() async {
+    _debugLog(
+      '_handlePauseRecording isRecording=${_recordingService.isRecording} isPaused=$_isPaused',
+    );
     try {
       await _recordingService.pauseRecording();
       setState(() {
         _isPaused = true;
       });
+      _debugLog('pause recording success');
     } catch (e) {
+      _debugLog('pause recording error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -202,6 +221,9 @@ class _ConsultationWorkflowScreenState
   }
 
   Future<void> _handleResumeRecording() async {
+    _debugLog(
+      '_handleResumeRecording isRecording=${_recordingService.isRecording} isPaused=$_isPaused',
+    );
     try {
       await _recordingService.resumeRecording(
         onDurationUpdate: (duration) {
@@ -214,7 +236,9 @@ class _ConsultationWorkflowScreenState
       setState(() {
         _isPaused = false;
       });
+      _debugLog('resume recording success');
     } catch (e) {
+      _debugLog('resume recording error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -261,6 +285,9 @@ class _ConsultationWorkflowScreenState
   }
 
   Future<void> _handleStopRecording() async {
+    _debugLog(
+      '_handleStopRecording isRecording=${_recordingService.isRecording} duration=$_recordingDuration',
+    );
     try {
       setState(() {
         _isLoading = true;
@@ -270,6 +297,7 @@ class _ConsultationWorkflowScreenState
       // Stop recording and use realtime transcript from socket session.
       final transcript = await _recordingService.stopRecording();
       log('Realtime transcript received, length: ${transcript.length}');
+      _debugLog('stop recording success transcriptLen=${transcript.length}');
 
       setState(() {
         _transcript = transcript;
@@ -278,6 +306,7 @@ class _ConsultationWorkflowScreenState
         _isTranscribing = false;
       });
     } catch (e) {
+      _debugLog('stop recording error: $e');
       setState(() {
         _isLoading = false;
         _isTranscribing = false;
@@ -667,10 +696,14 @@ class _ConsultationWorkflowScreenState
   }
 
   Future<void> _handleRestartRecording() async {
+    _debugLog(
+      '_handleRestartRecording isRecording=${_recordingService.isRecording} duration=$_recordingDuration',
+    );
     try {
       await _recordingService.cancelRecording();
     } catch (_) {
       // Ignore cancel errors
+      _debugLog('restart: cancelRecording threw and ignored');
     }
     if (!mounted) return;
     setState(() {
@@ -680,6 +713,7 @@ class _ConsultationWorkflowScreenState
       _manualTranscriptController.clear();
       _isTranscribing = false;
     });
+    _debugLog('restart recording reset complete');
   }
 
   @override
