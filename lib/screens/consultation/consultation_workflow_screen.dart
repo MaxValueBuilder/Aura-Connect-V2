@@ -267,18 +267,9 @@ class _ConsultationWorkflowScreenState
         _isTranscribing = true;
       });
 
-      // Stop recording and get audio file path
-      final audioFilePath = await _recordingService.stopRecording();
-      log('Audio file path: $audioFilePath');
-
-      // Transcribe audio
-      final transcript = await context
-          .read<ConsultationCubit>()
-          .transcribeAudio(audioFilePath);
-
-      if (transcript == null || transcript.isEmpty) {
-        throw Exception('Failed to transcribe audio');
-      }
+      // Stop recording and use realtime transcript from socket session.
+      final transcript = await _recordingService.stopRecording();
+      log('Realtime transcript received, length: ${transcript.length}');
 
       setState(() {
         _transcript = transcript;

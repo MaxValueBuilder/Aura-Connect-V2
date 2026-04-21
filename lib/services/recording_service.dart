@@ -1,19 +1,32 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:record/record.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import '../core/error/exceptions.dart';
-import '../core/constants/app_constants.dart';
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:typed_data';
 
-/// Service for audio recording functionality
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+
+import '../core/constants/app_constants.dart';
+import '../core/error/exceptions.dart';
+
+/// Service for realtime audio recording + Socket.IO transcription.
 class RecordingService {
   final AudioRecorder _recorder = AudioRecorder();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
   Timer? _durationTimer;
   int _duration = 0;
-  String? _currentRecordingPath;
   bool _isRecording = false;
   bool _isPaused = false;
+
+  io.Socket? _socket;
+  StreamSubscription<Uint8List>? _audioStreamSubscription;
+
+  String _committedTranscript = '';
+  String _partialTranscript = '';
 
   /// Check and request microphone permission
   Future<PermissionStatus> requestPermission() async {
@@ -26,18 +39,114 @@ class RecordingService {
     return status.isGranted;
   }
 
-  /// Start recording audio
+  String _socketOriginFromBackendUrl(String backendUrl) {
+    final uri = Uri.parse(backendUrl);
+    return '${uri.scheme}://${uri.authority}';
+  }
+
+  Future<io.Socket> _connectSocket() async {
+    final backendUrl = dotenv.env['BACKEND_URL'];
+    if (backendUrl == null || backendUrl.isEmpty) {
+      throw RecordingException(message: 'BACKEND_URL is not configured');
+    }
+
+    final token = await _storage.read(key: AppConstants.accessTokenKey);
+    if (token == null || token.isEmpty) {
+      throw RecordingException(message: 'Not authenticated');
+    }
+
+    final origin = _socketOriginFromBackendUrl(backendUrl);
+    final socket = io.io(
+      origin,
+      io.OptionBuilder()
+          .setPath('/api/socket.io')
+          .setTransports(['polling', 'websocket'])
+          .setAuth({'token': token})
+          .disableAutoConnect()
+          .build(),
+    );
+
+    final connected = Completer<void>();
+    socket.onConnect((_) {
+      if (!connected.isCompleted) connected.complete();
+    });
+    socket.onConnectError((error) {
+      if (!connected.isCompleted) {
+        connected.completeError(
+          RecordingException(message: 'Socket connection failed: $error'),
+        );
+      }
+    });
+    socket.onError((error) {
+      if (!connected.isCompleted) {
+        connected.completeError(
+          RecordingException(message: 'Socket error: $error'),
+        );
+      }
+    });
+
+    socket.connect();
+    await connected.future.timeout(
+      const Duration(seconds: 25),
+      onTimeout: () =>
+          throw RecordingException(message: 'Socket connection timed out'),
+    );
+
+    return socket;
+  }
+
+  Future<void> _startScribeSession(io.Socket socket) async {
+    _committedTranscript = '';
+    _partialTranscript = '';
+
+    final ready = Completer<void>();
+
+    socket.on('scribe:partial', (payload) {
+      final map = payload is Map ? payload : <String, dynamic>{};
+      _partialTranscript = (map['text'] ?? '').toString();
+    });
+    socket.on('scribe:committed', (payload) {
+      final map = payload is Map ? payload : <String, dynamic>{};
+      final piece = (map['text'] ?? '').toString().trim();
+      if (piece.isNotEmpty) {
+        _committedTranscript = _committedTranscript.isEmpty
+            ? piece
+            : '$_committedTranscript $piece';
+      }
+      _partialTranscript = '';
+    });
+
+    socket.once('scribe:ready', (_) {
+      if (!ready.isCompleted) ready.complete();
+    });
+    socket.once('scribe:error', (payload) {
+      final map = payload is Map ? payload : <String, dynamic>{};
+      final message = (map['message'] ?? 'Scribe failed to start').toString();
+      if (!ready.isCompleted) {
+        ready.completeError(RecordingException(message: message));
+      }
+    });
+
+    socket.emit('scribe:start');
+    await ready.future.timeout(
+      const Duration(seconds: 25),
+      onTimeout: () =>
+          throw RecordingException(message: 'Scribe session start timed out'),
+    );
+  }
+
+  /// Start recording and streaming PCM16 data to Scribe backend.
   Future<void> startRecording({
     Function(int duration)? onDurationUpdate,
   }) async {
     try {
-      // Check permission
+      if (_isRecording) {
+        throw RecordingException(message: 'Recording already in progress');
+      }
+
       if (!await hasPermission()) {
         final status = await requestPermission();
         if (!status.isGranted) {
-          // iOS will not show the permission prompt again if user selected "Don’t Allow"
-          // (or the app is restricted). In that case, the correct fix is enabling it in
-          // Settings -> Privacy -> Microphone -> <Your App>.
           if (status.isPermanentlyDenied) {
             throw PermissionException(
               message:
@@ -57,36 +166,36 @@ class RecordingService {
         }
       }
 
-      // Get temporary directory
-      final directory = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      _currentRecordingPath =
-          '${directory.path}/recording_$timestamp${AppConstants.audioFileExtension}';
-
-      // Start recording
-      if (await _recorder.hasPermission()) {
-        await _recorder.start(
-          const RecordConfig(
-            encoder: AudioEncoder.aacLc,
-            bitRate: 128000,
-            sampleRate: AppConstants.audioSampleRate,
-          ),
-          path: _currentRecordingPath!,
-        );
-
-        _isRecording = true;
-        _isPaused = false;
-        _duration = 0;
-
-        // Start duration timer
-        _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          _duration++;
-          onDurationUpdate?.call(_duration);
-        });
-      } else {
+      if (!await _recorder.hasPermission()) {
         throw PermissionException(message: 'Microphone permission not granted');
       }
+
+      _socket = await _connectSocket();
+      await _startScribeSession(_socket!);
+
+      final audioStream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+
+      _audioStreamSubscription = audioStream.listen((chunk) {
+        if (_isPaused || _socket == null || !_socket!.connected) return;
+        _socket!.emit('scribe:audio', {'audioBase64': base64Encode(chunk)});
+      });
+
+      _isRecording = true;
+      _isPaused = false;
+      _duration = 0;
+
+      _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _duration++;
+        onDurationUpdate?.call(_duration);
+      });
     } catch (e) {
+      await cancelRecording();
       if (e is PermissionException || e is RecordingException) {
         rethrow;
       }
@@ -96,7 +205,35 @@ class RecordingService {
     }
   }
 
-  /// Stop recording and return the audio file path
+  String _buildTranscript() {
+    final committed = _committedTranscript.trim();
+    final partial = _partialTranscript.trim();
+    return [committed, partial].where((e) => e.isNotEmpty).join(' ').trim();
+  }
+
+  Future<void> _stopSocketSession() async {
+    final socket = _socket;
+    if (socket == null) return;
+
+    final stopped = Completer<void>();
+    socket.once('scribe:stopped', (_) {
+      if (!stopped.isCompleted) stopped.complete();
+    });
+
+    socket.emit('scribe:commit');
+    socket.emit('scribe:stop');
+
+    try {
+      await stopped.future.timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Best effort shutdown; still disconnect socket below.
+    }
+
+    socket.dispose();
+    _socket = null;
+  }
+
+  /// Stop recording and return final transcript from realtime stream.
   Future<String> stopRecording() async {
     try {
       if (!_isRecording) {
@@ -105,18 +242,28 @@ class RecordingService {
 
       _durationTimer?.cancel();
       _durationTimer = null;
-
-      final path = await _recorder.stop();
       _isRecording = false;
       _isPaused = false;
 
-      if (path == null) {
-        throw RecordingException(message: 'Failed to stop recording');
+      await _audioStreamSubscription?.cancel();
+      _audioStreamSubscription = null;
+
+      await _recorder.stop();
+      await _stopSocketSession();
+
+      final transcript = _buildTranscript();
+      log('Realtime transcript length: ${transcript.length}');
+
+      if (transcript.isEmpty) {
+        throw RecordingException(
+          message: 'No transcript received. Please record again.',
+        );
       }
 
-      return path;
+      return transcript;
     } catch (e) {
       _isRecording = false;
+      _isPaused = false;
       if (e is RecordingException) {
         rethrow;
       }
@@ -126,73 +273,55 @@ class RecordingService {
     }
   }
 
-  /// Pause recording
+  /// Pause recording stream (keeps Scribe session open).
   Future<void> pauseRecording() async {
-    try {
-      if (!_isRecording || _isPaused) {
-        throw RecordingException(
-          message: 'No active recording or already paused',
-        );
-      }
-
-      await _recorder.pause();
-      _durationTimer?.cancel();
-      _isPaused = true;
-    } catch (e) {
+    if (!_isRecording || _isPaused) {
       throw RecordingException(
-        message: 'Failed to pause recording: ${e.toString()}',
+        message: 'No active recording or already paused',
       );
     }
+    _durationTimer?.cancel();
+    _isPaused = true;
   }
 
-  /// Resume recording
+  /// Resume recording stream.
   Future<void> resumeRecording({
     Function(int duration)? onDurationUpdate,
   }) async {
-    try {
-      if (!_isRecording || !_isPaused) {
-        throw RecordingException(message: 'Recording is not paused');
-      }
-
-      await _recorder.resume();
-      _isPaused = false;
-
-      // Restart duration timer
-      _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _duration++;
-        onDurationUpdate?.call(_duration);
-      });
-    } catch (e) {
-      throw RecordingException(
-        message: 'Failed to resume recording: ${e.toString()}',
-      );
+    if (!_isRecording || !_isPaused) {
+      throw RecordingException(message: 'Recording is not paused');
     }
+
+    _isPaused = false;
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _duration++;
+      onDurationUpdate?.call(_duration);
+    });
   }
 
-  /// Cancel current recording
+  /// Cancel current recording and cleanup resources.
   Future<void> cancelRecording() async {
-    try {
-      _durationTimer?.cancel();
-      _durationTimer = null;
+    _durationTimer?.cancel();
+    _durationTimer = null;
 
+    await _audioStreamSubscription?.cancel();
+    _audioStreamSubscription = null;
+
+    try {
       if (_isRecording) {
         await _recorder.stop();
-        _isRecording = false;
       }
-
-      // Delete the recording file
-      if (_currentRecordingPath != null) {
-        final file = File(_currentRecordingPath!);
-        if (await file.exists()) {
-          await file.delete();
-        }
-        _currentRecordingPath = null;
-      }
-
-      _duration = 0;
-    } catch (e) {
-      // Ignore errors during cancellation
+    } catch (_) {
+      // Ignore recorder stop errors on cancellation.
     }
+
+    await _stopSocketSession();
+
+    _isRecording = false;
+    _isPaused = false;
+    _duration = 0;
+    _committedTranscript = '';
+    _partialTranscript = '';
   }
 
   /// Get current recording duration in seconds
@@ -204,12 +333,11 @@ class RecordingService {
   /// Check if currently paused
   bool get isPaused => _isPaused;
 
-  /// Get current recording path
-  String? get currentRecordingPath => _currentRecordingPath;
-
   /// Dispose resources
   void dispose() {
     _durationTimer?.cancel();
+    _audioStreamSubscription?.cancel();
+    _socket?.dispose();
     _recorder.dispose();
   }
 }

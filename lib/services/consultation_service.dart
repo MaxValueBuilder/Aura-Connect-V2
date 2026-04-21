@@ -305,6 +305,11 @@ class ConsultationService {
       log('Transcribe audio response: $response');
       return response.data;
     } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      log(
+        'Transcribe audio DioException details: status=$status uri=${e.requestOptions.uri} responseData=$data',
+      );
       throw _handleError(e);
     }
   }
@@ -359,21 +364,28 @@ class ConsultationService {
     if (error.response != null) {
       final statusCode = error.response!.statusCode ?? 0;
       final data = error.response!.data;
+      final requestPath = error.requestOptions.path;
+      final requestUri = error.requestOptions.uri.toString();
       String message = 'An error occurred';
       if (data is Map<String, dynamic>) {
         message = (data['error'] ?? data['message'] ?? message).toString();
       } else if (data is String && data.isNotEmpty) {
-        message = statusCode == 404
-            ? 'Consultation not found'
-            : 'Request failed (${statusCode > 0 ? statusCode : "error"})';
+        message = 'Request failed (${statusCode > 0 ? statusCode : "error"})';
       }
 
       if (statusCode == 401) {
         return AuthException(message: message, statusCode: statusCode);
       }
       if (statusCode == 404) {
+        if (requestPath.contains('/consultations')) {
+          return ServerException(
+            message: 'Consultation not found',
+            statusCode: statusCode,
+          );
+        }
         return ServerException(
-          message: 'Consultation not found',
+          message:
+              'Endpoint not found (404) for $requestUri. Server message: $message',
           statusCode: statusCode,
         );
       }
