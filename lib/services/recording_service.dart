@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -53,6 +54,23 @@ class RecordingService {
   String _socketOriginFromBackendUrl(String backendUrl) {
     final uri = Uri.parse(backendUrl);
     return '${uri.scheme}://${uri.authority}';
+  }
+
+  RecordConfig _buildRecordConfig() {
+    if (Platform.isIOS) {
+      // iOS can fail when forcing hardware conversion to 16k at startStream.
+      // Keep PCM16 + mono, but let iOS choose a supported native sample rate.
+      return const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        numChannels: 1,
+      );
+    }
+
+    return const RecordConfig(
+      encoder: AudioEncoder.pcm16bits,
+      sampleRate: 16000,
+      numChannels: 1,
+    );
   }
 
   Future<io.Socket> _connectSocket() async {
@@ -206,14 +224,14 @@ class RecordingService {
       await _startScribeSession(_socket!);
       _audioChunkCount = 0;
 
-      final audioStream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
+      final recordConfig = _buildRecordConfig();
+      _debugLog(
+        'Starting recorder stream with config: '
+        'encoder=${recordConfig.encoder} sampleRate=${recordConfig.sampleRate} '
+        'channels=${recordConfig.numChannels}',
       );
-      _debugLog('Recorder stream started (pcm16/16k/mono)');
+      final audioStream = await _recorder.startStream(recordConfig);
+      _debugLog('Recorder stream started');
 
       _audioStreamSubscription = audioStream.listen((chunk) {
         if (_isPaused || _socket == null || !_socket!.connected) return;
