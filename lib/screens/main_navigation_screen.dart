@@ -16,6 +16,7 @@ import 'settings/settings_screen.dart';
 /// Dark nav bar colors to match design (dark bar, white icons, active tab highlight)
 final _navBarBackgroundColor = AppColors.secondary;
 final _navBarActiveItemBackground = Color(0xFF2A3757);
+const _navBarBaseHeight = kBottomNavigationBarHeight + 12;
 
 /// Main navigation wrapper that manages bottom navigation bar
 /// and switches between different screens
@@ -30,13 +31,40 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late final PersistentTabController _tabController;
   late final NavigationCubit _navigationCubit;
 
-  List<CustomNavBarScreen> _buildScreens() {
+  List<CustomNavBarScreen> _buildScreens(BuildContext context) {
+    final navInset = MediaQuery.of(context).viewPadding.bottom;
+    final navOverlayHeight = kBottomNavigationBarHeight + navInset;
     return [
-      CustomNavBarScreen(screen: const DashboardScreen()),
-      CustomNavBarScreen(screen: const HistoryScreen()),
-      CustomNavBarScreen(screen: const PatientsScreen()),
-      CustomNavBarScreen(screen: const NotificationHistoryScreen()),
-      CustomNavBarScreen(screen: const SettingsScreen()),
+      CustomNavBarScreen(
+        screen: Padding(
+          padding: EdgeInsets.only(bottom: navOverlayHeight),
+          child: const DashboardScreen(),
+        ),
+      ),
+      CustomNavBarScreen(
+        screen: Padding(
+          padding: EdgeInsets.only(bottom: navOverlayHeight),
+          child: const HistoryScreen(),
+        ),
+      ),
+      CustomNavBarScreen(
+        screen: Padding(
+          padding: EdgeInsets.only(bottom: navOverlayHeight),
+          child: const PatientsScreen(),
+        ),
+      ),
+      CustomNavBarScreen(
+        screen: Padding(
+          padding: EdgeInsets.only(bottom: navOverlayHeight),
+          child: const NotificationHistoryScreen(),
+        ),
+      ),
+      CustomNavBarScreen(
+        screen: Padding(
+          padding: EdgeInsets.only(bottom: navOverlayHeight),
+          child: const SettingsScreen(),
+        ),
+      ),
     ];
   }
 
@@ -126,7 +154,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           context,
           controller: _tabController,
           itemCount: _navBarItems().length,
-          screens: _buildScreens(),
+          screens: _buildScreens(context),
           customWidget: BlocBuilder<NotificationCubit, NotificationState>(
             builder: (context, notificationState) {
               return _DarkStyleNavBar(
@@ -153,7 +181,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           hideNavigationBarWhenKeyboardAppears: true,
           resizeToAvoidBottomInset: true,
           isVisible: true,
-          navBarHeight: kBottomNavigationBarHeight + bottomInset,
+          navBarHeight: _navBarBaseHeight + bottomInset,
           margin: EdgeInsets.zero,
           animationSettings: const NavBarAnimationSettings(
             navBarItemAnimation: ItemAnimationSettings(
@@ -198,7 +226,7 @@ class _DarkStyleNavBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: kBottomNavigationBarHeight,
+            height: _navBarBaseHeight,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(items.length, (index) {
