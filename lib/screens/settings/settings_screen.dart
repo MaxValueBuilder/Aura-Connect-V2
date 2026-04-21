@@ -56,6 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset =
+        MediaQuery.of(context).viewPadding.bottom + kBottomNavigationBarHeight;
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) =>
           previous.isAuthenticated && !current.isAuthenticated,
@@ -179,14 +181,17 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
                 ),
                 Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: const [
-                      ProfileTab(),
-                      PracticeTab(),
-                      BillingTab(),
-                      NotificationsTab(),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: bottomInset),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: const [
+                        ProfileTab(),
+                        PracticeTab(),
+                        BillingTab(),
+                        NotificationsTab(),
+                      ],
+                    ),
                   ),
                 ),
               ],
