@@ -58,8 +58,7 @@ class RecordingService {
 
   RecordConfig _buildRecordConfig() {
     if (Platform.isIOS) {
-      // iOS can fail when forcing hardware conversion to 16k at startStream.
-      // Keep PCM16 + mono, but let iOS choose a supported native sample rate.
+      // Primary iOS attempt; additional fallbacks are tried if this fails.
       return const RecordConfig(
         encoder: AudioEncoder.pcm16bits,
         numChannels: 1,
@@ -70,6 +69,74 @@ class RecordingService {
       encoder: AudioEncoder.pcm16bits,
       sampleRate: 16000,
       numChannels: 1,
+    );
+  }
+
+  List<RecordConfig> _buildIosFallbackConfigs() {
+    return const [
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 48000,
+        numChannels: 1,
+      ),
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 44100,
+        numChannels: 1,
+      ),
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+      // Some iOS routes only support stereo capture reliably.
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 48000,
+        numChannels: 2,
+      ),
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 44100,
+        numChannels: 2,
+      ),
+    ];
+  }
+
+  String _recordConfigLabel(RecordConfig config) {
+    return 'encoder=${config.encoder} sampleRate=${config.sampleRate} channels=${config.numChannels}';
+  }
+
+  Future<Stream<Uint8List>> _startRecorderStreamWithFallbacks() async {
+    final primaryConfig = _buildRecordConfig();
+    final attemptedLabels = <String>[];
+
+    final configs = <RecordConfig>[
+      primaryConfig,
+      if (Platform.isIOS) ..._buildIosFallbackConfigs(),
+    ];
+
+    Object? lastError;
+
+    for (final config in configs) {
+      final label = _recordConfigLabel(config);
+      attemptedLabels.add(label);
+      try {
+        _debugLog('Starting recorder stream with config: $label');
+        final stream = await _recorder.startStream(config);
+        _debugLog('Recorder stream started with config: $label');
+        return stream;
+      } catch (e) {
+        lastError = e;
+        _debugLog('Recorder stream failed with config [$label]: $e');
+      }
+    }
+
+    throw RecordingException(
+      message:
+          'Failed to start recording on this iOS audio route. '
+          'Tried configs: ${attemptedLabels.join(' | ')}. '
+          'Last error: ${lastError.toString()}',
     );
   }
 
@@ -224,14 +291,7 @@ class RecordingService {
       await _startScribeSession(_socket!);
       _audioChunkCount = 0;
 
-      final recordConfig = _buildRecordConfig();
-      _debugLog(
-        'Starting recorder stream with config: '
-        'encoder=${recordConfig.encoder} sampleRate=${recordConfig.sampleRate} '
-        'channels=${recordConfig.numChannels}',
-      );
-      final audioStream = await _recorder.startStream(recordConfig);
-      _debugLog('Recorder stream started');
+      final audioStream = await _startRecorderStreamWithFallbacks();
 
       _audioStreamSubscription = audioStream.listen((chunk) {
         if (_isPaused || _socket == null || !_socket!.connected) return;
