@@ -5,8 +5,8 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API Configuration (base URL is read from .env BACKEND_URL for security)
-  static const Duration apiTimeout = Duration(seconds: 30);
-  static const Duration cacheTimeout = Duration(minutes: 2);
+  static const Duration apiTimeout = Duration(seconds: 40);
+  static const Duration cacheTimeout = Duration(minutes: 3);
 
   // Google AI Configuration
   static const String geminiApiKey = 'your-gemini-api-key';
