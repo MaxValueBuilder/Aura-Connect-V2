@@ -74,6 +74,15 @@ class _ConsultationWorkflowScreenState
     _currentStatus = widget.initialStatus;
     _patientName = widget.initialPatientName;
     _currentConsultationId = widget.consultationId;
+    _recordingService.setCallbacks(
+      onRealtimeTranscript: (text) {
+        if (!mounted) return;
+        setState(() {
+          _transcript = text;
+          _manualTranscriptController.text = text;
+        });
+      },
+    );
 
     // Load consultation data if ID is provided
     if (_currentConsultationId != null) {
@@ -83,6 +92,7 @@ class _ConsultationWorkflowScreenState
 
   @override
   void dispose() {
+    _recordingService.setCallbacks(onRealtimeTranscript: null);
     _recordingService.dispose();
     _manualTranscriptController.dispose();
     super.dispose();

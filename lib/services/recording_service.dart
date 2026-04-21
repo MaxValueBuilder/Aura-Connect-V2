@@ -30,11 +30,21 @@ class RecordingService {
 
   String _committedTranscript = '';
   String _partialTranscript = '';
+  void Function(String transcript)? _onRealtimeTranscript;
 
   void _debugLog(String message) {
     if (kDebugMode) {
       log(message, name: 'RecordingService');
     }
+  }
+
+  /// Register callbacks for realtime transcript updates.
+  void setCallbacks({void Function(String transcript)? onRealtimeTranscript}) {
+    _onRealtimeTranscript = onRealtimeTranscript;
+  }
+
+  void _emitRealtimeTranscript() {
+    _onRealtimeTranscript?.call(_buildTranscript());
   }
 
   /// Check and request microphone permission
@@ -305,6 +315,7 @@ class RecordingService {
     socket.on('scribe:partial', (payload) {
       final map = payload is Map ? payload : <String, dynamic>{};
       _partialTranscript = (map['text'] ?? '').toString();
+      _emitRealtimeTranscript();
       if (_partialTranscript.isNotEmpty) {
         _debugLog('scribe:partial len=${_partialTranscript.length}');
       }
@@ -318,6 +329,7 @@ class RecordingService {
             : '$_committedTranscript $piece';
       }
       _partialTranscript = '';
+      _emitRealtimeTranscript();
       _debugLog(
         'scribe:committed totalCommittedLen=${_committedTranscript.length}',
       );
@@ -561,6 +573,7 @@ class RecordingService {
     _committedTranscript = '';
     _partialTranscript = '';
     _scribeSessionReady = false;
+    _emitRealtimeTranscript();
     _debugLog('cancelRecording cleanup complete');
   }
 
