@@ -9,6 +9,10 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
+  - audio_session (0.0.1):
+    - Flutter
+  - device_info_plus (0.0.1):
+    - Flutter
   - DKImagePickerController/Core (4.3.9):
     - DKImagePickerController/ImageDataManager
     - DKImagePickerController/Resource
@@ -153,6 +157,8 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - audio_session (from `.symlinks/plugins/audio_session/ios`)
+  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
@@ -190,6 +196,10 @@ SPEC REPOS:
     - SwiftyGif
 
 EXTERNAL SOURCES:
+  audio_session:
+    :path: ".symlinks/plugins/audio_session/ios"
+  device_info_plus:
+    :path: ".symlinks/plugins/device_info_plus/ios"
   file_picker:
     :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
@@ -220,6 +230,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
+  audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
+  device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be

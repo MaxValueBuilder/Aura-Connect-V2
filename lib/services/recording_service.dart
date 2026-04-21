@@ -2,9 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:audio_session/audio_session.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -27,10 +26,10 @@ class RecordingService {
 
   io.Socket? _socket;
   StreamSubscription<Uint8List>? _audioStreamSubscription;
+  bool _scribeSessionReady = false;
 
   String _committedTranscript = '';
   String _partialTranscript = '';
-  int _audioChunkCount = 0;
 
   void _debugLog(String message) {
     if (kDebugMode) {
@@ -57,12 +56,31 @@ class RecordingService {
     return '${uri.scheme}://${uri.authority}';
   }
 
+  static const _iosCategoryOptions = <IosAudioCategoryOption>[
+    IosAudioCategoryOption.allowBluetooth,
+  ];
+
+  RecordConfig _iosPcmConfig({
+    required int sampleRate,
+    required int channels,
+    int? streamBufferSize,
+  }) {
+    return RecordConfig(
+      encoder: AudioEncoder.pcm16bits,
+      sampleRate: sampleRate,
+      numChannels: channels,
+      iosConfig: const IosRecordConfig(categoryOptions: _iosCategoryOptions),
+      streamBufferSize: streamBufferSize,
+    );
+  }
+
   RecordConfig _buildRecordConfig() {
     if (Platform.isIOS) {
-      // Primary iOS attempt; additional fallbacks are tried if this fails.
-      return const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        numChannels: 1,
+      // iOS: avoid A2DP route option for input streaming stability.
+      return _iosPcmConfig(
+        sampleRate: 16000,
+        channels: 1,
+        streamBufferSize: 4096,
       );
     }
 
@@ -74,33 +92,12 @@ class RecordingService {
   }
 
   List<RecordConfig> _buildIosFallbackConfigs() {
-    return const [
-      RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 48000,
-        numChannels: 1,
-      ),
-      RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 44100,
-        numChannels: 1,
-      ),
-      RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
+    return [
+      _iosPcmConfig(sampleRate: 48000, channels: 1),
+      _iosPcmConfig(sampleRate: 44100, channels: 1),
       // Some iOS routes only support stereo capture reliably.
-      RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 48000,
-        numChannels: 2,
-      ),
-      RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 44100,
-        numChannels: 2,
-      ),
+      _iosPcmConfig(sampleRate: 48000, channels: 2),
+      _iosPcmConfig(sampleRate: 44100, channels: 2),
     ];
   }
 
@@ -108,30 +105,108 @@ class RecordingService {
     return 'encoder=${config.encoder} sampleRate=${config.sampleRate} channels=${config.numChannels}';
   }
 
-  Future<void> _configureAudioSessionForRecording() async {
-    final session = await AudioSession.instance;
-    await session.configure(AudioSessionConfiguration.speech());
-    await session.setActive(true);
-    _debugLog('Audio session configured and activated for recording');
+  Future<bool> _isPhysicalIosDevice() async {
+    if (!Platform.isIOS) return true;
+    try {
+      final info = await DeviceInfoPlugin().iosInfo;
+      return info.isPhysicalDevice;
+    } catch (_) {
+      // If detection fails, continue as physical to avoid false negatives.
+      return true;
+    }
   }
 
-  Future<void> _deactivateAudioSession() async {
+  Future<InputDevice?> _getPreferredIosInputDevice() async {
+    if (!Platform.isIOS) return null;
     try {
-      final session = await AudioSession.instance;
-      await session.setActive(false);
-      _debugLog('Audio session deactivated');
-    } catch (_) {
-      // Best effort.
+      final devices = await _recorder.listInputDevices();
+      if (devices.isEmpty) {
+        _debugLog('No explicit iOS input devices returned');
+        return null;
+      }
+
+      for (final device in devices) {
+        _debugLog('iOS input device: id=${device.id} label=${device.label}');
+      }
+
+      final builtIn = devices.where((d) {
+        final label = d.label.toLowerCase();
+        return label.contains('built') ||
+            label.contains('iphone microphone') ||
+            label.contains('microphone');
+      });
+
+      return builtIn.isNotEmpty ? builtIn.first : devices.first;
+    } catch (e) {
+      _debugLog('Failed to list iOS input devices: $e');
+      return null;
+    }
+  }
+
+  RecordConfig _withInputDevice(RecordConfig config, InputDevice? device) {
+    if (device == null) return config;
+    return RecordConfig(
+      encoder: config.encoder,
+      bitRate: config.bitRate,
+      sampleRate: config.sampleRate,
+      numChannels: config.numChannels,
+      device: device,
+      autoGain: config.autoGain,
+      echoCancel: config.echoCancel,
+      noiseSuppress: config.noiseSuppress,
+      androidConfig: config.androidConfig,
+      iosConfig: config.iosConfig,
+      audioInterruption: config.audioInterruption,
+      streamBufferSize: config.streamBufferSize,
+    );
+  }
+
+  Future<void> _configureIosSessionForStreaming() async {
+    if (!Platform.isIOS) return;
+
+    try {
+      final ios = _recorder.ios;
+      if (ios == null) return;
+
+      // Manually configure iOS audio session before stream start.
+      // This can avoid AVAudioConverter failures on some routes.
+      await ios.manageAudioSession(false);
+      await ios.setAudioSessionCategory(
+        category: IosAudioCategory.playAndRecord,
+        options: const [
+          IosAudioCategoryOptions.defaultToSpeaker,
+          IosAudioCategoryOptions.allowBluetooth,
+        ],
+      );
+      await ios.setAudioSessionActive(true);
+      _debugLog('iOS audio session configured for streaming');
+    } catch (e) {
+      _debugLog('iOS audio session setup failed (continuing): $e');
+    }
+  }
+
+  Future<void> _deactivateIosSession() async {
+    if (!Platform.isIOS) return;
+    try {
+      final ios = _recorder.ios;
+      await ios?.setAudioSessionActive(false);
+      _debugLog('iOS audio session deactivated');
+    } catch (e) {
+      _debugLog('iOS audio session deactivate failed (ignored): $e');
     }
   }
 
   Future<Stream<Uint8List>> _startRecorderStreamWithFallbacks() async {
     final primaryConfig = _buildRecordConfig();
     final attemptedLabels = <String>[];
+    final preferredDevice = await _getPreferredIosInputDevice();
 
     final configs = <RecordConfig>[
-      primaryConfig,
-      if (Platform.isIOS) ..._buildIosFallbackConfigs(),
+      _withInputDevice(primaryConfig, preferredDevice),
+      if (Platform.isIOS)
+        ..._buildIosFallbackConfigs().map(
+          (config) => _withInputDevice(config, preferredDevice),
+        ),
     ];
 
     Object? lastError;
@@ -151,10 +226,13 @@ class RecordingService {
     }
 
     throw RecordingException(
-      message:
-          'Failed to start recording on this iOS audio route. '
-          'Tried configs: ${attemptedLabels.join(' | ')}. '
-          'Last error: ${lastError.toString()}',
+      message: Platform.isIOS
+          ? 'Failed to start recording on iOS audio route. '
+                'If you are on Simulator, test on a real iPhone (PCM stream is often unsupported there). '
+                'If on device, disconnect Bluetooth/AirPlay mic route and retry. '
+                'Tried configs: ${attemptedLabels.join(' | ')}. '
+                'Last error: ${lastError.toString()}'
+          : 'Failed to start recording. Last error: ${lastError.toString()}',
     );
   }
 
@@ -220,6 +298,7 @@ class RecordingService {
   Future<void> _startScribeSession(io.Socket socket) async {
     _committedTranscript = '';
     _partialTranscript = '';
+    _scribeSessionReady = false;
 
     final ready = Completer<void>();
 
@@ -246,6 +325,7 @@ class RecordingService {
 
     socket.once('scribe:ready', (_) {
       _debugLog('scribe:ready received');
+      _scribeSessionReady = true;
       if (!ready.isCompleted) ready.complete();
     });
     socket.once('scribe:error', (payload) {
@@ -304,17 +384,24 @@ class RecordingService {
         throw PermissionException(message: 'Microphone permission not granted');
       }
       _debugLog('Recorder permission confirmed');
-      await _configureAudioSessionForRecording();
+
+      if (Platform.isIOS && !await _isPhysicalIosDevice()) {
+        throw RecordingException(
+          message:
+              'Realtime recording is not supported on iOS Simulator for this PCM stream route. '
+              'Please test on a physical iPhone.',
+        );
+      }
+
+      await _configureIosSessionForStreaming();
 
       _socket = await _connectSocket();
       await _startScribeSession(_socket!);
-      _audioChunkCount = 0;
 
       final audioStream = await _startRecorderStreamWithFallbacks();
 
       _audioStreamSubscription = audioStream.listen((chunk) {
         if (_isPaused || _socket == null || !_socket!.connected) return;
-        _audioChunkCount++;
         _socket!.emit('scribe:audio', {'audioBase64': base64Encode(chunk)});
       });
 
@@ -349,33 +436,34 @@ class RecordingService {
     final socket = _socket;
     if (socket == null) return;
 
-    final stopped = Completer<void>();
-    socket.once('scribe:stopped', (_) {
-      _debugLog('scribe:stopped received');
-      if (!stopped.isCompleted) stopped.complete();
-    });
+    if (_scribeSessionReady && socket.connected) {
+      final stopped = Completer<void>();
+      socket.once('scribe:stopped', (_) {
+        _debugLog('scribe:stopped received');
+        if (!stopped.isCompleted) stopped.complete();
+      });
 
-    socket.emit('scribe:commit');
-    socket.emit('scribe:stop');
-    _debugLog('scribe:commit and scribe:stop emitted');
+      socket.emit('scribe:commit');
+      socket.emit('scribe:stop');
+      _debugLog('scribe:commit and scribe:stop emitted');
 
-    try {
-      await stopped.future.timeout(const Duration(seconds: 8));
-    } catch (_) {
-      // Best effort shutdown; still disconnect socket below.
+      try {
+        await stopped.future.timeout(const Duration(seconds: 8));
+      } catch (_) {
+        // Best effort shutdown; still disconnect socket below.
+      }
     }
 
     socket.dispose();
     _socket = null;
+    _scribeSessionReady = false;
     _debugLog('Socket disposed');
   }
 
   /// Stop recording and return final transcript from realtime stream.
   Future<String> stopRecording() async {
     try {
-      _debugLog(
-        'stopRecording called isRecording=$_isRecording chunks=$_audioChunkCount',
-      );
+      _debugLog('stopRecording called isRecording=$_isRecording');
       if (!_isRecording) {
         throw RecordingException(message: 'No active recording');
       }
@@ -390,7 +478,7 @@ class RecordingService {
 
       await _recorder.stop();
       _debugLog('Recorder stopped');
-      await _deactivateAudioSession();
+      await _deactivateIosSession();
       await _stopSocketSession();
 
       final transcript = _buildTranscript();
@@ -463,7 +551,7 @@ class RecordingService {
     } catch (_) {
       // Ignore recorder stop errors on cancellation.
     }
-    await _deactivateAudioSession();
+    await _deactivateIosSession();
 
     await _stopSocketSession();
 
@@ -472,7 +560,7 @@ class RecordingService {
     _duration = 0;
     _committedTranscript = '';
     _partialTranscript = '';
-    _audioChunkCount = 0;
+    _scribeSessionReady = false;
     _debugLog('cancelRecording cleanup complete');
   }
 
@@ -492,6 +580,6 @@ class RecordingService {
     _audioStreamSubscription?.cancel();
     _socket?.dispose();
     _recorder.dispose();
-    _deactivateAudioSession();
+    _deactivateIosSession();
   }
 }
