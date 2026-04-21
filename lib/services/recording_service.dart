@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -105,6 +106,23 @@ class RecordingService {
 
   String _recordConfigLabel(RecordConfig config) {
     return 'encoder=${config.encoder} sampleRate=${config.sampleRate} channels=${config.numChannels}';
+  }
+
+  Future<void> _configureAudioSessionForRecording() async {
+    final session = await AudioSession.instance;
+    await session.configure(AudioSessionConfiguration.speech());
+    await session.setActive(true);
+    _debugLog('Audio session configured and activated for recording');
+  }
+
+  Future<void> _deactivateAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.setActive(false);
+      _debugLog('Audio session deactivated');
+    } catch (_) {
+      // Best effort.
+    }
   }
 
   Future<Stream<Uint8List>> _startRecorderStreamWithFallbacks() async {
@@ -286,6 +304,7 @@ class RecordingService {
         throw PermissionException(message: 'Microphone permission not granted');
       }
       _debugLog('Recorder permission confirmed');
+      await _configureAudioSessionForRecording();
 
       _socket = await _connectSocket();
       await _startScribeSession(_socket!);
@@ -371,6 +390,7 @@ class RecordingService {
 
       await _recorder.stop();
       _debugLog('Recorder stopped');
+      await _deactivateAudioSession();
       await _stopSocketSession();
 
       final transcript = _buildTranscript();
@@ -443,6 +463,7 @@ class RecordingService {
     } catch (_) {
       // Ignore recorder stop errors on cancellation.
     }
+    await _deactivateAudioSession();
 
     await _stopSocketSession();
 
@@ -471,5 +492,6 @@ class RecordingService {
     _audioStreamSubscription?.cancel();
     _socket?.dispose();
     _recorder.dispose();
+    _deactivateAudioSession();
   }
 }
